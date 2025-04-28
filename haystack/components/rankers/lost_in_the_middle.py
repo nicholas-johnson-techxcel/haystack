@@ -6,8 +6,10 @@ from typing import Dict, List, Optional
 
 from haystack import Document, component
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class LostInTheMiddleRanker:
     """
     A LostInTheMiddle Ranker.
@@ -59,7 +61,7 @@ class LostInTheMiddleRanker:
         self.word_count_threshold = word_count_threshold
         self.top_k = top_k
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(
         self, documents: List[Document], top_k: Optional[int] = None, word_count_threshold: Optional[int] = None
     ) -> Dict[str, List[Document]]:

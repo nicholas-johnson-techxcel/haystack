@@ -22,11 +22,14 @@ from haystack.utils.auth import Secret
 ### Component and Model Definitions
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class SimpleComponent:
     """A simple component that generates text."""
 
-    @component.output_types(reply=str)
+    @_component_instance.output_types(reply=str)
     def run(self, text: str) -> Dict[str, str]:
         """
         A simple component that generates text.
@@ -45,11 +48,14 @@ class User:
     age: int = 0
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class UserGreeter:
     """A simple component that processes a User."""
 
-    @component.output_types(message=str)
+    @_component_instance.output_types(message=str)
     def run(self, user: User) -> Dict[str, str]:
         """
         A simple component that processes a User.
@@ -60,11 +66,14 @@ class UserGreeter:
         return {"message": f"User {user.name} is {user.age} years old"}
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class ListProcessor:
     """A component that processes a list of strings."""
 
-    @component.output_types(concatenated=str)
+    @_component_instance.output_types(concatenated=str)
     def run(self, texts: List[str]) -> Dict[str, str]:
         """
         Concatenates a list of strings into a single string.
@@ -91,11 +100,14 @@ class Person:
     address: Address
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class PersonProcessor:
     """A component that processes a Person with nested Address."""
 
-    @component.output_types(info=str)
+    @_component_instance.output_types(info=str)
     def run(self, person: Person) -> Dict[str, str]:
         """
         Creates information about the person.
@@ -106,11 +118,14 @@ class PersonProcessor:
         return {"info": f"{person.name} lives at {person.address.street}, {person.address.city}."}
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class DocumentProcessor:
     """A component that processes a list of Documents."""
 
-    @component.output_types(concatenated=str)
+    @_component_instance.output_types(concatenated=str)
     def run(self, documents: List[Document], top_k: int = 5) -> Dict[str, str]:
         """
         Concatenates the content of multiple documents with newlines.

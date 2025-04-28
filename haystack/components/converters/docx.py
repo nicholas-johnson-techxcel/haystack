@@ -116,7 +116,10 @@ class DOCXLinkFormat(Enum):
         return link_format
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class DOCXToDocument:
     """
     Converts DOCX files to Documents.
@@ -190,7 +193,7 @@ class DOCXToDocument:
             data["init_parameters"]["link_format"] = DOCXLinkFormat.from_str(data["init_parameters"]["link_format"])
         return default_from_dict(cls, data)
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(
         self,
         sources: List[Union[str, Path, ByteStream]],

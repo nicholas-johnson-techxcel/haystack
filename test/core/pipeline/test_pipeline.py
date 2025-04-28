@@ -78,9 +78,12 @@ class TestPipeline:
     def test__run_component_fail(self):
         """Test error when component doesn't return a dictionary"""
 
-        @component
+        _component_instance = component()
+
+
+@_component_instance
         class WrongOutput:
-            @component.output_types(output=str)
+            @_component_instance.output_types(output=str)
             def run(self, value: str):
                 return "not_a_dict"
 
@@ -102,9 +105,12 @@ class TestPipeline:
     def test_run_component_error(self):
         """Test error when component fails to run"""
 
-        @component
+        _component_instance = component()
+
+
+@_component_instance
         class ErroringComponent:
-            @component.output_types(output=str)
+            @_component_instance.output_types(output=str)
             def run(self):
                 raise ValueError("Test error")
 

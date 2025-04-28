@@ -12,8 +12,10 @@ from haystack import component, default_from_dict, default_to_dict
 from haystack.utils import Secret, deserialize_secrets_inplace
 from haystack.utils.http_client import init_http_client
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class DALLEImageGenerator:
     """
     Generates images using OpenAI's DALL-E model.
@@ -94,7 +96,7 @@ class DALLEImageGenerator:
                 http_client=init_http_client(self.http_client_kwargs, async_client=False),
             )
 
-    @component.output_types(images=List[str], revised_prompt=str)
+    @_component_instance.output_types(images=List[str], revised_prompt=str)
     def run(
         self,
         prompt: str,

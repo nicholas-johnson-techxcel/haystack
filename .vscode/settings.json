@@ -1,0 +1,18 @@
+{
+    "python.analysis.typeCheckingMode": "strict",
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "always",
+            "source.organizeImports.ruff": "always"
+        }
+    },
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "always",
+        "source.organizeImports": "always"
+    },
+    "python.defaultInterpreterPath": ".venv/bin/python",
+}

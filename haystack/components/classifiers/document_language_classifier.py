@@ -12,8 +12,10 @@ logger = logging.getLogger(__name__)
 with LazyImport("Run 'pip install langdetect'") as langdetect_import:
     import langdetect
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class DocumentLanguageClassifier:
     """
     Classifies the language of each document and adds it to its metadata.
@@ -65,7 +67,7 @@ class DocumentLanguageClassifier:
             languages = ["en"]
         self.languages = languages
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(self, documents: List[Document]):
         """
         Classifies the language of each document and adds it to its metadata.

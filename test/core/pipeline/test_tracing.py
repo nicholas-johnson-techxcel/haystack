@@ -12,9 +12,12 @@ from haystack import Pipeline, component
 from haystack.tracing.tracer import tracer
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class Hello:
-    @component.output_types(output=str)
+    @_component_instance.output_types(output=str)
     def run(self, word: Optional[str]):  # use optional to spice up the typing tags
         """
         Takes a string in input and returns "Hello, <string>!"

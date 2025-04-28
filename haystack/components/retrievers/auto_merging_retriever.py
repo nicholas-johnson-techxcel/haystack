@@ -10,8 +10,10 @@ from haystack.core.serialization import default_from_dict
 from haystack.document_stores.types import DocumentStore
 from haystack.utils import deserialize_document_store_in_init_params_inplace
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class AutoMergingRetriever:
     """
     A retriever which returns parent documents of the matched leaf nodes documents, based on a threshold setting.
@@ -112,7 +114,7 @@ class AutoMergingRetriever:
         if not all(doc.meta.get("__block_size") for doc in matched_leaf_documents):
             raise ValueError("The matched leaf documents do not have the required meta field '__block_size'")
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(self, documents: List[Document]):
         """
         Run the AutoMergingRetriever.

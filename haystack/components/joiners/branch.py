@@ -8,8 +8,10 @@ from haystack import component, default_from_dict, default_to_dict
 from haystack.core.component.types import GreedyVariadic
 from haystack.utils import deserialize_type, serialize_type
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class BranchJoiner:
     """
     A component that merges multiple input branches of a pipeline into a single output stream.

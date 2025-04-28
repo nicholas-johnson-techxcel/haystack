@@ -22,8 +22,8 @@ from haystack.utils.deserialization import deserialize_chatgenerator_inplace
 
 logger = logging.getLogger(__name__)
 
-
-@component
+_component_instance = component()
+@_component_instance
 class Agent:
     """
     A Haystack component that implements a tool-using agent with provider-agnostic chat model support.
@@ -129,8 +129,8 @@ class Agent:
             # Skip setting input types for parameters that are already in the run method
             if param in ["messages", "streaming_callback"]:
                 continue
-            component.set_input_type(self, name=param, type=config["type"], default=None)
-        component.set_output_types(self, **output_types)
+            _component_instance.set_input_type(self, name=param, type=config["type"], default=None)
+        _component_instance.set_output_types(self, **output_types)
 
         self._tool_invoker = None
         if self.tools:

@@ -7,8 +7,10 @@ from typing import Any, Dict, List
 
 from haystack import Document, component
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class DocumentNDCGEvaluator:
     """
     Evaluator that calculates the normalized discounted cumulative gain (NDCG) of retrieved documents.
@@ -34,7 +36,7 @@ class DocumentNDCGEvaluator:
     ```
     """
 
-    @component.output_types(score=float, individual_scores=List[float])
+    @_component_instance.output_types(score=float, individual_scores=List[float])
     def run(
         self, ground_truth_documents: List[List[Document]], retrieved_documents: List[List[Document]]
     ) -> Dict[str, Any]:

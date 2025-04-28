@@ -11,7 +11,10 @@ from haystack.core.component import component
 logger = haystack_logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class Greet:
     """
     Logs a greeting message without affecting the value passing on the connection.
@@ -29,7 +32,7 @@ class Greet:
         self.message = message
         self.log_level = log_level
 
-    @component.output_types(value=int)
+    @_component_instance.output_types(value=int)
     def run(self, value: int, message: Optional[str] = None, log_level: Optional[str] = None):
         """
         Logs a greeting message without affecting the value passing on the connection.

@@ -82,7 +82,10 @@ def default_tool_parser(text: str) -> Optional[List[ToolCall]]:
         return None
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class HuggingFaceLocalChatGenerator:
     """
     Generates chat responses using models from Hugging Face that run locally.
@@ -325,7 +328,7 @@ class HuggingFaceLocalChatGenerator:
         deserialize_hf_model_kwargs(huggingface_pipeline_kwargs)
         return default_from_dict(cls, data)
 
-    @component.output_types(replies=List[ChatMessage])
+    @_component_instance.output_types(replies=List[ChatMessage])
     def run(
         self,
         messages: List[ChatMessage],
@@ -487,7 +490,7 @@ class HuggingFaceLocalChatGenerator:
 
         return list(set(stop_words or []))
 
-    @component.output_types(replies=List[ChatMessage])
+    @_component_instance.output_types(replies=List[ChatMessage])
     async def run_async(
         self,
         messages: List[ChatMessage],

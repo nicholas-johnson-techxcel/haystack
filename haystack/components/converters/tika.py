@@ -49,7 +49,10 @@ class XHTMLParser(HTMLParser):
             self.page += data
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class TikaDocumentConverter:
     """
     Converts files of different types to Documents.
@@ -88,7 +91,7 @@ class TikaDocumentConverter:
         self.tika_url = tika_url
         self.store_full_path = store_full_path
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(
         self,
         sources: List[Union[str, Path, ByteStream]],

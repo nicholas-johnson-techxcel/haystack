@@ -6,8 +6,10 @@ from typing import Any, List, Optional
 
 from haystack.core.component import component
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class FString:
     """
     Takes a template string and a list of variables in input and returns the formatted string in output.
@@ -20,7 +22,7 @@ class FString:
             raise ValueError("The variable name 'template' is reserved and cannot be used.")
         component.set_input_types(self, **dict.fromkeys(self.variables, Any))
 
-    @component.output_types(string=str)
+    @_component_instance.output_types(string=str)
     def run(self, template: Optional[str] = None, **kwargs):
         """
         Takes a template string and a list of variables in input and returns the formatted string in output.

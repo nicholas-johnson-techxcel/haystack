@@ -4,14 +4,16 @@
 
 from haystack.core.component import component
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class Subtract:
     """
     Compute the difference between two values.
     """
 
-    @component.output_types(difference=int)
+    @_component_instance.output_types(difference=int)
     def run(self, first_value: int, second_value: int):
         """
         Run the component.

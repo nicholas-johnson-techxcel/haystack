@@ -15,7 +15,10 @@ with LazyImport("Run 'pip install tiktoken'") as tiktoken_imports:
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class RecursiveDocumentSplitter:
     """
     Recursively chunk text into smaller chunks.
@@ -450,7 +453,7 @@ class RecursiveDocumentSplitter:
 
         return new_docs
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(self, documents: List[Document]) -> Dict[str, List[Document]]:
         """
         Split a list of documents into documents with smaller chunks of text.

@@ -21,7 +21,10 @@ with LazyImport("Run 'pip install markdown-it-py mdit_plain'") as markdown_conve
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class MarkdownToDocument:
     """
     Converts a Markdown file into a text Document.
@@ -57,7 +60,7 @@ class MarkdownToDocument:
         self.progress_bar = progress_bar
         self.store_full_path = store_full_path
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(
         self,
         sources: List[Union[str, Path, ByteStream]],

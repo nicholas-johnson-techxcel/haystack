@@ -79,8 +79,10 @@ def _convert_hfapi_tool_calls(hfapi_tool_calls: Optional[List["ChatCompletionOut
 
     return tool_calls
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class HuggingFaceAPIChatGenerator:
     """
     Completes chats using Hugging Face APIs.
@@ -269,7 +271,7 @@ class HuggingFaceAPIChatGenerator:
             data["init_parameters"]["streaming_callback"] = deserialize_callable(serialized_callback_handler)
         return default_from_dict(cls, data)
 
-    @component.output_types(replies=List[ChatMessage])
+    @_component_instance.output_types(replies=List[ChatMessage])
     def run(
         self,
         messages: List[ChatMessage],
@@ -328,7 +330,7 @@ class HuggingFaceAPIChatGenerator:
             ]
         return self._run_non_streaming(formatted_messages, generation_kwargs, hf_tools)
 
-    @component.output_types(replies=List[ChatMessage])
+    @_component_instance.output_types(replies=List[ChatMessage])
     async def run_async(
         self,
         messages: List[ChatMessage],

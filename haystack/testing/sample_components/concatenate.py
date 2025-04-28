@@ -6,14 +6,16 @@ from typing import List, Union
 
 from haystack.core.component import component
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class Concatenate:
     """
     Concatenates two values
     """
 
-    @component.output_types(value=List[str])
+    @_component_instance.output_types(value=List[str])
     def run(self, first: Union[List[str], str], second: Union[List[str], str]):
         """
         Concatenates two values

@@ -18,7 +18,10 @@ with LazyImport("Run 'pip install jq'") as jq_import:
     import jq
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class JSONConverter:
     """
     Converts one or more JSON files into a text document.
@@ -246,7 +249,7 @@ class JSONConverter:
 
         return result
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(
         self,
         sources: List[Union[str, Path, ByteStream]],

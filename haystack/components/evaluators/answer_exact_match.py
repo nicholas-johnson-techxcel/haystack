@@ -6,8 +6,10 @@ from typing import Any, Dict, List
 
 from haystack.core.component import component
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class AnswerExactMatchEvaluator:
     """
     An answer exact match evaluator class.
@@ -35,7 +37,7 @@ class AnswerExactMatchEvaluator:
     ```
     """
 
-    @component.output_types(individual_scores=List[int], score=float)
+    @_component_instance.output_types(individual_scores=List[int], score=float)
     def run(self, ground_truth_answers: List[str], predicted_answers: List[str]) -> Dict[str, Any]:
         """
         Run the AnswerExactMatchEvaluator on the given inputs.

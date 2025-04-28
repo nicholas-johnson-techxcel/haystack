@@ -16,7 +16,10 @@ def _default_function(first: int, second: int) -> int:
     return first + second
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class Accumulate:
     """
     Accumulates the value flowing through the connection into an internal attribute.
@@ -71,7 +74,7 @@ class Accumulate:
 
         return cls(function=accumulator_function)
 
-    @component.output_types(value=int)
+    @_component_instance.output_types(value=int)
     def run(self, value: int):
         """
         Accumulates the value flowing through the connection into an internal attribute.

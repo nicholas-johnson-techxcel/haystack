@@ -11,16 +11,22 @@ from haystack import component, Pipeline
 from haystack import tracing
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class Hello:
-    @component.output_types(output=str)
+    @_component_instance.output_types(output=str)
     def run(self, word: Optional[str]):
         return {"output": f"Hello, {word}!"}
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class FailingComponent:
-    @component.output_types(output=str)
+    @_component_instance.output_types(output=str)
     def run(self, word: Optional[str]):
         raise Exception("Failing component")
 

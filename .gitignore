@@ -137,9 +137,6 @@ dmypy.json
 # PyCharm
 .idea
 
-# VSCode
-.vscode
-
 # haystack files
 haystack/document_store/qa.db
 data

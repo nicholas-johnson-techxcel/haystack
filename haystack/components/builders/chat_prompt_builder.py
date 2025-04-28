@@ -15,7 +15,10 @@ from haystack.utils import Jinja2TimeExtension
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class ChatPromptBuilder:
     """
     Renders a chat prompt from a template string using Jinja2 syntax.
@@ -155,11 +158,11 @@ class ChatPromptBuilder:
         # setup inputs
         for var in self.variables:
             if self.required_variables == "*" or var in self.required_variables:
-                component.set_input_type(self, var, Any)
+                _component_instance.set_input_type(self, var, Any)
             else:
-                component.set_input_type(self, var, Any, "")
+                _component_instance.set_input_type(self, var, Any, "")
 
-    @component.output_types(prompt=List[ChatMessage])
+    @_component_instance.output_types(prompt=List[ChatMessage])
     def run(
         self,
         template: Optional[List[ChatMessage]] = None,

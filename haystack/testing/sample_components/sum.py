@@ -5,10 +5,12 @@
 from haystack.core.component import component
 from haystack.core.component.types import Variadic
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class Sum:
-    @component.output_types(total=int)
+    @_component_instance.output_types(total=int)
     def run(self, values: Variadic[int]):
         """
         :param value: the values to sum.

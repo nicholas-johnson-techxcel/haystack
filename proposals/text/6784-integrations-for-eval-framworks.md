@@ -95,7 +95,10 @@ Given the above comparison, **we will be implementing the second approach, i.e.,
 ```python
 from deepeval import BaseMetric, FaithfulnessMetric
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class DeepEvalEvaluator:
 	self._metric: BaseMetric
 

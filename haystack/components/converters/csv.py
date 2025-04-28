@@ -14,7 +14,10 @@ from haystack.dataclasses import ByteStream
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class CSVToDocument:
     """
     Converts CSV files to Documents.
@@ -50,7 +53,7 @@ class CSVToDocument:
         self.encoding = encoding
         self.store_full_path = store_full_path
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(
         self,
         sources: List[Union[str, Path, ByteStream]],

@@ -14,7 +14,10 @@ from haystack.core.pipeline import Pipeline
 
 
 def test_correct_declaration():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
         def to_dict(self):
             return {}
@@ -23,7 +26,7 @@ def test_correct_declaration():
         def from_dict(cls, data):
             return cls()
 
-        @component.output_types(output_value=int)
+        @_component_instance.output_types(output_value=int)
         def run(self, input_value: int):
             return {"output_value": input_value}
 
@@ -35,7 +38,10 @@ def test_correct_declaration():
 
 
 def test_correct_declaration_with_async():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
         def to_dict(self):
             return {}
@@ -44,11 +50,11 @@ def test_correct_declaration_with_async():
         def from_dict(cls, data):
             return cls()
 
-        @component.output_types(output_value=int)
+        @_component_instance.output_types(output_value=int)
         def run(self, input_value: int):
             return {"output_value": input_value}
 
-        @component.output_types(output_value=int)
+        @_component_instance.output_types(output_value=int)
         async def run_async(self, input_value: int):
             return {"output_value": input_value}
 
@@ -60,7 +66,10 @@ def test_correct_declaration_with_async():
 
 
 def test_correct_declaration_with_additional_readonly_property():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
         @property
         def store(self):
@@ -73,7 +82,7 @@ def test_correct_declaration_with_additional_readonly_property():
         def from_dict(cls, data):
             return cls()
 
-        @component.output_types(output_value=int)
+        @_component_instance.output_types(output_value=int)
         def run(self, input_value: int):
             return {"output_value": input_value}
 
@@ -84,7 +93,10 @@ def test_correct_declaration_with_additional_readonly_property():
 
 
 def test_correct_declaration_with_additional_writable_property():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
         @property
         def store(self):
@@ -101,7 +113,7 @@ def test_correct_declaration_with_additional_writable_property():
         def from_dict(cls, data):
             return cls()
 
-        @component.output_types(output_value=int)
+        @_component_instance.output_types(output_value=int)
         def run(self, input_value: int):
             return {"output_value": input_value}
 
@@ -115,20 +127,26 @@ def test_correct_declaration_with_additional_writable_property():
 def test_missing_run():
     with pytest.raises(ComponentError, match=r"must have a 'run\(\)' method"):
 
-        @component
+        _component_instance = component()
+
+
+@_component_instance
         class MockComponent:
             def another_method(self, input_value: int):
                 return {"output_value": input_value}
 
 
 def test_async_run_not_async():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self, value: int):
             return {"value": 1}
 
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run_async(self, value: int):
             return {"value": 1}
 
@@ -137,13 +155,16 @@ def test_async_run_not_async():
 
 
 def test_async_run_not_coroutine():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self, value: int):
             return {"value": 1}
 
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         async def run_async(self, value: int):
             yield {"value": 1}
 
@@ -154,39 +175,48 @@ def test_async_run_not_coroutine():
 def test_parameters_mismatch_run_and_async_run():
     err_msg = r"Parameters of 'run' and 'run_async' methods must be the same"
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponentMismatchingInputTypes:
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self, value: int):
             return {"value": 1}
 
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         async def run_async(self, value: str):
             return {"value": "1"}
 
     with pytest.raises(ComponentError, match=err_msg):
         _ = MockComponentMismatchingInputTypes()
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponentMismatchingInputs:
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self, value: int, **kwargs):
             return {"value": 1}
 
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         async def run_async(self, value: int):
             return {"value": "1"}
 
     with pytest.raises(ComponentError, match=err_msg):
         _ = MockComponentMismatchingInputs()
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponentMismatchingInputOrder:
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self, value: int, another: str):
             return {"value": 1}
 
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         async def run_async(self, another: str, value: int):
             return {"value": "1"}
 
@@ -195,14 +225,17 @@ def test_parameters_mismatch_run_and_async_run():
 
 
 def test_set_input_types():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
         def __init__(self, flag: bool):
             component.set_input_types(self, value=Any)
             if flag:
                 component.set_input_type(self, name="another", type=str)
 
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self, **kwargs):
             return {"value": 1}
 
@@ -219,7 +252,10 @@ def test_set_input_types():
 
 
 def test_set_input_types_no_kwarg():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
         def __init__(self, flag: bool):
             if flag:
@@ -227,7 +263,7 @@ def test_set_input_types_no_kwarg():
             else:
                 component.set_input_types(self, value=Any)
 
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self, fini: bool):
             return {"value": 1}
 
@@ -239,7 +275,10 @@ def test_set_input_types_no_kwarg():
 
 
 def test_set_input_types_overrides_run():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
         def __init__(self, state: bool):
             if state:
@@ -247,7 +286,7 @@ def test_set_input_types_overrides_run():
             else:
                 component.set_input_types(self, fini=Any)
 
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self, fini: bool, **kwargs):
             return {"value": 1}
 
@@ -260,7 +299,10 @@ def test_set_input_types_overrides_run():
 
 
 def test_set_output_types():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
         def __init__(self):
             component.set_output_types(self, value=int)
@@ -280,9 +322,12 @@ def test_set_output_types():
 
 
 def test_output_types_decorator_with_compatible_type():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self, value: int):
             return {"value": 1}
 
@@ -300,12 +345,15 @@ def test_output_types_decorator_with_compatible_type():
 def test_output_types_decorator_wrong_method():
     with pytest.raises(ComponentError):
 
-        @component
+        _component_instance = component()
+
+
+@_component_instance
         class MockComponent:
             def run(self, value: int):
                 return {"value": 1}
 
-            @component.output_types(value=int)
+            @_component_instance.output_types(value=int)
             def to_dict(self):
                 return {}
 
@@ -315,12 +363,15 @@ def test_output_types_decorator_wrong_method():
 
 
 def test_output_types_decorator_and_set_output_types():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
         def __init__(self) -> None:
             component.set_output_types(self, value=int)
 
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self, value: int):
             return {"value": 1}
 
@@ -329,13 +380,16 @@ def test_output_types_decorator_and_set_output_types():
 
 
 def test_output_types_decorator_mismatch_run_async_run():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self, value: int):
             return {"value": 1}
 
-        @component.output_types(value=str)
+        @_component_instance.output_types(value=str)
         async def run_async(self, value: int):
             return {"value": "1"}
 
@@ -344,9 +398,12 @@ def test_output_types_decorator_mismatch_run_async_run():
 
 
 def test_output_types_decorator_missing_async_run():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self, value: int):
             return {"value": 1}
 
@@ -358,9 +415,12 @@ def test_output_types_decorator_missing_async_run():
 
 
 def test_component_decorator_set_it_as_component():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self, value: int):
             return {"value": 1}
 
@@ -376,9 +436,12 @@ def test_component_decorator_set_it_as_component():
 
 
 def test_input_has_default_value():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self, value: int = 42):
             return {"value": value}
 
@@ -388,7 +451,10 @@ def test_input_has_default_value():
 
 
 def test_keyword_only_args():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
         def __init__(self):
             component.set_output_types(self, value=int)
@@ -402,7 +468,10 @@ def test_keyword_only_args():
 
 
 def test_repr():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
         def __init__(self):
             component.set_output_types(self, value=int)
@@ -415,7 +484,10 @@ def test_repr():
 
 
 def test_repr_added_to_pipeline():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
         def __init__(self):
             component.set_output_types(self, value=int)
@@ -430,7 +502,10 @@ def test_repr_added_to_pipeline():
 
 
 def test_pre_init_hooking():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
         def __init__(self, pos_arg1, pos_arg2, pos_arg3=None, *, kwarg1=1, kwarg2="string"):
             self.pos_arg1 = pos_arg1
@@ -439,7 +514,7 @@ def test_pre_init_hooking():
             self.kwarg1 = kwarg1
             self.kwarg2 = kwarg2
 
-        @component.output_types(output_value=int)
+        @_component_instance.output_types(output_value=int)
         def run(self, input_value: int):
             return {"output_value": input_value}
 
@@ -475,14 +550,17 @@ def test_pre_init_hooking():
 
 
 def test_pre_init_hooking_variadic_positional_args():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
         def __init__(self, *args, kwarg1=1, kwarg2="string"):
             self.args = args
             self.kwarg1 = kwarg1
             self.kwarg2 = kwarg2
 
-        @component.output_types(output_value=int)
+        @_component_instance.output_types(output_value=int)
         def run(self, input_value: int):
             return {"output_value": input_value}
 
@@ -503,14 +581,17 @@ def test_pre_init_hooking_variadic_positional_args():
 
 
 def test_pre_init_hooking_variadic_kwargs():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MockComponent:
         def __init__(self, pos_arg1, pos_arg2=None, **kwargs):
             self.pos_arg1 = pos_arg1
             self.pos_arg2 = pos_arg2
             self.kwargs = kwargs
 
-        @component.output_types(output_value=int)
+        @_component_instance.output_types(output_value=int)
         def run(self, input_value: int):
             return {"output_value": input_value}
 

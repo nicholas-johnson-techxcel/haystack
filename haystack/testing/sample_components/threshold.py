@@ -6,8 +6,10 @@ from typing import Optional
 
 from haystack.core.component import component
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class Threshold:  # pylint: disable=too-few-public-methods
     """
     Redirects the value, along a different connection whether the value is above or below the given threshold.
@@ -21,7 +23,7 @@ class Threshold:  # pylint: disable=too-few-public-methods
         """
         self.threshold = threshold
 
-    @component.output_types(above=int, below=int)
+    @_component_instance.output_types(above=int, below=int)
     def run(self, value: int, threshold: Optional[int] = None):
         """
         Redirects the value, along a different connection whether the value is above or below the given threshold.

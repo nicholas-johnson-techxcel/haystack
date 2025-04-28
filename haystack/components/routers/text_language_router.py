@@ -13,7 +13,10 @@ with LazyImport("Run 'pip install langdetect'") as langdetect_import:
     import langdetect
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class TextLanguageRouter:
     """
     Routes text strings to different output connections based on their language.

@@ -24,7 +24,10 @@ class RouteConditionException(Exception):
     """Exception raised when there is an error parsing or evaluating the condition expression in ConditionalRouter."""
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class ConditionalRouter:
     """
     Routes data based on specific conditions.

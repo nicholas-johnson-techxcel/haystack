@@ -17,7 +17,10 @@ with LazyImport(message="Run 'pip install transformers[torch,sentencepiece]'") a
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class TransformersSimilarityRanker:
     """
     Ranks documents based on their semantic similarity to the query.
@@ -198,7 +201,7 @@ class TransformersSimilarityRanker:
 
         return default_from_dict(cls, data)
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(  # pylint: disable=too-many-positional-arguments
         self,
         query: str,

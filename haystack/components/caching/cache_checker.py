@@ -8,8 +8,10 @@ from haystack import Document, component, default_from_dict, default_to_dict
 from haystack.document_stores.types import DocumentStore
 from haystack.utils import deserialize_document_store_in_init_params_inplace
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class CacheChecker:
     """
     Checks for the presence of documents in a Document Store based on a specified field in each document's metadata.
@@ -75,8 +77,8 @@ class CacheChecker:
 
         return default_from_dict(cls, data)
 
-    @component.output_types(hits=List[Document], misses=List)
-    def run(self, items: List[Any]):
+    @_component_instance.output_types(hits=List[Document], misses=List)
+    def run(self, items: List[Any]) -> Dict[str, List[Any]]:
         """
         Checks if any document associated with the specified cache field is already present in the store.
 

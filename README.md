@@ -119,3 +119,15 @@ world know that you use Haystack!
 -   [PostHog](https://github.com/PostHog/max-ai#readme)
 -   [Rakuten](https://www.rakuten.com/)
 -   [Sooth.ai](https://www.deepset.ai/blog/advanced-neural-search-with-sooth-ai)
+
+# Notes:
+- openai-whisper does not seem to install on Python later than 3.11
+- Using `Python 3.13.3` results in `hatch env create test` failing, even after removing the requirement `<3.12`
+- In the future, when 3.13.3 is unblocked, the `ruff` rules need to be updated 
+
+
+# Development:
+- Install `.vscode/extensions.json` recommendations
+- `pyenv local 3.11.7`
+- `hatch env create test`
+- Format on save should work

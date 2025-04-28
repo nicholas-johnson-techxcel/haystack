@@ -12,8 +12,10 @@ from haystack import component, default_from_dict, default_to_dict
 from haystack.utils import Secret, deserialize_secrets_inplace
 from haystack.utils.http_client import init_http_client
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class OpenAITextEmbedder:
     """
     Embeds strings using OpenAI models.
@@ -169,7 +171,7 @@ class OpenAITextEmbedder:
     def _prepare_output(self, result: CreateEmbeddingResponse) -> Dict[str, Any]:
         return {"embedding": result.data[0].embedding, "meta": {"model": result.model, "usage": dict(result.usage)}}
 
-    @component.output_types(embedding=List[float], meta=Dict[str, Any])
+    @_component_instance.output_types(embedding=List[float], meta=Dict[str, Any])
     def run(self, text: str):
         """
         Embeds a single string.
@@ -186,7 +188,7 @@ class OpenAITextEmbedder:
         response = self.client.embeddings.create(**create_kwargs)
         return self._prepare_output(result=response)
 
-    @component.output_types(embedding=List[float], meta=Dict[str, Any])
+    @_component_instance.output_types(embedding=List[float], meta=Dict[str, Any])
     async def run_async(self, text: str):
         """
         Asynchronously embed a single string.

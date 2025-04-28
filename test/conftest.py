@@ -23,14 +23,17 @@ tracing.disable_tracing()
 
 @pytest.fixture()
 def waiting_component():
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class Waiter:
-        @component.output_types(waited_for=int)
+        @_component_instance.output_types(waited_for=int)
         def run(self, wait_for: int) -> Dict[str, int]:
             time.sleep(wait_for)
             return {"waited_for": wait_for}
 
-        @component.output_types(waited_for=int)
+        @_component_instance.output_types(waited_for=int)
         async def run_async(self, wait_for: int) -> Dict[str, int]:
             await asyncio.sleep(wait_for)
             return {"waited_for": wait_for}

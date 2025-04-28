@@ -18,7 +18,10 @@ with LazyImport(message="Run 'pip install transformers[torch,sentencepiece]'") a
     )
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class TransformersTextRouter:
     """
     Routes the text strings to different connections based on a category label.

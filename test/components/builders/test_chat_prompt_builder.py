@@ -275,9 +275,12 @@ class TestChatPromptBuilder:
         ]
         prompt_builder = ChatPromptBuilder(template=default_template, variables=["documents"])
 
-        @component
+        _component_instance = component()
+
+
+@_component_instance
         class DocumentProducer:
-            @component.output_types(documents=List[Document])
+            @_component_instance.output_types(documents=List[Document])
             def run(self, doc_input: str):
                 return {"documents": [Document(content=doc_input)]}
 
@@ -584,12 +587,15 @@ class TestChatPromptBuilderDynamic:
         }
 
     def test_pipeline_complex(self):
-        @component
+        _component_instance = component()
+
+
+@_component_instance
         class ValueProducer:
             def __init__(self, value_to_produce: str):
                 self.value_to_produce = value_to_produce
 
-            @component.output_types(value_output=str)
+            @_component_instance.output_types(value_output=str)
             def run(self):
                 return {"value_output": self.value_to_produce}
 

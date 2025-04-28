@@ -14,7 +14,10 @@ with LazyImport(message="Run 'pip install \"torch>=1.13\"'") as torch_import:
     import torch
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class TopPSampler:
     """
     Implements top-p (nucleus) sampling for document filtering based on cumulative probability scores.
@@ -61,7 +64,7 @@ class TopPSampler:
         self.score_field = score_field
         self.min_top_k = min_top_k
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(self, documents: List[Document], top_p: Optional[float] = None):
         """
         Filters documents using top-p sampling based on their scores.

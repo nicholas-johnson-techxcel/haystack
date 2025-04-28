@@ -22,7 +22,10 @@ with LazyImport(message="Run 'pip install \"huggingface_hub>=0.27.0\"'") as hugg
     )
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class HuggingFaceAPIGenerator:
     """
     Generates text using Hugging Face APIs.
@@ -176,7 +179,7 @@ class HuggingFaceAPIGenerator:
             init_params["streaming_callback"] = deserialize_callable(serialized_callback_handler)
         return default_from_dict(cls, data)
 
-    @component.output_types(replies=List[str], meta=List[Dict[str, Any]])
+    @_component_instance.output_types(replies=List[str], meta=List[Dict[str, Any]])
     def run(
         self,
         prompt: str,

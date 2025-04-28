@@ -13,7 +13,10 @@ with LazyImport(message="Run 'pip install transformers[torch,sentencepiece]'") a
     from transformers import pipeline
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class TransformersZeroShotDocumentClassifier:
     """
     Performs zero-shot classification of documents based on given labels and adds the predicted label to their metadata.
@@ -182,7 +185,7 @@ class TransformersZeroShotDocumentClassifier:
             deserialize_hf_model_kwargs(data["init_parameters"]["huggingface_pipeline_kwargs"])
         return default_from_dict(cls, data)
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(self, documents: List[Document], batch_size: int = 1):
         """
         Classifies the documents based on the provided labels and adds them to their metadata.

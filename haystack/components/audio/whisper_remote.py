@@ -15,8 +15,10 @@ from haystack.utils.http_client import init_http_client
 
 logger = logging.getLogger(__name__)
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class RemoteWhisperTranscriber:
     """
     Transcribes audio files using the OpenAI's Whisper API.
@@ -135,7 +137,7 @@ class RemoteWhisperTranscriber:
         deserialize_secrets_inplace(data["init_parameters"], keys=["api_key"])
         return default_from_dict(cls, data)
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(self, sources: List[Union[str, Path, ByteStream]]):
         """
         Transcribes the list of audio files into a list of documents.

@@ -95,10 +95,13 @@ Note that having separate components for each LLM makes easy to deprecate them w
 All these LLM clients will have a near-identical I/O:
 
 ```python
-@component
+_component_instance = component()
+
+
+@_component_instance
 class ChatGPTGenerator:
 
-    @component.output_types(replies=List[List[str]])
+    @_component_instance.output_types(replies=List[List[str]])
     def run(self, prompts: List[str], ... chatgpt specific params...):
         ...
         return {'replies': [...]}
@@ -164,7 +167,10 @@ The goal of `PromptBuilder` is to transform prompt templates, which are strings 
 Draft I/O for `PromptBuilder`:
 
 ```python
-@component
+_component_instance = component()
+
+
+@_component_instance
 class PromptBuilder:
 
     def __init__(self, template: Union[str, Path]):
@@ -172,7 +178,7 @@ class PromptBuilder:
         template_variables = # extracts the variables from the template text
 		component.set_input_parameters(**{var: Any for var in template_variables})
 
-  	@component.output_types(prompts=List[str])
+  	@_component_instance.output_types(prompts=List[str])
     def run(self, **kwargs):
         # Render the template using the variables
         return {"prompts": prompts}
@@ -193,11 +199,14 @@ If we decide that Canals should support again such components, we would be able 
 For example:
 
 ```python
-@component
+_component_instance = component()
+
+
+@_component_instance
 class PromptBuilder:
 
 	@variadic_input
-  	@component.output_types(prompts=List[str])
+  	@_component_instance.output_types(prompts=List[str])
     def run(self, template: Union[str, Path], **kwargs):
 	    # ... loads the template ...
         # ... render the prompts ...
@@ -225,10 +234,13 @@ The most straightforward component in this category is `RepliesToAnswersConverte
 Draft I/O for `RepliesToAnswersConverter` (note: this may end up being almost the entire component’s implementation):
 
 ```python
-@component
+_component_instance = component()
+
+
+@_component_instance
 class RepliesToAnswersConverter:
 
-    @component.output_types(answers=List[List[Answer]])
+    @_component_instance.output_types(answers=List[List[Answer]])
     def run(self, replies: List[List[str]]):
         return {"answers": Answer(answer=answer) for answers in replies for answer in answers}
 ```

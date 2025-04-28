@@ -8,8 +8,10 @@ from haystack import Document, component, default_from_dict, default_to_dict
 from haystack.document_stores.types import DocumentStore
 from haystack.utils import deserialize_document_store_in_init_params_inplace
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class FilterRetriever:
     """
     Retrieves documents that match the provided filters.
@@ -80,7 +82,7 @@ class FilterRetriever:
 
         return default_from_dict(cls, data)
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(self, filters: Optional[Dict[str, Any]] = None):
         """
         Run the FilterRetriever on the given input data.

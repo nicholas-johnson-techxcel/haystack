@@ -114,7 +114,10 @@ class InMemoryDocumentStore:
         # keep track of whether we own the executor if we created it we must also clean it up
         self._owns_executor = async_executor is None
         self.executor = (
-            ThreadPoolExecutor(thread_name_prefix=f"async-inmemory-docstore-executor-{id(self)}", max_workers=1)
+            ThreadPoolExecutor(
+                thread_name_prefix=f"async-inmemory-docstore-executor-{id(self)}",
+                max_workers=1,
+            )
             if async_executor is None
             else async_executor
         )
@@ -123,7 +126,11 @@ class InMemoryDocumentStore:
         """
         Cleanup when the instance is being destroyed.
         """
-        if hasattr(self, "_owns_executor") and self._owns_executor and hasattr(self, "executor"):
+        if (
+            hasattr(self, "_owns_executor")
+            and self._owns_executor
+            and hasattr(self, "executor")
+        ):
             self.executor.shutdown(wait=True)
 
     def shutdown(self):
@@ -163,10 +170,16 @@ class InMemoryDocumentStore:
         :returns:
             The BM25 algorithm method.
         """
-        table = {"BM25Okapi": self._score_bm25okapi, "BM25L": self._score_bm25l, "BM25Plus": self._score_bm25plus}
+        table = {
+            "BM25Okapi": self._score_bm25okapi,
+            "BM25L": self._score_bm25l,
+            "BM25Plus": self._score_bm25plus,
+        }
 
         if self.bm25_algorithm not in table:
-            raise ValueError(f"BM25 algorithm '{self.bm25_algorithm}' is not supported.")
+            raise ValueError(
+                f"BM25 algorithm '{self.bm25_algorithm}' is not supported."
+            )
         return table[self.bm25_algorithm]
 
     def _tokenize_bm25(self, text: str) -> List[str]:
@@ -186,7 +199,9 @@ class InMemoryDocumentStore:
         text = text.lower()
         return self.tokenizer(text)
 
-    def _score_bm25l(self, query: str, documents: List[Document]) -> List[Tuple[Document, float]]:
+    def _score_bm25l(
+        self, query: str, documents: List[Document]
+    ) -> List[Tuple[Document, float]]:
         """
         Calculate BM25L scores for the given query and filtered documents.
 
@@ -233,7 +248,9 @@ class InMemoryDocumentStore:
 
         return ret
 
-    def _score_bm25okapi(self, query: str, documents: List[Document]) -> List[Tuple[Document, float]]:
+    def _score_bm25okapi(
+        self, query: str, documents: List[Document]
+    ) -> List[Tuple[Document, float]]:
         """
         Calculate BM25Okapi scores for the given query and filtered documents.
 
@@ -291,7 +308,9 @@ class InMemoryDocumentStore:
 
         return ret
 
-    def _score_bm25plus(self, query: str, documents: List[Document]) -> List[Tuple[Document, float]]:
+    def _score_bm25plus(
+        self, query: str, documents: List[Document]
+    ) -> List[Tuple[Document, float]]:
         """
         Calculate BM25+ scores for the given query and filtered documents.
 
@@ -376,7 +395,9 @@ class InMemoryDocumentStore:
         :param path: The path to the JSON file.
         """
         data: Dict[str, Any] = self.to_dict()
-        data["documents"] = [doc.to_dict(flatten=False) for doc in self.storage.values()]
+        data["documents"] = [
+            doc.to_dict(flatten=False) for doc in self.storage.values()
+        ]
         with open(path, "w") as f:
             json.dump(data, f)
 
@@ -393,12 +414,15 @@ class InMemoryDocumentStore:
                 with open(path, "r") as f:
                     data = json.load(f)
             except Exception as e:
-                raise Exception(f"Error loading InMemoryDocumentStore from disk. error: {e}")
+                raise Exception(
+                    f"Error loading InMemoryDocumentStore from disk. error: {e}"
+                )
 
             documents = data.pop("documents")
             cls_object = default_from_dict(cls, data)
             cls_object.write_documents(
-                documents=[Document(**doc) for doc in documents], policy=DuplicatePolicy.OVERWRITE
+                documents=[Document(**doc) for doc in documents],
+                policy=DuplicatePolicy.OVERWRITE,
             )
             return cls_object
 
@@ -411,7 +435,9 @@ class InMemoryDocumentStore:
         """
         return len(self.storage.keys())
 
-    def filter_documents(self, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def filter_documents(
+        self, filters: Optional[Dict[str, Any]] = None
+    ) -> List[Document]:
         """
         Returns the documents that match the filters provided.
 
@@ -426,10 +452,16 @@ class InMemoryDocumentStore:
                 raise ValueError(
                     "Invalid filter syntax. See https://docs.haystack.deepset.ai/docs/metadata-filtering for details."
                 )
-            return [doc for doc in self.storage.values() if document_matches_filter(filters=filters, document=doc)]
+            return [
+                doc
+                for doc in self.storage.values()
+                if document_matches_filter(filters=filters, document=doc)
+            ]
         return list(self.storage.values())
 
-    def write_documents(self, documents: List[Document], policy: DuplicatePolicy = DuplicatePolicy.NONE) -> int:
+    def write_documents(
+        self, documents: List[Document], policy: DuplicatePolicy = DuplicatePolicy.NONE
+    ) -> int:
         """
         Refer to the DocumentStore.write_documents() protocol documentation.
 
@@ -447,11 +479,16 @@ class InMemoryDocumentStore:
 
         written_documents = len(documents)
         for document in documents:
-            if policy != DuplicatePolicy.OVERWRITE and document.id in self.storage.keys():
+            if (
+                policy != DuplicatePolicy.OVERWRITE
+                and document.id in self.storage.keys()
+            ):
                 if policy == DuplicatePolicy.FAIL:
                     raise DuplicateDocumentError(f"ID '{document.id}' already exists.")
                 if policy == DuplicatePolicy.SKIP:
-                    logger.warning("ID '{document_id}' already exists", document_id=document.id)
+                    logger.warning(
+                        "ID '{document_id}' already exists", document_id=document.id
+                    )
                     written_documents -= 1
                     continue
 
@@ -467,9 +504,13 @@ class InMemoryDocumentStore:
 
             self.storage[document.id] = document
 
-            self._bm25_attr[document.id] = BM25DocumentStats(Counter(tokens), len(tokens))
+            self._bm25_attr[document.id] = BM25DocumentStats(
+                Counter(tokens), len(tokens)
+            )
             self._freq_vocab_for_idf.update(set(tokens))
-            self._avg_doc_len = (len(tokens) + self._avg_doc_len * len(self._bm25_attr)) / (len(self._bm25_attr) + 1)
+            self._avg_doc_len = (
+                len(tokens) + self._avg_doc_len * len(self._bm25_attr)
+            ) / (len(self._bm25_attr) + 1)
         return written_documents
 
     def delete_documents(self, document_ids: List[str]) -> None:
@@ -490,12 +531,18 @@ class InMemoryDocumentStore:
 
             self._freq_vocab_for_idf.subtract(Counter(freq.keys()))
             try:
-                self._avg_doc_len = (self._avg_doc_len * (len(self._bm25_attr) + 1) - doc_len) / len(self._bm25_attr)
+                self._avg_doc_len = (
+                    self._avg_doc_len * (len(self._bm25_attr) + 1) - doc_len
+                ) / len(self._bm25_attr)
             except ZeroDivisionError:
                 self._avg_doc_len = 0
 
     def bm25_retrieval(
-        self, query: str, filters: Optional[Dict[str, Any]] = None, top_k: int = 10, scale_score: bool = False
+        self,
+        query: str,
+        filters: Optional[Dict[str, Any]] = None,
+        top_k: int = 10,
+        scale_score: bool = False,
     ) -> List[Document]:
         """
         Retrieves documents that are most relevant to the query using BM25 algorithm.
@@ -524,7 +571,11 @@ class InMemoryDocumentStore:
             logger.info("No documents found for BM25 retrieval. Returning empty list.")
             return []
 
-        results = sorted(self.bm25_algorithm_inst(query, all_documents), key=lambda x: x[1], reverse=True)[:top_k]
+        results = sorted(
+            self.bm25_algorithm_inst(query, all_documents),
+            key=lambda x: x[1],
+            reverse=True,
+        )[:top_k]
 
         # BM25Okapi can return meaningful negative values, so they should not be filtered out when scale_score is False.
         # It's the only algorithm supported by rank_bm25 at the time of writing (2024) that can return negative scores.
@@ -571,7 +622,9 @@ class InMemoryDocumentStore:
         filters = filters or {}
         all_documents = self.filter_documents(filters=filters)
 
-        documents_with_embeddings = [doc for doc in all_documents if doc.embedding is not None]
+        documents_with_embeddings = [
+            doc for doc in all_documents if doc.embedding is not None
+        ]
         if len(documents_with_embeddings) == 0:
             logger.warning(
                 "No Documents found with embeddings. Returning empty list. "
@@ -584,12 +637,16 @@ class InMemoryDocumentStore:
             )
 
         scores = self._compute_query_embedding_similarity_scores(
-            embedding=query_embedding, documents=documents_with_embeddings, scale_score=scale_score
+            embedding=query_embedding,
+            documents=documents_with_embeddings,
+            scale_score=scale_score,
         )
 
         # create Documents with the similarity score for the top k results
         top_documents = []
-        for doc, score in sorted(zip(documents_with_embeddings, scores), key=lambda x: x[1], reverse=True)[:top_k]:
+        for doc, score in sorted(
+            zip(documents_with_embeddings, scores), key=lambda x: x[1], reverse=True
+        )[:top_k]:
             doc_fields = doc.to_dict()
             doc_fields["score"] = score
             if return_embedding is False:
@@ -599,7 +656,10 @@ class InMemoryDocumentStore:
         return top_documents
 
     def _compute_query_embedding_similarity_scores(
-        self, embedding: List[float], documents: List[Document], scale_score: bool = False
+        self,
+        embedding: List[float],
+        documents: List[Document],
+        scale_score: bool = False,
     ) -> List[float]:
         """
         Computes the similarity scores between the query embedding and the embeddings of the documents.
@@ -629,7 +689,9 @@ class InMemoryDocumentStore:
         if self.embedding_similarity_function == "cosine":
             # cosine similarity is a normed dot product
             query_embedding /= np.linalg.norm(x=query_embedding, axis=1, keepdims=True)
-            document_embeddings /= np.linalg.norm(x=document_embeddings, axis=1, keepdims=True)
+            document_embeddings /= np.linalg.norm(
+                x=document_embeddings, axis=1, keepdims=True
+            )
 
         try:
             scores = np.dot(a=query_embedding, b=document_embeddings.T)[0].tolist()
@@ -643,7 +705,9 @@ class InMemoryDocumentStore:
 
         if scale_score:
             if self.embedding_similarity_function == "dot_product":
-                scores = [expit(float(score / DOT_PRODUCT_SCALING_FACTOR)) for score in scores]
+                scores = [
+                    expit(float(score / DOT_PRODUCT_SCALING_FACTOR)) for score in scores
+                ]
             elif self.embedding_similarity_function == "cosine":
                 scores = [(score + 1) / 2 for score in scores]
 
@@ -655,7 +719,9 @@ class InMemoryDocumentStore:
         """
         return len(self.storage.keys())
 
-    async def filter_documents_async(self, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    async def filter_documents_async(
+        self, filters: Optional[Dict[str, Any]] = None
+    ) -> List[Document]:
         """
         Returns the documents that match the filters provided.
 
@@ -678,7 +744,8 @@ class InMemoryDocumentStore:
         If `policy` is set to `DuplicatePolicy.NONE` defaults to `DuplicatePolicy.FAIL`.
         """
         return await asyncio.get_event_loop().run_in_executor(
-            self.executor, lambda: self.write_documents(documents=documents, policy=policy)
+            self.executor,
+            lambda: self.write_documents(documents=documents, policy=policy),
         )
 
     async def delete_documents_async(self, document_ids: List[str]) -> None:
@@ -692,7 +759,11 @@ class InMemoryDocumentStore:
         )
 
     async def bm25_retrieval_async(
-        self, query: str, filters: Optional[Dict[str, Any]] = None, top_k: int = 10, scale_score: bool = False
+        self,
+        query: str,
+        filters: Optional[Dict[str, Any]] = None,
+        top_k: int = 10,
+        scale_score: bool = False,
     ) -> List[Document]:
         """
         Retrieves documents that are most relevant to the query using BM25 algorithm.
@@ -705,7 +776,9 @@ class InMemoryDocumentStore:
         """
         return await asyncio.get_event_loop().run_in_executor(
             self.executor,
-            lambda: self.bm25_retrieval(query=query, filters=filters, top_k=top_k, scale_score=scale_score),
+            lambda: self.bm25_retrieval(
+                query=query, filters=filters, top_k=top_k, scale_score=scale_score
+            ),
         )
 
     async def embedding_retrieval_async(  # pylint: disable=too-many-positional-arguments

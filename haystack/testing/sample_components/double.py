@@ -4,14 +4,16 @@
 
 from haystack.core.component import component
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class Double:
     """
     Doubles the input value.
     """
 
-    @component.output_types(value=int)
+    @_component_instance.output_types(value=int)
     def run(self, value: int):
         """
         Doubles the input value.

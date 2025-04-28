@@ -14,7 +14,10 @@ from haystack import Document, component, logging
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class DocumentCleaner:
     """
     Cleans the text in the documents.
@@ -89,7 +92,7 @@ class DocumentCleaner:
         if unicode_normalization and unicode_normalization not in ["NFC", "NFKC", "NFD", "NFKD"]:
             raise ValueError("unicode_normalization must be one of 'NFC', 'NFKC', 'NFD', 'NFKD'.")
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(self, documents: List[Document]):
         """
         Cleans up the documents.

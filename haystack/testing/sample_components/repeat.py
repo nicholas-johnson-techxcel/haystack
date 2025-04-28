@@ -6,8 +6,10 @@ from typing import List
 
 from haystack.core.component import component
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class Repeat:
     def __init__(self, outputs: List[str]):
         self._outputs = outputs

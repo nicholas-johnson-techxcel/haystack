@@ -4,15 +4,18 @@
 
 from typing import Any, Dict, List, Literal, Optional
 
-from haystack import Document, component, default_from_dict, default_to_dict
+from haystack import Document, default_from_dict, default_to_dict
 from haystack.components.embedders.backends.sentence_transformers_backend import (
     _SentenceTransformersEmbeddingBackendFactory,
 )
+from haystack.core.component.component import component
 from haystack.utils import ComponentDevice, Secret, deserialize_secrets_inplace
 from haystack.utils.hf import deserialize_hf_model_kwargs, serialize_hf_model_kwargs
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class SentenceTransformersDocumentEmbedder:
     """
     Calculates document embeddings using Sentence Transformers models.
@@ -211,8 +214,8 @@ class SentenceTransformersDocumentEmbedder:
             if self.tokenizer_kwargs and self.tokenizer_kwargs.get("model_max_length"):
                 self.embedding_backend.model.max_seq_length = self.tokenizer_kwargs["model_max_length"]
 
-    @component.output_types(documents=List[Document])
-    def run(self, documents: List[Document]):
+    @_component_instance.output_types(documents=list[Document])
+    def run(self, documents: list[Document]) -> dict[str, Any]:
         """
         Embed a list of documents.
 
@@ -231,7 +234,7 @@ class SentenceTransformersDocumentEmbedder:
         if self.embedding_backend is None:
             raise RuntimeError("The embedding model has not been loaded. Please call warm_up() before running.")
 
-        texts_to_embed = []
+        texts_to_embed: list[str] = []
         for doc in documents:
             meta_values_to_embed = [
                 str(doc.meta[key]) for key in self.meta_fields_to_embed if key in doc.meta and doc.meta[key]

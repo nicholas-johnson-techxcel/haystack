@@ -15,7 +15,10 @@ from haystack.utils.http_client import init_http_client
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class AzureOpenAIDocumentEmbedder(OpenAIDocumentEmbedder):
     """
     Calculates document embeddings using OpenAI models deployed on Azure.

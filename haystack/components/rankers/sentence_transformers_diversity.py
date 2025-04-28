@@ -69,7 +69,10 @@ class DiversityRankingSimilarity(Enum):
         return similarity
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class SentenceTransformersDiversityRanker:
     """
     A Diversity Ranker based on Sentence Transformers.
@@ -381,7 +384,7 @@ class SentenceTransformersDiversityRanker:
         if (strategy == DiversityRankingStrategy.MAXIMUM_MARGIN_RELEVANCE) and not 0 <= lambda_threshold <= 1:
             raise ValueError(f"lambda_threshold must be between 0 and 1, but got {lambda_threshold}.")
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(
         self,
         query: str,

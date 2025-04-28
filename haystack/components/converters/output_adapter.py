@@ -22,7 +22,10 @@ class OutputAdaptationException(Exception):
     """Exception raised when there is an error during output adaptation."""
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class OutputAdapter:
     """
     Adapts output of a Component using Jinja templates.

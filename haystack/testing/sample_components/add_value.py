@@ -6,8 +6,10 @@ from typing import Optional
 
 from haystack.core.component import component
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class AddFixedValue:
     """
     Adds two values together.
@@ -16,7 +18,7 @@ class AddFixedValue:
     def __init__(self, add: int = 1):
         self.add = add
 
-    @component.output_types(result=int)
+    @_component_instance.output_types(result=int)
     def run(self, value: int, add: Optional[int] = None):
         """
         Adds two values together.

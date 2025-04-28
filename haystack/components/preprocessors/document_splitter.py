@@ -18,7 +18,10 @@ logger = logging.getLogger(__name__)
 _CHARACTER_SPLIT_BY_MAPPING = {"page": "\f", "passage": "\n\n", "period": ".", "word": " ", "line": "\n"}
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class DocumentSplitter:
     """
     Splits long documents into smaller chunks.
@@ -162,7 +165,7 @@ class DocumentSplitter:
                 keep_white_spaces=True,
             )
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(self, documents: List[Document]):
         """
         Split documents into smaller parts.

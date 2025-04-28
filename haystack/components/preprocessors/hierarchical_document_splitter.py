@@ -7,8 +7,10 @@ from typing import Any, Dict, List, Literal, Set
 from haystack import Document, component, default_from_dict, default_to_dict
 from haystack.components.preprocessors import DocumentSplitter
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class HierarchicalDocumentSplitter:
     """
     Splits a documents into different block sizes building a hierarchical tree structure of blocks of different sizes.
@@ -54,7 +56,7 @@ class HierarchicalDocumentSplitter:
         self.split_by = split_by
         self._build_block_sizes()
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(self, documents: List[Document]):
         """
         Builds a hierarchical document structure for each document in a list of documents.

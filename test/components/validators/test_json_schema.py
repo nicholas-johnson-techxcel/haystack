@@ -171,9 +171,12 @@ class TestJsonSchemaValidator:
         assert recovery_message == expected_recovery_message
 
     def test_schema_validator_in_pipeline_validated(self, json_schema_github_compare, genuine_fc_message):
-        @component
+        _component_instance = component()
+
+
+@_component_instance
         class ChatMessageProducer:
-            @component.output_types(messages=List[ChatMessage])
+            @_component_instance.output_types(messages=List[ChatMessage])
             def run(self):
                 return {"messages": [ChatMessage.from_assistant(genuine_fc_message)]}
 
@@ -187,9 +190,12 @@ class TestJsonSchemaValidator:
         assert result["schema_validator"]["validated"][0].text == genuine_fc_message
 
     def test_schema_validator_in_pipeline_validation_error(self, json_schema_github_compare):
-        @component
+        _component_instance = component()
+
+
+@_component_instance
         class ChatMessageProducer:
-            @component.output_types(messages=List[ChatMessage])
+            @_component_instance.output_types(messages=List[ChatMessage])
             def run(self):
                 # example json string that is not valid
                 simple_invalid_json = '{"key": "value"}'

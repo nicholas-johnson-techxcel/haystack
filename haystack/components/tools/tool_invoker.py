@@ -51,7 +51,8 @@ class ToolOutputMergeError(ToolInvokerError):
     pass
 
 
-@component
+_component_instance = component()
+@_component_instance
 class ToolInvoker:
     """
     Invokes tools based on prepared tool calls and returns the results as a list of ChatMessage objects.
@@ -357,7 +358,7 @@ class ToolInvoker:
             # Merge other outputs into the state
             state.set(state_key, output_value, handler_override=handler)
 
-    @component.output_types(tool_messages=List[ChatMessage], state=State)
+    @_component_instance.output_types(tool_messages=List[ChatMessage], state=State)
     def run(self, messages: List[ChatMessage], state: Optional[State] = None) -> Dict[str, Any]:
         """
         Processes ChatMessage objects containing tool calls and invokes the corresponding tools, if available.

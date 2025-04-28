@@ -40,7 +40,10 @@ class JoinMode(Enum):
         return mode
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class DocumentJoiner:
     """
     Joins multiple lists of documents into a single list.
@@ -126,7 +129,7 @@ class DocumentJoiner:
         self.top_k = top_k
         self.sort_by_score = sort_by_score
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(self, documents: Variadic[List[Document]], top_k: Optional[int] = None):
         """
         Joins multiple lists of Documents into a single list depending on the `join_mode` parameter.

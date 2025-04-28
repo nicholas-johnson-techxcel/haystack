@@ -56,7 +56,7 @@ class Tool:
     name: str
     description: str
     parameters: Dict[str, Any]
-    function: Callable
+    function: Callable[..., Any]
     outputs_to_string: Optional[Dict[str, Any]] = None
     inputs_from_state: Optional[Dict[str, str]] = None
     outputs_to_state: Optional[Dict[str, Dict[str, Any]]] = None

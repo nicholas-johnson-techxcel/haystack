@@ -8,8 +8,10 @@ from haystack import Document, component, default_from_dict, default_to_dict
 from haystack.document_stores.types import DocumentStore
 from haystack.utils import deserialize_document_store_in_init_params_inplace
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class SentenceWindowRetriever:
     """
     Retrieves documents adjacent to a given document in the Document Store.
@@ -143,7 +145,7 @@ class SentenceWindowRetriever:
         # deserialize the component
         return default_from_dict(cls, data)
 
-    @component.output_types(context_windows=List[str], context_documents=List[Document])
+    @_component_instance.output_types(context_windows=List[str], context_documents=List[Document])
     def run(self, retrieved_documents: List[Document], window_size: Optional[int] = None):
         """
         Based on the `source_id` and on the `doc.meta['split_id']` get surrounding documents from the document store.

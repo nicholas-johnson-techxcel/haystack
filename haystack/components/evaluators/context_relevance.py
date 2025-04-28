@@ -38,7 +38,10 @@ _DEFAULT_EXAMPLES = [
 ]
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class ContextRelevanceEvaluator(LLMEvaluator):
     """
     Evaluator that checks if a provided context is relevant to the question.
@@ -154,7 +157,7 @@ class ContextRelevanceEvaluator(LLMEvaluator):
             progress_bar=progress_bar,
         )
 
-    @component.output_types(score=float, results=List[Dict[str, Any]])
+    @_component_instance.output_types(score=float, results=List[Dict[str, Any]])
     def run(self, **inputs) -> Dict[str, Any]:
         """
         Run the LLM evaluator.

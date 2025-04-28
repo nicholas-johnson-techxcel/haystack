@@ -32,23 +32,29 @@ from haystack.testing.sample_components import AddFixedValue, Double, Greet
 logging.basicConfig(level=logging.DEBUG)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class FakeComponent:
     def __init__(self, an_init_param: Optional[str] = None):
         pass
 
-    @component.output_types(value=str)
+    @_component_instance.output_types(value=str)
     def run(self, input_: str):
         return {"value": input_}
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class FakeComponentSquared:
     def __init__(self, an_init_param: Optional[str] = None):
         self.an_init_param = an_init_param
         self.inner = FakeComponent()
 
-    @component.output_types(value=str)
+    @_component_instance.output_types(value=str)
     def run(self, input_: str):
         return {"value": input_}
 
@@ -777,18 +783,24 @@ class TestPipelineBase:
         pipeline.walk() should return each component exactly once. The order is not guaranteed.
         """
 
-        @component
+        _component_instance = component()
+
+
+@_component_instance
         class Hello:
-            @component.output_types(output=str)
+            @_component_instance.output_types(output=str)
             def run(self, word: str):
                 """
                 Takes a string in input and returns "Hello, <string>!" in output.
                 """
                 return {"output": f"Hello, {word}!"}
 
-        @component
+        _component_instance = component()
+
+
+@_component_instance
         class Joiner:
-            @component.output_types(output=str)
+            @_component_instance.output_types(output=str)
             def run(self, word1: str, word2: str):
                 """
                 Takes two strings in input and returns "Hello, <string1> and <string2>!" in output.
@@ -818,12 +830,15 @@ class TestPipelineBase:
         pipeline.walk() should return these components exactly once. The order is not guaranteed.
         """
 
-        @component
+        _component_instance = component()
+
+
+@_component_instance
         class Hello:
             def __init__(self):
                 self.iteration_counter = 0
 
-            @component.output_types(intermediate=str, final=str)
+            @_component_instance.output_types(intermediate=str, final=str)
             def run(self, word: str, intermediate: Optional[str] = None):
                 """
                 Takes a string in input and returns "Hello, <string>!" in output.

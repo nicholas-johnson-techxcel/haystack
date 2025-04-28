@@ -30,7 +30,10 @@ with LazyImport(message="Run 'pip install \"transformers[torch]\"'") as transfor
     )
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class HuggingFaceLocalGenerator:
     """
     Generates text using models from Hugging Face that run locally.
@@ -203,7 +206,7 @@ class HuggingFaceLocalGenerator:
         deserialize_hf_model_kwargs(huggingface_pipeline_kwargs)
         return default_from_dict(cls, data)
 
-    @component.output_types(replies=List[str])
+    @_component_instance.output_types(replies=List[str])
     def run(
         self,
         prompt: str,

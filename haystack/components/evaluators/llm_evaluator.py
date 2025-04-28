@@ -18,7 +18,10 @@ from haystack.utils import deserialize_chatgenerator_inplace, deserialize_type, 
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class LLMEvaluator:
     """
     Uses an LLM to evaluate inputs based on a prompt containing instructions and examples.
@@ -164,7 +167,7 @@ class LLMEvaluator:
                 )
                 raise ValueError(msg)
 
-    @component.output_types(results=List[Dict[str, Any]])
+    @_component_instance.output_types(results=List[Dict[str, Any]])
     def run(self, **inputs) -> Dict[str, Any]:
         """
         Run the LLM evaluator.

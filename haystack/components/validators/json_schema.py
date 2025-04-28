@@ -25,66 +25,72 @@ def is_valid_json(s: str) -> bool:
     return True
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class JsonSchemaValidator:
     """
-    Validates JSON content of `ChatMessage` against a specified [JSON Schema](https://json-schema.org/).
+        Validates JSON content of `ChatMessage` against a specified [JSON Schema](https://json-schema.org/).
 
-    If JSON content of a message conforms to the provided schema, the message is passed along the "validated" output.
-    If the JSON content does not conform to the schema, the message is passed along the "validation_error" output.
-    In the latter case, the error message is constructed using the provided `error_template` or a default template.
-    These error ChatMessages can be used by LLMs in Haystack 2.x recovery loops.
+        If JSON content of a message conforms to the provided schema, the message is passed along the "validated" output.
+        If the JSON content does not conform to the schema, the message is passed along the "validation_error" output.
+        In the latter case, the error message is constructed using the provided `error_template` or a default template.
+        These error ChatMessages can be used by LLMs in Haystack 2.x recovery loops.
 
-    Usage example:
+        Usage example:
 
-    ```python
-    from typing import List
+        ```python
+        from typing import List
 
-    from haystack import Pipeline
-    from haystack.components.generators.chat import OpenAIChatGenerator
-    from haystack.components.joiners import BranchJoiner
-    from haystack.components.validators import JsonSchemaValidator
-    from haystack import component
-    from haystack.dataclasses import ChatMessage
-
-
-    @component
-    class MessageProducer:
-
-        @component.output_types(messages=List[ChatMessage])
-        def run(self, messages: List[ChatMessage]) -> dict:
-            return {"messages": messages}
+        from haystack import Pipeline
+        from haystack.components.generators.chat import OpenAIChatGenerator
+        from haystack.components.joiners import BranchJoiner
+        from haystack.components.validators import JsonSchemaValidator
+        from haystack import component
+        from haystack.dataclasses import ChatMessage
 
 
-    p = Pipeline()
-    p.add_component("llm", OpenAIChatGenerator(model="gpt-4-1106-preview",
-                                               generation_kwargs={"response_format": {"type": "json_object"}}))
-    p.add_component("schema_validator", JsonSchemaValidator())
-    p.add_component("joiner_for_llm", BranchJoiner(List[ChatMessage]))
-    p.add_component("message_producer", MessageProducer())
+        _component_instance = component()
 
-    p.connect("message_producer.messages", "joiner_for_llm")
-    p.connect("joiner_for_llm", "llm")
-    p.connect("llm.replies", "schema_validator.messages")
-    p.connect("schema_validator.validation_error", "joiner_for_llm")
 
-    result = p.run(data={
-        "message_producer": {
-            "messages":[ChatMessage.from_user("Generate JSON for person with name 'John' and age 30")]},
-            "schema_validator": {
-                "json_schema": {
-                    "type": "object",
-                    "properties": {"name": {"type": "string"},
-                    "age": {"type": "integer"}
+    @_component_instance
+        class MessageProducer:
+
+            @_component_instance.output_types(messages=List[ChatMessage])
+            def run(self, messages: List[ChatMessage]) -> dict:
+                return {"messages": messages}
+
+
+        p = Pipeline()
+        p.add_component("llm", OpenAIChatGenerator(model="gpt-4-1106-preview",
+                                                   generation_kwargs={"response_format": {"type": "json_object"}}))
+        p.add_component("schema_validator", JsonSchemaValidator())
+        p.add_component("joiner_for_llm", BranchJoiner(List[ChatMessage]))
+        p.add_component("message_producer", MessageProducer())
+
+        p.connect("message_producer.messages", "joiner_for_llm")
+        p.connect("joiner_for_llm", "llm")
+        p.connect("llm.replies", "schema_validator.messages")
+        p.connect("schema_validator.validation_error", "joiner_for_llm")
+
+        result = p.run(data={
+            "message_producer": {
+                "messages":[ChatMessage.from_user("Generate JSON for person with name 'John' and age 30")]},
+                "schema_validator": {
+                    "json_schema": {
+                        "type": "object",
+                        "properties": {"name": {"type": "string"},
+                        "age": {"type": "integer"}
+                    }
                 }
             }
-        }
-    })
-    print(result)
-    >> {'schema_validator': {'validated': [ChatMessage(content='\\n{\\n  "name": "John",\\n  "age": 30\\n}',
-    role=<ChatRole.ASSISTANT: 'assistant'>, name=None, meta={'model': 'gpt-4-1106-preview', 'index': 0,
-    'finish_reason': 'stop', 'usage': {'completion_tokens': 17, 'prompt_tokens': 20, 'total_tokens': 37}})]}}
-    ```
+        })
+        print(result)
+        >> {'schema_validator': {'validated': [ChatMessage(content='\\n{\\n  "name": "John",\\n  "age": 30\\n}',
+        role=<ChatRole.ASSISTANT: 'assistant'>, name=None, meta={'model': 'gpt-4-1106-preview', 'index': 0,
+        'finish_reason': 'stop', 'usage': {'completion_tokens': 17, 'prompt_tokens': 20, 'total_tokens': 37}})]}}
+        ```
     """
 
     # Default error description template
@@ -111,7 +117,7 @@ class JsonSchemaValidator:
         self.json_schema = json_schema
         self.error_template = error_template
 
-    @component.output_types(validated=List[ChatMessage], validation_error=List[ChatMessage])
+    @_component_instance.output_types(validated=List[ChatMessage], validation_error=List[ChatMessage])
     def run(
         self,
         messages: List[ChatMessage],

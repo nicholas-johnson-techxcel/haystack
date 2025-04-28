@@ -37,7 +37,10 @@ class JoinMode(Enum):
         return mode
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class AnswerJoiner:
     """
     Merges multiple lists of `Answer` objects into a single list.
@@ -111,7 +114,7 @@ class AnswerJoiner:
         self.top_k = top_k
         self.sort_by_score = sort_by_score
 
-    @component.output_types(answers=List[AnswerType])
+    @_component_instance.output_types(answers=List[AnswerType])
     def run(self, answers: Variadic[List[AnswerType]], top_k: Optional[int] = None):
         """
         Joins multiple lists of Answers into a single list depending on the `join_mode` parameter.

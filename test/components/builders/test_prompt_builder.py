@@ -225,9 +225,12 @@ class TestPromptBuilder:
         default_template = "Here is the document: {{documents[0].content}} \\n Answer: {{query}}"
         prompt_builder = PromptBuilder(template=default_template, variables=["documents"])
 
-        @component
+        _component_instance = component()
+
+
+@_component_instance
         class DocumentProducer:
-            @component.output_types(documents=List[Document])
+            @_component_instance.output_types(documents=List[Document])
             def run(self, doc_input: str):
                 return {"documents": [Document(content=doc_input)]}
 

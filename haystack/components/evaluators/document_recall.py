@@ -35,7 +35,10 @@ class RecallMode(Enum):
         return mode
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class DocumentRecallEvaluator:
     """
     Evaluator that calculates the Recall score for a list of documents.
@@ -99,7 +102,7 @@ class DocumentRecallEvaluator:
 
         return len(retrieved_ground_truths) / len(ground_truth_documents)
 
-    @component.output_types(score=float, individual_scores=List[float])
+    @_component_instance.output_types(score=float, individual_scores=List[float])
     def run(
         self, ground_truth_documents: List[List[Document]], retrieved_documents: List[List[Document]]
     ) -> Dict[str, Any]:

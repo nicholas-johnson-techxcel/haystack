@@ -51,9 +51,12 @@ def document_store(documents):
 def rag_pipeline(document_store):
     """Create a simple RAG pipeline."""
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeGenerator:
-        @component.output_types(replies=List[str])
+        @_component_instance.output_types(replies=List[str])
         def run(self, prompt: str, **kwargs):
             return {"replies": ["This is a test response about capitals."]}
 
@@ -82,9 +85,12 @@ def rag_pipeline(document_store):
 def async_rag_pipeline(document_store):
     """Create a simple asyncRAG pipeline."""
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeGenerator:
-        @component.output_types(replies=List[str])
+        @_component_instance.output_types(replies=List[str])
         def run(self, prompt: str, **kwargs):
             return {"replies": ["This is a test response about capitals."]}
 
@@ -268,7 +274,10 @@ class TestSuperComponent:
         super_comp = SuperComponent(rag_pipeline)
         serialized = super_comp.to_dict()
 
-        @component
+        _component_instance = component()
+
+
+@_component_instance
         class CustomSuperComponent(SuperComponent):
             def __init__(self, pipeline, instance_attribute="test"):
                 self.instance_attribute = instance_attribute

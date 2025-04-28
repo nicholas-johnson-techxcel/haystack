@@ -18,7 +18,10 @@ SEARCHAPI_BASE_URL = "https://www.searchapi.io/api/v1/search"
 class SearchApiError(ComponentError): ...
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class SearchApiWebSearch:
     """
     Uses [SearchApi](https://www.searchapi.io/) to search the web for relevant documents.
@@ -95,7 +98,7 @@ class SearchApiWebSearch:
         deserialize_secrets_inplace(data["init_parameters"], keys=["api_key"])
         return default_from_dict(cls, data)
 
-    @component.output_types(documents=List[Document], links=List[str])
+    @_component_instance.output_types(documents=List[Document], links=List[str])
     def run(self, query: str) -> Dict[str, Union[List[Document], List[str]]]:
         """
         Uses [SearchApi](https://www.searchapi.io/) to search the web.

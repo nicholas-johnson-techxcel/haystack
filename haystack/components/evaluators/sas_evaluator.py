@@ -16,7 +16,10 @@ with LazyImport(message="Run 'pip install \"sentence-transformers>=3.0.0\"'") as
     from transformers import AutoConfig
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class SASEvaluator:
     """
     SASEvaluator computes the Semantic Answer Similarity (SAS) between a list of predictions and a one of ground truths.
@@ -137,7 +140,7 @@ class SASEvaluator:
         else:
             self._similarity_model = SentenceTransformer(self._model, device=device, use_auth_token=token)
 
-    @component.output_types(score=float, individual_scores=List[float])
+    @_component_instance.output_types(score=float, individual_scores=List[float])
     def run(self, ground_truth_answers: List[str], predicted_answers: List[str]) -> Dict[str, Any]:
         """
         SASEvaluator component run method.

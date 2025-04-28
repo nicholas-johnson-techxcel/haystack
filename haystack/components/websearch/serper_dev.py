@@ -19,7 +19,8 @@ SERPERDEV_BASE_URL = "https://google.serper.dev/search"
 class SerperDevError(ComponentError): ...
 
 
-@component
+_component_instance = component()
+@_component_instance
 class SerperDevWebSearch:
     """
     Uses [Serper](https://serper.dev/) to search the web for relevant documents.
@@ -90,7 +91,7 @@ class SerperDevWebSearch:
         deserialize_secrets_inplace(data["init_parameters"], keys=["api_key"])
         return default_from_dict(cls, data)
 
-    @component.output_types(documents=List[Document], links=List[str])
+    @_component_instance.output_types(documents=List[Document], links=List[str])
     def run(self, query: str) -> Dict[str, Union[List[Document], List[str]]]:
         """
         Use [Serper](https://serper.dev/) to search the web.

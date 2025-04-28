@@ -15,7 +15,10 @@ with LazyImport("Run 'pip install pandas'") as pandas_import:
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class CSVDocumentCleaner:
     """
     A component for cleaning CSV documents by removing empty rows and columns.
@@ -54,7 +57,7 @@ class CSVDocumentCleaner:
         self.keep_id = keep_id
         pandas_import.check()
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(self, documents: List[Document]) -> Dict[str, List[Document]]:
         """
         Cleans CSV documents by removing empty rows and columns while preserving specified ignored rows and columns.

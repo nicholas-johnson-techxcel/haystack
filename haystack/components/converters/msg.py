@@ -19,7 +19,10 @@ with LazyImport("Run 'pip install python-oxmsg'") as oxmsg_import:
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class MSGToDocument:
     """
     Converts Microsoft Outlook .msg files into Haystack Documents.
@@ -130,7 +133,7 @@ class MSGToDocument:
 
         return txt, attachments
 
-    @component.output_types(documents=List[Document], attachments=List[ByteStream])
+    @_component_instance.output_types(documents=List[Document], attachments=List[ByteStream])
     def run(
         self,
         sources: List[Union[str, Path, ByteStream]],

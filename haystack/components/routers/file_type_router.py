@@ -22,7 +22,10 @@ CUSTOM_MIMETYPES = {
 }
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class FileTypeRouter:
     """
     Categorizes files or byte streams by their MIME types, helping in context-based routing.

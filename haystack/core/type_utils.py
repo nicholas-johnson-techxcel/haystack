@@ -2,13 +2,11 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import collections.abc
-from typing import Any, TypeVar, Union, get_args, get_origin
-
-T = TypeVar("T")
+from collections.abc import Callable
+from typing import Any, Union, get_args, get_origin
 
 
-def _types_are_compatible(sender, receiver, type_validation: bool = True) -> bool:
+def _types_are_compatible(sender: Any, receiver: Any, type_validation: bool = True) -> bool:
     """
     Determines if two types are compatible based on the specified validation mode.
 
@@ -23,7 +21,7 @@ def _types_are_compatible(sender, receiver, type_validation: bool = True) -> boo
         return True
 
 
-def _strict_types_are_compatible(sender, receiver):  # pylint: disable=too-many-return-statements
+def _strict_types_are_compatible(sender: Any, receiver: Any) -> bool:
     """
     Checks whether the sender type is equal to or a subtype of the receiver type under strict validation.
 
@@ -63,7 +61,7 @@ def _strict_types_are_compatible(sender, receiver):  # pylint: disable=too-many-
     receiver_args = get_args(receiver)
 
     # Handle Callable types
-    if sender_origin == receiver_origin == collections.abc.Callable:
+    if sender_origin == receiver_origin == Callable:
         return _check_callable_compatibility(sender_args, receiver_args)
 
     # Handle bare types
@@ -77,7 +75,7 @@ def _strict_types_are_compatible(sender, receiver):  # pylint: disable=too-many-
     )
 
 
-def _check_callable_compatibility(sender_args, receiver_args):
+def _check_callable_compatibility(sender_args: tuple[Any, ...], receiver_args: tuple[Any, ...]) -> bool:
     """Helper function to check compatibility of Callable types"""
     if not receiver_args:
         return True
@@ -95,7 +93,7 @@ def _check_callable_compatibility(sender_args, receiver_args):
     return all(_strict_types_are_compatible(sender_args[0][i], receiver_args[0][i]) for i in range(len(sender_args[0])))
 
 
-def _type_name(type_):
+def _type_name(type_: Any) -> str:
     """
     Util methods to get a nice readable representation of a type.
 

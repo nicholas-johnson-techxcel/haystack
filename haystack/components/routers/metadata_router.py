@@ -7,8 +7,10 @@ from typing import Dict, List
 from haystack import Document, component
 from haystack.utils.filters import document_matches_filter
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class MetadataRouter:
     """
     Routes documents to different connections based on their metadata fields.

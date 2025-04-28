@@ -47,7 +47,10 @@ class PyPDFExtractionMode(Enum):
         return mode
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class PyPDFToDocument:
     """
     Converts PDF files to documents your pipeline can query.
@@ -171,7 +174,7 @@ class PyPDFToDocument:
         text = "\f".join(texts)
         return text
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(
         self,
         sources: List[Union[str, Path, ByteStream]],

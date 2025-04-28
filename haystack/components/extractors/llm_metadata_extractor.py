@@ -21,7 +21,10 @@ from haystack.utils import deserialize_chatgenerator_inplace, expand_page_range
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class LLMMetadataExtractor:
     """
     Extracts metadata from documents using a Large Language Model (LLM).
@@ -273,7 +276,7 @@ class LLMMetadataExtractor:
             result = {"error": "LLM failed with exception: " + str(e)}
         return result
 
-    @component.output_types(documents=List[Document], failed_documents=List[Document])
+    @_component_instance.output_types(documents=List[Document], failed_documents=List[Document])
     def run(self, documents: List[Document], page_range: Optional[List[Union[str, int]]] = None):
         """
         Extract metadata from documents using a Large Language Model.

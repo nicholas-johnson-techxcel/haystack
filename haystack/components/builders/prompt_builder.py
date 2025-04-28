@@ -12,8 +12,10 @@ from haystack.utils import Jinja2TimeExtension
 
 logger = logging.getLogger(__name__)
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class PromptBuilder:
     """
 
@@ -194,9 +196,9 @@ class PromptBuilder:
         # setup inputs
         for var in self.variables:
             if self.required_variables == "*" or var in self.required_variables:
-                component.set_input_type(self, var, Any)
+                component.set_input_type(instance=self, name=var, type=Any)
             else:
-                component.set_input_type(self, var, Any, "")
+                component.set_input_type(instance=self, name=var, type=Any, default="")
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -206,11 +208,19 @@ class PromptBuilder:
             Serialized dictionary representation of the component.
         """
         return default_to_dict(
-            self, template=self._template_string, variables=self._variables, required_variables=self._required_variables
+            self,
+            template=self._template_string,
+            variables=self._variables,
+            required_variables=self._required_variables,
         )
 
-    @component.output_types(prompt=str)
-    def run(self, template: Optional[str] = None, template_variables: Optional[Dict[str, Any]] = None, **kwargs):
+    @_component_instance.output_types(prompt=str)
+    def run(
+        self,
+        template: Optional[str] = None,
+        template_variables: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
+    ):
         """
         Renders the prompt template with the provided variables.
 
@@ -257,7 +267,9 @@ class PromptBuilder:
             required_variables = sorted(self.variables)
         else:
             required_variables = self.required_variables
-        missing_variables = [var for var in required_variables if var not in provided_variables]
+        missing_variables = [
+            var for var in required_variables if var not in provided_variables
+        ]
         if missing_variables:
             missing_vars_str = ", ".join(missing_variables)
             raise ValueError(

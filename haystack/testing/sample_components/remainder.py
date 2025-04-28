@@ -4,8 +4,10 @@
 
 from haystack.core.component import component
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class Remainder:
     def __init__(self, divisor=3):
         if divisor == 0:

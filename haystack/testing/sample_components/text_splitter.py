@@ -6,10 +6,12 @@ from typing import List
 
 from haystack.core.component import component
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class TextSplitter:
-    @component.output_types(output=List[str])
+    @_component_instance.output_types(output=List[str])
     def run(self, sentence: str):
         """Takes a sentence in input and returns its words in output."""
         return {"output": sentence.split()}

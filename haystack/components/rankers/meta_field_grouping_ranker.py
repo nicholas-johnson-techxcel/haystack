@@ -7,8 +7,10 @@ from typing import Any, Dict, List, Optional, cast
 
 from haystack import Document, component
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class MetaFieldGroupingRanker:
     """
     Reorders the documents by grouping them based on metadata keys.
@@ -72,7 +74,7 @@ class MetaFieldGroupingRanker:
         self.sort_docs_by = sort_docs_by
         self.subgroup_by = subgroup_by
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(self, documents: List[Document]) -> Dict[str, Any]:
         """
         Groups the provided list of documents based on the `group_by` parameter and optionally the `subgroup_by`.

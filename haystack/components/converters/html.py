@@ -17,7 +17,10 @@ with LazyImport("Run 'pip install trafilatura'") as trafilatura_import:
     from trafilatura import extract
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class HTMLToDocument:
     """
     Converts an HTML file to a Document.
@@ -71,7 +74,7 @@ class HTMLToDocument:
         """
         return default_from_dict(cls, data)
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(
         self,
         sources: List[Union[str, Path, ByteStream]],

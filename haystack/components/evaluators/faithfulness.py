@@ -47,7 +47,10 @@ _DEFAULT_EXAMPLES = [
 ]
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class FaithfulnessEvaluator(LLMEvaluator):
     """
     Evaluator that checks if a generated answer can be inferred from the provided contexts.
@@ -144,7 +147,7 @@ class FaithfulnessEvaluator(LLMEvaluator):
             progress_bar=progress_bar,
         )
 
-    @component.output_types(individual_scores=List[int], score=float, results=List[Dict[str, Any]])
+    @_component_instance.output_types(individual_scores=List[int], score=float, results=List[Dict[str, Any]])
     def run(self, **inputs) -> Dict[str, Any]:
         """
         Run the LLM evaluator.

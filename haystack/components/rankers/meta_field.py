@@ -12,7 +12,10 @@ from haystack import Document, component, logging
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class MetaFieldRanker:
     """
     Ranks Documents based on the value of their specific meta field.
@@ -156,7 +159,7 @@ class MetaFieldRanker:
                 "MetaFieldRanker." % meta_value_type
             )
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(  # pylint: disable=too-many-positional-arguments
         self,
         documents: List[Document],

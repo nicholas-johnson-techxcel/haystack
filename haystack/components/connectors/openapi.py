@@ -12,7 +12,10 @@ with LazyImport("Run 'pip install openapi-llm'") as openapi_llm_imports:
     from openapi_llm.client.openapi import OpenAPIClient
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class OpenAPIConnector:
     """
     OpenAPIConnector enables direct invocation of REST endpoints defined in an OpenAPI specification.
@@ -85,7 +88,7 @@ class OpenAPIConnector:
         deserialize_secrets_inplace(data["init_parameters"], keys=["credentials"])
         return default_from_dict(cls, data)
 
-    @component.output_types(response=Dict[str, Any])
+    @_component_instance.output_types(response=Dict[str, Any])
     def run(self, operation_id: str, arguments: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Invokes a REST endpoint specified in the OpenAPI specification.

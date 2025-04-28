@@ -8,8 +8,10 @@ from haystack import DeserializationError, Document, component, default_from_dic
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 from haystack.document_stores.types import FilterPolicy
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class InMemoryBM25Retriever:
     """
     Retrieves documents that are most similar to the query using keyword-based algorithm.
@@ -124,7 +126,7 @@ class InMemoryBM25Retriever:
         )
         return default_from_dict(cls, data)
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(
         self,
         query: str,
@@ -162,7 +164,7 @@ class InMemoryBM25Retriever:
         docs = self.document_store.bm25_retrieval(query=query, filters=filters, top_k=top_k, scale_score=scale_score)
         return {"documents": docs}
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     async def run_async(
         self,
         query: str,

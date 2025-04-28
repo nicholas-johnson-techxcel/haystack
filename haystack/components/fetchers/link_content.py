@@ -53,7 +53,10 @@ def _binary_content_handler(response: httpx.Response) -> ByteStream:
     return ByteStream(data=response.content)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class LinkContentFetcher:
     """
     Fetches and extracts content from URLs.
@@ -196,7 +199,7 @@ class LinkContentFetcher:
             # Suppress any exceptions during cleanup
             pass
 
-    @component.output_types(streams=List[ByteStream])
+    @_component_instance.output_types(streams=List[ByteStream])
     def run(self, urls: List[str]):
         """
         Fetches content from a list of URLs and returns a list of extracted content streams.
@@ -236,7 +239,7 @@ class LinkContentFetcher:
 
         return {"streams": streams}
 
-    @component.output_types(streams=List[ByteStream])
+    @_component_instance.output_types(streams=List[ByteStream])
     async def run_async(self, urls: List[str]):
         """
         Asynchronously fetches content from a list of URLs and returns a list of extracted content streams.

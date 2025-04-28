@@ -6,18 +6,22 @@ import os
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from openai import OpenAI, Stream
-from openai.types.chat import ChatCompletion, ChatCompletionChunk
-
 from haystack import component, default_from_dict, default_to_dict, logging
 from haystack.dataclasses import ChatMessage, StreamingChunk
-from haystack.utils import Secret, deserialize_callable, deserialize_secrets_inplace, serialize_callable
+from haystack.utils import (
+    Secret,
+    deserialize_callable,
+    deserialize_secrets_inplace,
+    serialize_callable,
+)
 from haystack.utils.http_client import init_http_client
+from openai import OpenAI, Stream
+from openai.types.chat import ChatCompletion, ChatCompletionChunk
 
 logger = logging.getLogger(__name__)
 
 
-@component
+@component()
 class OpenAIGenerator:
     """
     Generates text using OpenAI's large language models (LLMs).
@@ -143,7 +147,11 @@ class OpenAIGenerator:
         :returns:
             The serialized component as a dictionary.
         """
-        callback_name = serialize_callable(self.streaming_callback) if self.streaming_callback else None
+        callback_name = (
+            serialize_callable(self.streaming_callback)
+            if self.streaming_callback
+            else None
+        )
         return default_to_dict(
             self,
             model=self.model,
@@ -170,10 +178,12 @@ class OpenAIGenerator:
         init_params = data.get("init_parameters", {})
         serialized_callback_handler = init_params.get("streaming_callback")
         if serialized_callback_handler:
-            data["init_parameters"]["streaming_callback"] = deserialize_callable(serialized_callback_handler)
+            data["init_parameters"]["streaming_callback"] = deserialize_callable(
+                serialized_callback_handler
+            )
         return default_from_dict(cls, data)
 
-    @component.output_types(replies=List[str], meta=List[Dict[str, Any]])
+    @component().output_types(replies=List[str], meta=List[Dict[str, Any]])
     def run(
         self,
         prompt: str,
@@ -214,13 +224,17 @@ class OpenAIGenerator:
         streaming_callback = streaming_callback or self.streaming_callback
 
         # adapt ChatMessage(s) to the format expected by the OpenAI API
-        openai_formatted_messages = [message.to_openai_dict_format() for message in messages]
+        openai_formatted_messages = [
+            message.to_openai_dict_format() for message in messages
+        ]
 
-        completion: Union[Stream[ChatCompletionChunk], ChatCompletion] = self.client.chat.completions.create(
-            model=self.model,
-            messages=openai_formatted_messages,  # type: ignore
-            stream=streaming_callback is not None,
-            **generation_kwargs,
+        completion: Union[Stream[ChatCompletionChunk], ChatCompletion] = (
+            self.client.chat.completions.create(
+                model=self.model,
+                messages=openai_formatted_messages,  # type: ignore
+                stream=streaming_callback is not None,
+                **generation_kwargs,
+            )
         )
 
         completions: List[ChatMessage] = []
@@ -244,13 +258,18 @@ class OpenAIGenerator:
 
             completions = [self._create_message_from_chunks(last_chunk, chunks)]
         elif isinstance(completion, ChatCompletion):
-            completions = [self._build_message(completion, choice) for choice in completion.choices]
+            completions = [
+                self._build_message(completion, choice) for choice in completion.choices
+            ]
 
         # before returning, do post-processing of the completions
         for response in completions:
             self._check_finish_reason(response)
 
-        return {"replies": [message.text for message in completions], "meta": [message.meta for message in completions]}
+        return {
+            "replies": [message.text for message in completions],
+            "meta": [message.meta for message in completions],
+        }
 
     def _serialize_usage(self, usage):
         """Convert OpenAI usage object to serializable dict recursively"""
@@ -271,15 +290,24 @@ class OpenAIGenerator:
         """
         Creates a single ChatMessage from the streamed chunks. Some data is retrieved from the completion chunk.
         """
-        complete_response = ChatMessage.from_assistant("".join([chunk.content for chunk in streamed_chunks]))
+        complete_response = ChatMessage.from_assistant(
+            "".join([chunk.content for chunk in streamed_chunks])
+        )
         finish_reason = streamed_chunks[-1].meta["finish_reason"]
         complete_response.meta.update(
             {
                 "model": completion_chunk.model,
                 "index": 0,
                 "finish_reason": finish_reason,
+<<<<<<< HEAD
                 "completion_start_time": streamed_chunks[0].meta.get("received_at"),  # first chunk received
                 "usage": self._serialize_usage(completion_chunk.usage),
+=======
+                "completion_start_time": streamed_chunks[0].meta.get(
+                    "received_at"
+                ),  # first chunk received
+                "usage": dict(completion_chunk.usage or {}),
+>>>>>>> 6269c785 (Fix typing issues caused by @component decorator, allowing VSCode of projects consuming the haystack-ai to fully infer fields and types)
             }
         )
         return complete_response

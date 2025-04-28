@@ -8,8 +8,10 @@ from haystack import Document, component, default_from_dict, default_to_dict
 from haystack.document_stores.types import DocumentStore, DuplicatePolicy
 from haystack.utils import deserialize_document_store_in_init_params_inplace
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class DocumentWriter:
     """
     Writes documents to a DocumentStore.
@@ -79,7 +81,7 @@ class DocumentWriter:
 
         return default_from_dict(cls, data)
 
-    @component.output_types(documents_written=int)
+    @_component_instance.output_types(documents_written=int)
     def run(self, documents: List[Document], policy: Optional[DuplicatePolicy] = None):
         """
         Run the DocumentWriter on the given input data.
@@ -100,7 +102,7 @@ class DocumentWriter:
         documents_written = self.document_store.write_documents(documents=documents, policy=policy)
         return {"documents_written": documents_written}
 
-    @component.output_types(documents_written=int)
+    @_component_instance.output_types(documents_written=int)
     async def run_async(self, documents: List[Document], policy: Optional[DuplicatePolicy] = None):
         """
         Asynchronously run the DocumentWriter on the given input data.

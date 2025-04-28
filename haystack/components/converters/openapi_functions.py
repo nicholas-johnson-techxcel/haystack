@@ -19,7 +19,10 @@ with LazyImport("Run 'pip install jsonref'") as openapi_imports:
     import jsonref
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class OpenAPIServiceToFunctions:
     """
     Converts OpenAPI service definitions to a format suitable for OpenAI function calling.
@@ -52,7 +55,7 @@ class OpenAPIServiceToFunctions:
         """
         openapi_imports.check()
 
-    @component.output_types(functions=List[Dict[str, Any]], openapi_specs=List[Dict[str, Any]])
+    @_component_instance.output_types(functions=List[Dict[str, Any]], openapi_specs=List[Dict[str, Any]])
     def run(self, sources: List[Union[str, Path, ByteStream]]) -> Dict[str, Any]:
         """
         Converts OpenAPI definitions in OpenAI function calling format.

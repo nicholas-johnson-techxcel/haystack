@@ -9,8 +9,10 @@ from haystack import component, default_from_dict, default_to_dict
 from haystack.core.component.types import Variadic
 from haystack.utils import deserialize_type, serialize_type
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class ListJoiner:
     """
     A component that joins multiple lists into a single flat list.

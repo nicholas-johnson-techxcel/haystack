@@ -4,10 +4,14 @@
 
 from typing import Any, Dict, List, Literal, Optional
 
+import numpy as np
+
 from haystack.lazy_imports import LazyImport
 from haystack.utils.auth import Secret
 
-with LazyImport(message="Run 'pip install \"sentence-transformers>=3.0.0\"'") as sentence_transformers_import:
+with LazyImport(
+    message="Run 'pip install \"sentence-transformers>=3.0.0\"'"
+) as sentence_transformers_import:
     from sentence_transformers import SentenceTransformer
 
 
@@ -32,8 +36,13 @@ class _SentenceTransformersEmbeddingBackendFactory:
     ):
         embedding_backend_id = f"{model}{device}{auth_token}{truncate_dim}{backend}"
 
-        if embedding_backend_id in _SentenceTransformersEmbeddingBackendFactory._instances:
-            return _SentenceTransformersEmbeddingBackendFactory._instances[embedding_backend_id]
+        if (
+            embedding_backend_id
+            in _SentenceTransformersEmbeddingBackendFactory._instances
+        ):
+            return _SentenceTransformersEmbeddingBackendFactory._instances[
+                embedding_backend_id
+            ]
         embedding_backend = _SentenceTransformersEmbeddingBackend(
             model=model,
             device=device,
@@ -45,7 +54,9 @@ class _SentenceTransformersEmbeddingBackendFactory:
             config_kwargs=config_kwargs,
             backend=backend,
         )
-        _SentenceTransformersEmbeddingBackendFactory._instances[embedding_backend_id] = embedding_backend
+        _SentenceTransformersEmbeddingBackendFactory._instances[
+            embedding_backend_id
+        ] = embedding_backend
         return embedding_backend
 
 
@@ -81,6 +92,10 @@ class _SentenceTransformersEmbeddingBackend:
             backend=backend,
         )
 
-    def embed(self, data: List[str], **kwargs) -> List[List[float]]:
-        embeddings = self.model.encode(data, **kwargs).tolist()
-        return embeddings
+    def embed(self, data: List[str], **kwargs: Any) -> list[list[float]]:
+        embeddings = self.model.encode(data, **kwargs)
+        if isinstance(embeddings, np.ndarray):
+            lst = embeddings.tolist()
+            print("lst", embeddings.shape)
+            return lst
+        raise ValueError(f"Unexpected embedding type: {type(embeddings)}")

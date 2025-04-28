@@ -81,21 +81,27 @@ This is the most critical aspect of the design.
 **Below, I will focus on the public API. The internal implementation is discussed in [Implementation details](#implementation-details).**
 
 ```python
-@component
+_component_instance = component()
+
+
+@_component_instance
 class HFTextEmbedder:
     ...
 
-    @component.output_types(result=List[np.ndarray])
+    @_component_instance.output_types(result=List[np.ndarray])
     def run(self, strings: List[str]):
         ...
         return {"result": list_of_computed_embeddings}
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class HFDocumentEmbedder:
     ...
 
-    @component.output_types(result=List[Document])
+    @_component_instance.output_types(result=List[Document])
     def run(self, documents: List[Document]):
         ...
         return {"result": list_of_documents_with_embeddings}
@@ -163,7 +169,10 @@ Implemented as singletons, when instantiating an EmbeddingBackend class, if anot
 This is how an EmbeddingBackend would be used by a text embedder component:
 **Part of the public API**.
 ```python
-@component
+_component_instance = component()
+
+
+@_component_instance
 class HFTextEmbedder:
 
     def __init__(self, model_name: str, ... init params ...):
@@ -173,7 +182,7 @@ class HFTextEmbedder:
     def warm_up(self):
         self.embedding_backend = HFEmbeddingBackend(self.model_name, **self.model_params)
 
-    @component.output_types(result=List[np.ndarray])
+    @_component_instance.output_types(result=List[np.ndarray])
     def run(self, strings: List[str]):
         return {"result": self.embedding_backend.embed(data)}
 ```
@@ -182,7 +191,10 @@ Another example, using an embedder component expecting Documents:
 **Part of the public API**.
 
 ```python
-@component
+_component_instance = component()
+
+
+@_component_instance
 class HFDocumentEmbedder:
 
     def __init__(self, model_name: str, ... init params ...):
@@ -192,7 +204,7 @@ class HFDocumentEmbedder:
     def warm_up(self):
         self.embedding_backend = HFEmbeddingBackend(self.model_name, **self.model_params)
 
-    @component.output_types(result=List[Document])
+    @_component_instance.output_types(result=List[Document])
     def run(self, documents: List[Document]):
         text_strings = [document.content for document in data]
         embeddings = self.embedding_backend.embed(text_strings)

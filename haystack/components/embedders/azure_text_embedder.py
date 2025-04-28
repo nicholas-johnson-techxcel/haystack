@@ -12,8 +12,10 @@ from haystack.components.embedders import OpenAITextEmbedder
 from haystack.utils import Secret, deserialize_callable, deserialize_secrets_inplace, serialize_callable
 from haystack.utils.http_client import init_http_client
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class AzureOpenAITextEmbedder(OpenAITextEmbedder):
     """
     Embeds strings using OpenAI models deployed on Azure.

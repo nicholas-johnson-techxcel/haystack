@@ -29,8 +29,10 @@ WhisperLocalModel = Literal[
     "tiny.en",
 ]
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class LocalWhisperTranscriber:
     """
     Transcribes audio files using OpenAI's Whisper model on your local machine.
@@ -108,8 +110,10 @@ class LocalWhisperTranscriber:
             init_params["device"] = ComponentDevice.from_dict(init_params["device"])
         return default_from_dict(cls, data)
 
-    @component.output_types(documents=List[Document])
-    def run(self, sources: List[Union[str, Path, ByteStream]], whisper_params: Optional[Dict[str, Any]] = None):
+    @_component_instance.output_types(documents=List[Document])
+    def run(
+        self, sources: List[Union[str, Path, ByteStream]], whisper_params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, List[Document]]:
         """
         Transcribes a list of audio files into a list of documents.
 
@@ -137,7 +141,7 @@ class LocalWhisperTranscriber:
         documents = self.transcribe(sources, **whisper_params)
         return {"documents": documents}
 
-    def transcribe(self, sources: List[Union[str, Path, ByteStream]], **kwargs) -> List[Document]:
+    def transcribe(self, sources: List[Union[str, Path, ByteStream]], **kwargs: Any) -> List[Document]:
         """
         Transcribes the audio files into a list of Documents, one for each input file.
 
@@ -158,7 +162,7 @@ class LocalWhisperTranscriber:
             documents.append(doc)
         return documents
 
-    def _raw_transcribe(self, sources: List[Union[str, Path, ByteStream]], **kwargs) -> Dict[Path, Any]:
+    def _raw_transcribe(self, sources: List[Union[str, Path, ByteStream]], **kwargs: Any) -> Dict[Path, Any]:
         """
         Transcribes the given audio files. Returns the output of the model, a dictionary, for each input file.
 

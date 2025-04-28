@@ -2,17 +2,17 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, Literal, Optional
 
-from haystack import component, default_from_dict, default_to_dict
+from haystack import component, default_from_dict, default_to_dict  # type: ignore
 from haystack.components.embedders.backends.sentence_transformers_backend import (
-    _SentenceTransformersEmbeddingBackendFactory,
+    _SentenceTransformersEmbeddingBackendFactory,  # type: ignore
 )
 from haystack.utils import ComponentDevice, Secret, deserialize_secrets_inplace
 from haystack.utils.hf import deserialize_hf_model_kwargs, serialize_hf_model_kwargs
 
 
-@component
+@component()
 class SentenceTransformersTextEmbedder:
     """
     Embeds strings using Sentence Transformers models.
@@ -36,9 +36,12 @@ class SentenceTransformersTextEmbedder:
 
     def __init__(  # noqa: PLR0913 # pylint: disable=too-many-positional-arguments
         self,
+        *,
         model: str = "sentence-transformers/all-mpnet-base-v2",
         device: Optional[ComponentDevice] = None,
-        token: Optional[Secret] = Secret.from_env_var(["HF_API_TOKEN", "HF_TOKEN"], strict=False),
+        token: Optional[Secret] = Secret.from_env_var(
+            ["HF_API_TOKEN", "HF_TOKEN"], strict=False
+        ),
         prefix: str = "",
         suffix: str = "",
         batch_size: int = 32,
@@ -157,11 +160,13 @@ class SentenceTransformersTextEmbedder:
             backend=self.backend,
         )
         if serialization_dict["init_parameters"].get("model_kwargs") is not None:
-            serialize_hf_model_kwargs(serialization_dict["init_parameters"]["model_kwargs"])
+            serialize_hf_model_kwargs(
+                serialization_dict["init_parameters"]["model_kwargs"]
+            )
         return serialization_dict
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SentenceTransformersTextEmbedder":
+    def from_dict(cls, data: Dict[str, Any]) -> "SentenceTransformersTextEmbedder":  # type: ignore
         """
         Deserializes the component from a dictionary.
 
@@ -183,22 +188,26 @@ class SentenceTransformersTextEmbedder:
         Initializes the component.
         """
         if self.embedding_backend is None:
-            self.embedding_backend = _SentenceTransformersEmbeddingBackendFactory.get_embedding_backend(
-                model=self.model,
-                device=self.device.to_torch_str(),
-                auth_token=self.token,
-                trust_remote_code=self.trust_remote_code,
-                truncate_dim=self.truncate_dim,
-                model_kwargs=self.model_kwargs,
-                tokenizer_kwargs=self.tokenizer_kwargs,
-                config_kwargs=self.config_kwargs,
-                backend=self.backend,
+            self.embedding_backend = (
+                _SentenceTransformersEmbeddingBackendFactory.get_embedding_backend(
+                    model=self.model,
+                    device=self.device.to_torch_str(),
+                    auth_token=self.token,
+                    trust_remote_code=self.trust_remote_code,
+                    truncate_dim=self.truncate_dim,
+                    model_kwargs=self.model_kwargs,
+                    tokenizer_kwargs=self.tokenizer_kwargs,
+                    config_kwargs=self.config_kwargs,
+                    backend=self.backend,  # type: ignore
+                )
             )
             if self.tokenizer_kwargs and self.tokenizer_kwargs.get("model_max_length"):
-                self.embedding_backend.model.max_seq_length = self.tokenizer_kwargs["model_max_length"]
+                self.embedding_backend.model.max_seq_length = self.tokenizer_kwargs[  # type: ignore
+                    "model_max_length"
+                ]
 
-    @component.output_types(embedding=List[float])
-    def run(self, text: str):
+    @component().output_types(embedding=list[float])
+    def run(self, text: str) -> dict[str, Any]:
         """
         Embed a single string.
 
@@ -209,16 +218,18 @@ class SentenceTransformersTextEmbedder:
             A dictionary with the following keys:
             - `embedding`: The embedding of the input text.
         """
-        if not isinstance(text, str):
+        if not isinstance(text, str):  # type: ignore
             raise TypeError(
                 "SentenceTransformersTextEmbedder expects a string as input."
                 "In case you want to embed a list of Documents, please use the SentenceTransformersDocumentEmbedder."
             )
         if self.embedding_backend is None:
-            raise RuntimeError("The embedding model has not been loaded. Please call warm_up() before running.")
+            raise RuntimeError(
+                "The embedding model has not been loaded. Please call warm_up() before running."
+            )
 
         text_to_embed = self.prefix + text + self.suffix
-        embedding = self.embedding_backend.embed(
+        embedding = self.embedding_backend.embed(  # type: ignore
             [text_to_embed],
             batch_size=self.batch_size,
             show_progress_bar=self.progress_bar,

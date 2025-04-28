@@ -18,12 +18,15 @@ from haystack.utils.auth import Secret, TokenSecret
 def test_pipeline_running(telemetry, pipeline_class):
     telemetry.send_event = Mock()
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class Component:
         def _get_telemetry_data(self):
             return {"key": "values"}
 
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self):
             pass
 
@@ -68,7 +71,10 @@ def test_pipeline_running(telemetry, pipeline_class):
 def test_pipeline_running_with_non_serializable_component(telemetry):
     telemetry.send_event = Mock()
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class Component:
         def __init__(self, api_key: Secret = TokenSecret("api_key")):
             self.api_key = api_key
@@ -76,7 +82,7 @@ def test_pipeline_running_with_non_serializable_component(telemetry):
         def _get_telemetry_data(self):
             return {"key": "values"}
 
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self):
             pass
 
@@ -95,7 +101,10 @@ def test_pipeline_running_with_non_serializable_component(telemetry):
 
 
 def test_pipeline_running_with_non_dict_telemetry_data(caplog):
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class Component:
         def __init__(self, api_key: Secret = TokenSecret("api_key")):
             self.api_key = api_key
@@ -104,7 +113,7 @@ def test_pipeline_running_with_non_dict_telemetry_data(caplog):
         def _get_telemetry_data(self):
             return ["values"]
 
-        @component.output_types(value=int)
+        @_component_instance.output_types(value=int)
         def run(self):
             pass
 

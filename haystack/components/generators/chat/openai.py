@@ -35,7 +35,8 @@ from haystack.utils.http_client import init_http_client
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+@_component_instance
 class OpenAIChatGenerator:
     """
     Completes chats using OpenAI's large language models (LLMs).
@@ -222,7 +223,7 @@ class OpenAIChatGenerator:
             data["init_parameters"]["streaming_callback"] = deserialize_callable(serialized_callback_handler)
         return default_from_dict(cls, data)
 
-    @component.output_types(replies=List[ChatMessage])
+    @_component_instance.output_types(replies=List[ChatMessage])
     def run(
         self,
         messages: List[ChatMessage],
@@ -292,7 +293,7 @@ class OpenAIChatGenerator:
 
         return {"replies": completions}
 
-    @component.output_types(replies=List[ChatMessage])
+    @_component_instance.output_types(replies=List[ChatMessage])
     async def run_async(
         self,
         messages: List[ChatMessage],

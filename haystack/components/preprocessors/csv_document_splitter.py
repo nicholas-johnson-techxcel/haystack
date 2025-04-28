@@ -16,7 +16,10 @@ logger = logging.getLogger(__name__)
 SplitMode = Literal["threshold", "row-wise"]
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class CSVDocumentSplitter:
     """
     A component for splitting CSV documents into sub-tables based on split arguments.
@@ -70,7 +73,7 @@ class CSVDocumentSplitter:
         self.read_csv_kwargs = read_csv_kwargs or {}
         self.split_mode = split_mode
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(self, documents: List[Document]) -> Dict[str, List[Document]]:
         """
         Processes and splits a list of CSV documents into multiple sub-tables.

@@ -143,7 +143,10 @@ with LazyImport("Run 'pip install openapi3'") as openapi_imports:
     Operation.request = patch_request
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class OpenAPIServiceConnector:
     """
     A component which connects the Haystack framework to OpenAPI services.
@@ -205,7 +208,7 @@ class OpenAPIServiceConnector:
         openapi_imports.check()
         self.ssl_verify = ssl_verify
 
-    @component.output_types(service_response=Dict[str, Any])
+    @_component_instance.output_types(service_response=Dict[str, Any])
     def run(
         self,
         messages: List[ChatMessage],

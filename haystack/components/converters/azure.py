@@ -26,7 +26,10 @@ with LazyImport(message="Run 'pip install pandas'") as pandas_import:
     from pandas import DataFrame
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class AzureOCRDocumentConverter:
     """
     Converts files to documents using Azure's Document Intelligence service.
@@ -108,7 +111,7 @@ class AzureOCRDocumentConverter:
         if self.page_layout == "single_column" and self.threshold_y is None:
             self.threshold_y = 0.05
 
-    @component.output_types(documents=List[Document], raw_azure_response=List[Dict])
+    @_component_instance.output_types(documents=List[Document], raw_azure_response=List[Dict])
     def run(self, sources: List[Union[str, Path, ByteStream]], meta: Optional[List[Dict[str, Any]]] = None):
         """
         Convert a list of files to Documents using Azure's Document Intelligence service.

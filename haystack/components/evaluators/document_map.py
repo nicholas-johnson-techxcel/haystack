@@ -6,8 +6,10 @@ from typing import Any, Dict, List
 
 from haystack import Document, component
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class DocumentMAPEvaluator:
     """
     A Mean Average Precision (MAP) evaluator for documents.
@@ -44,7 +46,7 @@ class DocumentMAPEvaluator:
     """
 
     # Refer to https://www.pinecone.io/learn/offline-evaluation/ for the algorithm.
-    @component.output_types(score=float, individual_scores=List[float])
+    @_component_instance.output_types(score=float, individual_scores=List[float])
     def run(
         self, ground_truth_documents: List[List[Document]], retrieved_documents: List[List[Document]]
     ) -> Dict[str, Any]:

@@ -8,8 +8,10 @@ from typing import Any, Dict, List, Optional
 
 from haystack import component
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class TextCleaner:
     """
     Cleans text strings.
@@ -61,7 +63,7 @@ class TextCleaner:
 
         self._translator = str.maketrans("", "", to_remove) if to_remove else None
 
-    @component.output_types(texts=List[str])
+    @_component_instance.output_types(texts=List[str])
     def run(self, texts: List[str]) -> Dict[str, Any]:
         """
         Cleans up the given list of strings.

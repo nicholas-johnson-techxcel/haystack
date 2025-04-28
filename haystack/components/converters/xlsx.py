@@ -22,7 +22,10 @@ with LazyImport("Run 'pip install tabulate'") as tabulate_import:
     from tabulate import tabulate  # pylint: disable=unused-import # the library is used but not directly referenced
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class XLSXToDocument:
     """
     Converts XLSX (Excel) files into Documents.
@@ -79,7 +82,7 @@ class XLSXToDocument:
         self.table_format_kwargs = table_format_kwargs or {}
         self.store_full_path = store_full_path
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(
         self,
         sources: List[Union[str, Path, ByteStream]],

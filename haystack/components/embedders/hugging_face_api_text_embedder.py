@@ -16,7 +16,10 @@ with LazyImport(message="Run 'pip install \"huggingface_hub>=0.27.0\"'") as hugg
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class HuggingFaceAPITextEmbedder:
     """
     Embeds strings using Hugging Face APIs.
@@ -202,7 +205,7 @@ class HuggingFaceAPITextEmbedder:
         deserialize_secrets_inplace(data["init_parameters"], keys=["token"])
         return default_from_dict(cls, data)
 
-    @component.output_types(embedding=List[float])
+    @_component_instance.output_types(embedding=List[float])
     def run(self, text: str):
         """
         Embeds a single string.
@@ -230,7 +233,7 @@ class HuggingFaceAPITextEmbedder:
 
         return {"embedding": embedding}
 
-    @component.output_types(embedding=List[float])
+    @_component_instance.output_types(embedding=List[float])
     async def run_async(self, text: str):
         """
         Embeds a single string asynchronously.

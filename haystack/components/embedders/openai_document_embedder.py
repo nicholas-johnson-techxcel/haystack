@@ -17,7 +17,10 @@ from haystack.utils.http_client import init_http_client
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class OpenAIDocumentEmbedder:
     """
     Computes document embeddings using OpenAI models.
@@ -267,7 +270,7 @@ class OpenAIDocumentEmbedder:
 
         return all_embeddings, meta
 
-    @component.output_types(documents=List[Document], meta=Dict[str, Any])
+    @_component_instance.output_types(documents=List[Document], meta=Dict[str, Any])
     def run(self, documents: List[Document]):
         """
         Embeds a list of documents.
@@ -295,7 +298,7 @@ class OpenAIDocumentEmbedder:
 
         return {"documents": documents, "meta": meta}
 
-    @component.output_types(documents=List[Document], meta=Dict[str, Any])
+    @_component_instance.output_types(documents=List[Document], meta=Dict[str, Any])
     async def run_async(self, documents: List[Document]):
         """
         Embeds a list of documents asynchronously.

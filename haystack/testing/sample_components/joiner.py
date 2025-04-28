@@ -7,10 +7,12 @@ from typing import List
 from haystack.core.component import component
 from haystack.core.component.types import Variadic
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class StringJoiner:
-    @component.output_types(output=str)
+    @_component_instance.output_types(output=str)
     def run(self, input_str: Variadic[str]):
         """
         Take strings from multiple input nodes and join them into a single one returned in output.
@@ -20,9 +22,12 @@ class StringJoiner:
         return {"output": " ".join(input_str)}
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class StringListJoiner:
-    @component.output_types(output=str)
+    @_component_instance.output_types(output=str)
     def run(self, inputs: Variadic[List[str]]):
         """
         Take list of strings from multiple input nodes and join them into a single one returned in output.

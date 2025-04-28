@@ -162,9 +162,12 @@ class TestOutputAdapter:
         assert not component._unsafe
 
     def test_output_adapter_in_pipeline(self):
-        @component
+        _component_instance = component()
+
+
+@_component_instance
         class DocumentProducer:
-            @component.output_types(documents=dict)
+            @_component_instance.output_types(documents=dict)
             def run(self):
                 return {"documents": [{"content": '{"framework": "Haystack"}'}]}
 

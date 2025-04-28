@@ -19,7 +19,10 @@ with LazyImport("Run 'pip install python-pptx'") as pptx_import:
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class PPTXToDocument:
     """
     Converts PPTX files to Documents.
@@ -62,7 +65,7 @@ class PPTXToDocument:
         text = "\f".join(text_all_slides)
         return text
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(
         self,
         sources: List[Union[str, Path, ByteStream]],

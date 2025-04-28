@@ -22,7 +22,10 @@ logger = logging.getLogger(__name__)
 CID_PATTERN = r"\(cid:\d+\)"  # regex pattern to detect CID characters
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class PDFMinerToDocument:
     """
     Converts PDF files to Documents.
@@ -156,7 +159,7 @@ class PDFMinerToDocument:
 
         return {"total_chars": total_chars, "cid_chars": cid_chars, "percentage": round(percentage, 2)}
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(
         self,
         sources: List[Union[str, Path, ByteStream]],

@@ -20,7 +20,10 @@ with LazyImport(message="Run 'pip install \"huggingface_hub>=0.27.0\"'") as hugg
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class HuggingFaceAPIDocumentEmbedder:
     """
     Embeds documents using Hugging Face APIs.
@@ -306,7 +309,7 @@ class HuggingFaceAPIDocumentEmbedder:
 
         return all_embeddings
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     def run(self, documents: List[Document]):
         """
         Embeds a list of documents.
@@ -333,7 +336,7 @@ class HuggingFaceAPIDocumentEmbedder:
 
         return {"documents": documents}
 
-    @component.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=List[Document])
     async def run_async(self, documents: List[Document]):
         """
         Embeds a list of documents asynchronously.

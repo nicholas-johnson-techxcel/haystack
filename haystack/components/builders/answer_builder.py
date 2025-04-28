@@ -10,8 +10,10 @@ from haystack.dataclasses.chat_message import ChatMessage
 
 logger = logging.getLogger(__name__)
 
+_component_instance = component()
 
-@component
+
+@_component_instance
 class AnswerBuilder:
     """
     Converts a query and Generator replies into a `GeneratedAnswer` object.
@@ -57,7 +59,7 @@ class AnswerBuilder:
         self.pattern = pattern
         self.reference_pattern = reference_pattern
 
-    @component.output_types(answers=List[GeneratedAnswer])
+    @_component_instance.output_types(answers=List[GeneratedAnswer])
     def run(  # pylint: disable=too-many-positional-arguments
         self,
         query: str,

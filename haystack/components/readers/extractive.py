@@ -21,7 +21,10 @@ with LazyImport("Run 'pip install transformers[torch,sentencepiece]'") as torch_
 logger = logging.getLogger(__name__)
 
 
-@component
+_component_instance = component()
+
+
+@_component_instance
 class ExtractiveReader:
     """
     Locates and extracts answers to a given query from Documents.
@@ -528,7 +531,7 @@ class ExtractiveReader:
 
         return deduplicated_answers
 
-    @component.output_types(answers=List[ExtractedAnswer])
+    @_component_instance.output_types(answers=List[ExtractedAnswer])
     def run(  # pylint: disable=too-many-positional-arguments
         self,
         query: str,

@@ -202,9 +202,12 @@ def pipeline_complex(pipeline_class):
 
 @given("a pipeline that has a single component with a default input", target_fixture="pipeline_data")
 def pipeline_that_has_a_single_component_with_a_default_input(pipeline_class):
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class WithDefault:
-        @component.output_types(b=int)
+        @_component_instance.output_types(b=int)
         def run(self, a: int, b: int = 2):
             return {"c": a + b}
 
@@ -633,9 +636,12 @@ def pipeline_that_has_two_branches_one_of_which_loops_back(pipeline_class):
 
 @given("a pipeline that has a component with mutable input", target_fixture="pipeline_data")
 def pipeline_that_has_a_component_with_mutable_input(pipeline_class):
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class InputMangler:
-        @component.output_types(mangled_list=List[str])
+        @_component_instance.output_types(mangled_list=List[str])
         def run(self, input_list: List[str]):
             input_list.append("extra_item")
             return {"mangled_list": input_list}
@@ -672,23 +678,32 @@ def pipeline_that_has_a_component_with_mutable_input(pipeline_class):
 
 @given("a pipeline that has a component with mutable output sent to multiple inputs", target_fixture="pipeline_data")
 def pipeline_that_has_a_component_with_mutable_output_sent_to_multiple_inputs(pipeline_class):
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class PassThroughPromptBuilder:
         # This is a pass-through component that returns the same input
-        @component.output_types(prompt=List[ChatMessage])
+        @_component_instance.output_types(prompt=List[ChatMessage])
         def run(self, prompt_source: List[ChatMessage]):
             return {"prompt": prompt_source}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class MessageMerger:
-        @component.output_types(merged_message=str)
+        @_component_instance.output_types(merged_message=str)
         def run(self, messages: List[ChatMessage], metadata: dict = None):
             return {"merged_message": "\n".join(t.text or "" for t in messages)}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeGenerator:
         # This component is a fake generator that always returns the same message
-        @component.output_types(replies=List[ChatMessage])
+        @_component_instance.output_types(replies=List[ChatMessage])
         def run(self, messages: List[ChatMessage]):
             return {"replies": [ChatMessage.from_assistant("Fake message")]}
 
@@ -1311,13 +1326,16 @@ def pipeline_that_has_a_loop_and_returns_intermediate_outputs_from_it(pipeline_c
     "a pipeline that is linear and returns intermediate outputs from multiple sockets", target_fixture="pipeline_data"
 )
 def pipeline_that_is_linear_and_returns_intermediate_outputs_from_multiple_sockets(pipeline_class):
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class DoubleWithOriginal:
         """
         Doubles the input value and returns the original value as well.
         """
 
-        @component.output_types(value=int, original=int)
+        @_component_instance.output_types(value=int, original=int)
         def run(self, value: int):
             return {"value": value * 2, "original": value}
 
@@ -1410,17 +1428,23 @@ def pipeline_that_has_a_component_with_default_inputs_that_doesnt_receive_anythi
             Answer:"""
     )
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeGenerator:
-        @component.output_types(replies=List[str])
+        @_component_instance.output_types(replies=List[str])
         def run(self, prompt: str):
             if "no_answer" in prompt:
                 return {"replies": ["There's simply no_answer to this question"]}
             return {"replies": ["Some SQL query"]}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeSQLQuerier:
-        @component.output_types(results=str)
+        @_component_instance.output_types(results=str)
         def run(self, query: str):
             return {"results": "This is the query result", "query": query}
 
@@ -1661,9 +1685,12 @@ def pipeline_that_has_a_loop_and_a_component_with_default_inputs_that_doesnt_rec
     """
     prompt_builder = PromptBuilder(template=template)
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeOutputValidator:
-        @component.output_types(
+        @_component_instance.output_types(
             valid_replies=List[str], invalid_replies=Optional[List[str]], error_message=Optional[str]
         )
         def run(self, replies: List[str]):
@@ -1672,9 +1699,12 @@ def pipeline_that_has_a_loop_and_a_component_with_default_inputs_that_doesnt_rec
                 return {"invalid_replies": ["This is an invalid reply"], "error_message": "this is an error message"}
             return {"valid_replies": replies}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeGenerator:
-        @component.output_types(replies=List[str])
+        @_component_instance.output_types(replies=List[str])
         def run(self, prompt: str):
             return {"replies": ["This is a valid reply"]}
 
@@ -1838,9 +1868,12 @@ def pipeline_that_has_multiple_components_with_only_default_inputs_and_are_added
     """
     )
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeRetriever:
-        @component.output_types(documents=List[Document])
+        @_component_instance.output_types(documents=List[Document])
         def run(
             self,
             query: str,
@@ -1850,9 +1883,12 @@ def pipeline_that_has_multiple_components_with_only_default_inputs_and_are_added
         ):
             return {"documents": [Document(content="This is a document")]}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeRanker:
-        @component.output_types(documents=List[Document])
+        @_component_instance.output_types(documents=List[Document])
         def run(
             self,
             query: str,
@@ -1864,9 +1900,12 @@ def pipeline_that_has_multiple_components_with_only_default_inputs_and_are_added
         ):
             return {"documents": documents}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeGenerator:
-        @component.output_types(replies=List[str], meta=Dict[str, Any])
+        @_component_instance.output_types(replies=List[str], meta=Dict[str, Any])
         def run(self, prompt: str, generation_kwargs: Optional[Dict[str, Any]] = None):
             return {"replies": ["This is a reply"], "meta": {"meta_key": "meta_value"}}
 
@@ -1976,37 +2015,52 @@ def pipeline_that_has_multiple_components_with_only_default_inputs_and_are_added
 def that_is_linear_with_conditional_branching_and_multiple_joins(pipeline_class):
     pipeline = pipeline_class()
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeRouter:
-        @component.output_types(LEGIT=str, INJECTION=str)
+        @_component_instance.output_types(LEGIT=str, INJECTION=str)
         def run(self, query: str):
             if "injection" in query:
                 return {"INJECTION": query}
             return {"LEGIT": query}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeEmbedder:
-        @component.output_types(embeddings=List[float])
+        @_component_instance.output_types(embeddings=List[float])
         def run(self, text: str):
             return {"embeddings": [1.0, 2.0, 3.0]}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeRanker:
-        @component.output_types(documents=List[Document])
+        @_component_instance.output_types(documents=List[Document])
         def run(self, query: str, documents: List[Document]):
             return {"documents": documents}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeRetriever:
-        @component.output_types(documents=List[Document])
+        @_component_instance.output_types(documents=List[Document])
         def run(self, query: str):
             if "injection" in query:
                 return {"documents": []}
             return {"documents": [Document(content="This is a document")]}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeEmbeddingRetriever:
-        @component.output_types(documents=List[Document])
+        @_component_instance.output_types(documents=List[Document])
         def run(self, query_embedding: List[float]):
             return {"documents": [Document(content="This is another document")]}
 
@@ -2153,11 +2207,14 @@ def that_is_a_simple_agent(pipeline_class):
         },
     ]
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeThoughtActionOpenAIChatGenerator:
         run_counter = 0
 
-        @component.output_types(replies=List[ChatMessage])
+        @_component_instance.output_types(replies=List[ChatMessage])
         def run(self, messages: List[ChatMessage], generation_kwargs: Optional[Dict[str, Any]] = None):
             if self.run_counter == 0:
                 self.run_counter += 1
@@ -2171,15 +2228,21 @@ def that_is_a_simple_agent(pipeline_class):
 
             return {"replies": [ChatMessage.from_assistant("thinking\n Action: finish[Eiffel Tower]\n")]}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeConclusionOpenAIChatGenerator:
-        @component.output_types(replies=List[ChatMessage])
+        @_component_instance.output_types(replies=List[ChatMessage])
         def run(self, messages: List[ChatMessage], generation_kwargs: Optional[Dict[str, Any]] = None):
             return {"replies": [ChatMessage.from_assistant("Tower of Pisa is 55 meters tall\n")]}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeSerperDevWebSearch:
-        @component.output_types(documents=List[Document])
+        @_component_instance.output_types(documents=List[Document])
         def run(self, query: str):
             return {
                 "documents": [
@@ -2194,9 +2257,12 @@ def that_is_a_simple_agent(pipeline_class):
     pipeline.add_component("prompt_builder", ChatPromptBuilder(variables=["query"]))
     pipeline.add_component("llm", FakeThoughtActionOpenAIChatGenerator())
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class ToolExtractor:
-        @component.output_types(output=List[str])
+        @_component_instance.output_types(output=List[str])
         def run(self, messages: List[ChatMessage]):
             prompt: str = messages[-1].text
             lines = prompt.strip().split("\n")
@@ -2212,19 +2278,25 @@ def that_is_a_simple_agent(pipeline_class):
 
     pipeline.add_component("tool_extractor", ToolExtractor())
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class PromptConcatenator:
         def __init__(self, suffix: str = ""):
             self._suffix = suffix
 
-        @component.output_types(output=List[ChatMessage])
+        @_component_instance.output_types(output=List[ChatMessage])
         def run(self, replies: List[ChatMessage], current_prompt: List[ChatMessage]):
             content = current_prompt[-1].text + replies[-1].text + self._suffix
             return {"output": [ChatMessage.from_user(content)]}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class SearchOutputAdapter:
-        @component.output_types(output=List[ChatMessage])
+        @_component_instance.output_types(output=List[ChatMessage])
         def run(self, replies: List[ChatMessage]):
             content = f"Observation: {replies[-1].text}\n"
             return {"output": [ChatMessage.from_assistant(content)]}
@@ -2527,12 +2599,15 @@ def that_is_a_simple_agent(pipeline_class):
 
 @given("a pipeline that has a variadic component that receives partial inputs", target_fixture="pipeline_data")
 def that_has_a_variadic_component_that_receives_partial_inputs(pipeline_class):
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class ConditionalDocumentCreator:
         def __init__(self, content: str):
             self._content = content
 
-        @component.output_types(documents=List[Document], noop=None)
+        @_component_instance.output_types(documents=List[Document], noop=None)
         def run(self, create_document: bool = False):
             if create_document:
                 return {"documents": [Document(id=self._content, content=self._content)]}
@@ -2608,12 +2683,15 @@ def that_has_a_variadic_component_that_receives_partial_inputs(pipeline_class):
     target_fixture="pipeline_data",
 )
 def that_has_a_variadic_component_that_receives_partial_inputs_different_order(pipeline_class):
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class ConditionalDocumentCreator:
         def __init__(self, content: str):
             self._content = content
 
-        @component.output_types(documents=List[Document], noop=None)
+        @_component_instance.output_types(documents=List[Document], noop=None)
         def run(self, create_document: bool = False):
             if create_document:
                 return {"documents": [Document(id=self._content, content=self._content)]}
@@ -2773,9 +2851,12 @@ def that_has_an_answer_joiner_variadic_component(pipeline_class):
 def that_is_linear_and_a_component_in_the_middle_receives_optional_input_from_other_components_and_input_from_the_user(
     pipeline_class,
 ):
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class QueryMetadataExtractor:
-        @component.output_types(filters=Dict[str, str])
+        @_component_instance.output_types(filters=Dict[str, str])
         def run(self, prompt: str):
             metadata = json.loads(prompt)
             filters = []
@@ -2904,9 +2985,12 @@ def that_has_a_cycle_that_would_get_it_stuck(pipeline_class):
         template=template, required_variables=["comment", "invalid_replies", "error_message"]
     )
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeOutputValidator:
-        @component.output_types(
+        @_component_instance.output_types(
             valid_replies=List[str], invalid_replies=Optional[List[str]], error_message=Optional[str]
         )
         def run(self, replies: List[str]):
@@ -2915,9 +2999,12 @@ def that_has_a_cycle_that_would_get_it_stuck(pipeline_class):
                 return {"invalid_replies": ["This is an invalid reply"], "error_message": "this is an error message"}
             return {"valid_replies": replies}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeGenerator:
-        @component.output_types(replies=List[str])
+        @_component_instance.output_types(replies=List[str])
         def run(self, prompt: str):
             return {"replies": ["This is a valid reply"]}
 
@@ -2942,9 +3029,12 @@ def that_has_a_cycle_that_would_get_it_stuck(pipeline_class):
 
 @given("a pipeline that has a loop in the middle", target_fixture="pipeline_data")
 def that_has_a_loop_in_the_middle(pipeline_class):
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeGenerator:
-        @component.output_types(replies=List[str])
+        @_component_instance.output_types(replies=List[str])
         def run(self, prompt: str):
             replies = []
             if getattr(self, "first_run", True):
@@ -2954,9 +3044,12 @@ def that_has_a_loop_in_the_middle(pipeline_class):
                 replies.append("42")
             return {"replies": replies}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class PromptCleaner:
-        @component.output_types(clean_prompt=str)
+        @_component_instance.output_types(clean_prompt=str)
         def run(self, prompt: str):
             return {"clean_prompt": prompt.strip()}
 
@@ -3051,15 +3144,21 @@ def that_has_variadic_component_that_receives_a_conditional_input(pipeline_class
         },
     ]
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class NoOp:
-        @component.output_types(documents=List[Document])
+        @_component_instance.output_types(documents=List[Document])
         def run(self, documents: List[Document]):
             return {"documents": documents}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class CommaSplitter:
-        @component.output_types(documents=List[Document])
+        @_component_instance.output_types(documents=List[Document])
         def run(self, documents: List[Document]):
             res = []
             current_id = 0
@@ -3340,13 +3439,16 @@ def that_has_a_string_variadic_component(pipeline_class):
 
 @given("a pipeline that is an agent that can use RAG", target_fixture="pipeline_data")
 def an_agent_that_can_use_RAG(pipeline_class):
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FixedGenerator:
         def __init__(self, replies):
             self.replies = replies
             self.idx = 0
 
-        @component.output_types(replies=List[str])
+        @_component_instance.output_types(replies=List[str])
         def run(self, prompt: str):
             if self.idx < len(self.replies):
                 replies = [self.replies[self.idx]]
@@ -3358,9 +3460,12 @@ def an_agent_that_can_use_RAG(pipeline_class):
 
             return {"replies": replies}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeRetriever:
-        @component.output_types(documents=List[Document])
+        @_component_instance.output_types(documents=List[Document])
         def run(self, query: str):
             return {
                 "documents": [
@@ -3588,13 +3693,16 @@ Documents:
 
 @given("a pipeline that has a feedback loop", target_fixture="pipeline_data")
 def has_feedback_loop(pipeline_class):
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FixedGenerator:
         def __init__(self, replies):
             self.replies = replies
             self.idx = 0
 
-        @component.output_types(replies=List[str])
+        @_component_instance.output_types(replies=List[str])
         def run(self, prompt: str):
             if self.idx < len(self.replies):
                 replies = [self.replies[self.idx]]
@@ -3752,13 +3860,16 @@ Provide additional feedback on why it fails.
 
 @given("a pipeline created in a non-standard order that has a loop", target_fixture="pipeline_data")
 def has_non_standard_order_loop(pipeline_class):
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FixedGenerator:
         def __init__(self, replies):
             self.replies = replies
             self.idx = 0
 
-        @component.output_types(replies=List[str])
+        @_component_instance.output_types(replies=List[str])
         def run(self, prompt: str):
             if self.idx < len(self.replies):
                 replies = [self.replies[self.idx]]
@@ -3917,13 +4028,16 @@ Provide additional feedback on why it fails.
 
 @given("a pipeline that has an agent with a feedback cycle", target_fixture="pipeline_data")
 def agent_with_feedback_cycle(pipeline_class):
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FixedGenerator:
         def __init__(self, replies):
             self.replies = replies
             self.idx = 0
 
-        @component.output_types(replies=List[str])
+        @_component_instance.output_types(replies=List[str])
         def run(self, prompt: str):
             if self.idx < len(self.replies):
                 replies = [self.replies[self.idx]]
@@ -3935,9 +4049,12 @@ def agent_with_feedback_cycle(pipeline_class):
 
             return {"replies": replies}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeFileEditor:
-        @component.output_types(files=str)
+        @_component_instance.output_types(files=str)
         def run(self, replies: List[str]):
             return {"files": "This is the edited file content."}
 
@@ -4651,13 +4768,16 @@ Provide additional feedback on why it fails.
 
 @given("a pipeline that passes outputs that are consumed in cycle to outside the cycle", target_fixture="pipeline_data")
 def passes_outputs_outside_cycle(pipeline_class):
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FixedGenerator:
         def __init__(self, replies):
             self.replies = replies
             self.idx = 0
 
-        @component.output_types(replies=List[str])
+        @_component_instance.output_types(replies=List[str])
         def run(self, prompt: str):
             if self.idx < len(self.replies):
                 replies = [self.replies[self.idx]]
@@ -4669,9 +4789,12 @@ def passes_outputs_outside_cycle(pipeline_class):
 
             return {"replies": replies}
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class AnswerBuilderWithPrompt:
-        @component.output_types(answers=List[GeneratedAnswer])
+        @_component_instance.output_types(answers=List[GeneratedAnswer])
         def run(self, replies: List[str], query: str, prompt: Optional[str] = None) -> Dict[str, Any]:
             answer = GeneratedAnswer(data=replies[0], query=query, documents=[])
 
@@ -4921,13 +5044,16 @@ FAIL, come on, try again."""
 
 @given("a pipeline with a component that has dynamic default inputs", target_fixture="pipeline_data")
 def pipeline_with_dynamic_defaults(pipeline_class):
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class ParrotWithDynamicDefaultInputs:
         def __init__(self, input_variable: str):
             self.input_variable = input_variable
             component.set_input_type(self, input_variable, str, default="Parrot doesn't only parrot!")
 
-        @component.output_types(response=str)
+        @_component_instance.output_types(response=str)
         def run(self, **kwargs):
             return {"response": kwargs[self.input_variable]}
 
@@ -4953,13 +5079,16 @@ def pipeline_with_dynamic_defaults(pipeline_class):
 
 @given("a pipeline with a component that has variadic dynamic default inputs", target_fixture="pipeline_data")
 def pipeline_with_variadic_dynamic_defaults(pipeline_class):
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class ParrotWithVariadicDynamicDefaultInputs:
         def __init__(self, input_variable: str):
             self.input_variable = input_variable
             component.set_input_type(self, input_variable, Variadic[str], default="Parrot doesn't only parrot!")
 
-        @component.output_types(response=List[str])
+        @_component_instance.output_types(response=List[str])
         def run(self, **kwargs):
             return {"response": kwargs[self.input_variable]}
 
@@ -5208,13 +5337,16 @@ def pipeline_that_converts_files_with_three_joiners_and_a_loop(pipeline_class):
     # can not run anymore.
     # This prevents an edge case where multiple lazy variadic components wait for input and the execution order
     # would otherwise be decided by lexicographical sort.
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class FakeDataExtractor:
         def __init__(self, metas):
             self.metas = metas
             self.current_idx = 0
 
-        @component.output_types(documents=List[Document])
+        @_component_instance.output_types(documents=List[Document])
         def run(self, documents: List[Document]):
             sorted_docs = sorted(documents, key=lambda doc: doc.meta["file_type"])
             if self.current_idx >= len(sorted_docs):
@@ -5369,9 +5501,12 @@ def pipeline_has_components_returning_dataframes(pipeline_class):
     def get_df():
         return DataFrame({"a": [1, 2], "b": [1, 2]})
 
-    @component
+    _component_instance = component()
+
+
+@_component_instance
     class DataFramer:
-        @component.output_types(dataframe=DataFrame)
+        @_component_instance.output_types(dataframe=DataFrame)
         def run(self, dataframe: DataFrame) -> Dict[str, Any]:
             return {"dataframe": get_df()}
 

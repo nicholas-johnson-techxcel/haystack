@@ -4,7 +4,7 @@
 
 import hashlib
 from dataclasses import asdict, dataclass, field, fields
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from numpy import ndarray
 
@@ -62,16 +62,18 @@ class Document(metaclass=_BackwardCompatible):
     id: str = field(default="")
     content: Optional[str] = field(default=None)
     blob: Optional[ByteStream] = field(default=None)
-    meta: Dict[str, Any] = field(default_factory=dict)
+    meta: dict[str, Any] = field(default_factory=dict)
     score: Optional[float] = field(default=None)
-    embedding: Optional[List[float]] = field(default=None)
+    embedding: Optional[list[float]] = field(default=None)
     sparse_embedding: Optional[SparseEmbedding] = field(default=None)
 
     def __repr__(self):
         fields = []
         if self.content is not None:
             fields.append(
-                f"content: '{self.content}'" if len(self.content) < 100 else f"content: '{self.content[:100]}...'"
+                f"content: '{self.content}'"
+                if len(self.content) < 100
+                else f"content: '{self.content[:100]}...'"
             )
         if self.blob is not None:
             fields.append(f"blob: {len(self.blob.data)} bytes")
@@ -82,7 +84,9 @@ class Document(metaclass=_BackwardCompatible):
         if self.embedding is not None:
             fields.append(f"embedding: vector of size {len(self.embedding)}")
         if self.sparse_embedding is not None:
-            fields.append(f"sparse_embedding: vector with {len(self.sparse_embedding.indices)} non-zero elements")
+            fields.append(
+                f"sparse_embedding: vector with {len(self.sparse_embedding.indices)} non-zero elements"
+            )
         fields_str = ", ".join(fields)
         return f"{self.__class__.__name__}(id={self.id}, {fields_str})"
 
@@ -113,7 +117,9 @@ class Document(metaclass=_BackwardCompatible):
         mime_type = self.blob.mime_type if self.blob is not None else None
         meta = self.meta or {}
         embedding = self.embedding if self.embedding is not None else None
-        sparse_embedding = self.sparse_embedding.to_dict() if self.sparse_embedding is not None else ""
+        sparse_embedding = (
+            self.sparse_embedding.to_dict() if self.sparse_embedding is not None else ""
+        )
         data = f"{text}{dataframe}{blob}{mime_type}{meta}{embedding}{sparse_embedding}"
         return hashlib.sha256(data.encode("utf-8")).hexdigest()
 
@@ -144,7 +150,9 @@ class Document(metaclass=_BackwardCompatible):
         The `blob` field is converted to its original type.
         """
         if blob := data.get("blob"):
-            data["blob"] = ByteStream(data=bytes(blob["data"]), mime_type=blob["mime_type"])
+            data["blob"] = ByteStream(
+                data=bytes(blob["data"]), mime_type=blob["mime_type"]
+            )
         if sparse_embedding := data.get("sparse_embedding"):
             data["sparse_embedding"] = SparseEmbedding.from_dict(sparse_embedding)
 
