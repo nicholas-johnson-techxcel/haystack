@@ -2,12 +2,14 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 import httpx
 
 
-def init_http_client(http_client_kwargs: Optional[Dict[str, Any]] = None, async_client: bool = False):
+def init_http_client(
+    http_client_kwargs: dict[str, Any] | None = None, async_client: bool = False
+) -> httpx.Client | httpx.AsyncClient | None:
     """
     Initialize an httpx client based on the http_client_kwargs.
 

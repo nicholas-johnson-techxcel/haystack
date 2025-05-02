@@ -73,7 +73,6 @@ def test_pipeline_running_with_non_serializable_component(telemetry: Mock):
 
     _component_instance = component()
 
-
     @_component_instance
     class Component:
         def __init__(self, api_key: Secret = TokenSecret("api_key")):
@@ -102,7 +101,6 @@ def test_pipeline_running_with_non_serializable_component(telemetry: Mock):
 
 def test_pipeline_running_with_non_dict_telemetry_data(caplog: Any):
     _component_instance = component()
-
 
     @_component_instance
     class Component:

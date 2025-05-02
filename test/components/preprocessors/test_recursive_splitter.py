@@ -831,7 +831,9 @@ def test_run_custom_split_by_dot_and_overlap_3_char_unit():
 
 def test_run_serialization_in_pipeline():
     pipeline = Pipeline()
-    pipeline.add_component("chunker", RecursiveDocumentSplitter(split_length=20, split_overlap=5, separators=["."]))
+    chunker = RecursiveDocumentSplitter(split_length=20, split_overlap=5, separators=["."])
+    chunker.warm_up()
+    pipeline.add_component("chunker", chunker)
     pipeline_dict = pipeline.dumps()
     new_pipeline = Pipeline.loads(pipeline_dict)
     assert pipeline_dict == new_pipeline.dumps()

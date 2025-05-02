@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import os
 import math
-from typing import List
+from typing import Any, List
 
 import pytest
 
@@ -15,7 +15,7 @@ from haystack.components.generators.chat.openai import OpenAIChatGenerator
 
 
 class TestFaithfulnessEvaluator:
-    def test_init_default(self, monkeypatch):
+    def test_init_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
 
         component = FaithfulnessEvaluator()
@@ -70,12 +70,12 @@ class TestFaithfulnessEvaluator:
         assert component._chat_generator.client.api_key == "test-api-key"
         assert component._chat_generator.generation_kwargs == {"response_format": {"type": "json_object"}, "seed": 42}
 
-    def test_init_fail_wo_openai_api_key(self, monkeypatch):
+    def test_init_fail_wo_openai_api_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         with pytest.raises(ValueError, match="None of the .* environment variables are set"):
             FaithfulnessEvaluator()
 
-    def test_init_with_parameters(self, monkeypatch):
+    def test_init_with_parameters(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = FaithfulnessEvaluator(
             examples=[
@@ -99,14 +99,14 @@ class TestFaithfulnessEvaluator:
         assert component._chat_generator.client.api_key == "test-api-key"
         assert component._chat_generator.generation_kwargs == {"response_format": {"type": "json_object"}, "seed": 42}
 
-    def test_init_with_chat_generator(self, monkeypatch):
+    def test_init_with_chat_generator(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         chat_generator = OpenAIChatGenerator(generation_kwargs={"response_format": {"type": "json_object"}, "seed": 42})
         component = FaithfulnessEvaluator(chat_generator=chat_generator)
 
         assert component._chat_generator is chat_generator
 
-    def test_to_dict_with_parameters(self, monkeypatch):
+    def test_to_dict_with_parameters(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("ENV_VAR", "test-api-key")
         chat_generator = OpenAIChatGenerator(
             generation_kwargs={"response_format": {"type": "json_object"}, "seed": 42},
@@ -135,7 +135,7 @@ class TestFaithfulnessEvaluator:
             },
         }
 
-    def test_from_dict(self, monkeypatch):
+    def test_from_dict(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         chat_generator = OpenAIChatGenerator(generation_kwargs={"response_format": {"type": "json_object"}, "seed": 42})
 
@@ -156,7 +156,7 @@ class TestFaithfulnessEvaluator:
             {"inputs": {"predicted_answers": "Football is the most popular sport."}, "outputs": {"score": 0}}
         ]
 
-    def test_pipeline_serde(self, monkeypatch):
+    def test_pipeline_serde(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
 
         component = FaithfulnessEvaluator()
@@ -167,11 +167,11 @@ class TestFaithfulnessEvaluator:
         deserialized_pipeline = Pipeline.loads(serialized_pipeline)
         assert deserialized_pipeline == pipeline
 
-    def test_run_calculates_mean_score(self, monkeypatch):
+    def test_run_calculates_mean_score(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = FaithfulnessEvaluator()
 
-        def chat_generator_run(self, *args, **kwargs):
+        def chat_generator_run(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
             if "Football" in kwargs["messages"][0].text:
                 return {
                     "replies": [ChatMessage.from_assistant('{"statements": ["a", "b"], "statement_scores": [1, 0]}')]
@@ -212,11 +212,11 @@ class TestFaithfulnessEvaluator:
             "meta": None,
         }
 
-    def test_run_no_statements_extracted(self, monkeypatch):
+    def test_run_no_statements_extracted(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = FaithfulnessEvaluator()
 
-        def chat_generator_run(self, *args, **kwargs):
+        def chat_generator_run(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
             if "Football" in kwargs["messages"][0].text:
                 return {
                     "replies": [ChatMessage.from_assistant('{"statements": ["a", "b"], "statement_scores": [1, 0]}')]
@@ -251,17 +251,17 @@ class TestFaithfulnessEvaluator:
             "meta": None,
         }
 
-    def test_run_missing_parameters(self, monkeypatch):
+    def test_run_missing_parameters(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = FaithfulnessEvaluator()
         with pytest.raises(ValueError, match="LLM evaluator expected input parameter"):
             component.run()
 
-    def test_run_returns_nan_raise_on_failure_false(self, monkeypatch):
+    def test_run_returns_nan_raise_on_failure_false(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = FaithfulnessEvaluator(raise_on_failure=False)
 
-        def chat_generator_run(self, *args, **kwargs):
+        def chat_generator_run(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
             if "Python" in kwargs["messages"][0].text:
                 raise Exception("OpenAI API request failed.")
             else:
@@ -307,7 +307,7 @@ class TestFaithfulnessEvaluator:
         reason="Export an env var called OPENAI_API_KEY containing the OpenAI API key to run this test.",
     )
     @pytest.mark.integration
-    def test_live_run(self):
+    def test_live_run(self) -> None:
         questions = ["What is Python and who created it?"]
         contexts = [["Python is a programming language created by Guido van Rossum."]]
         predicted_answers = ["Python is a programming language created by George Lucas."]

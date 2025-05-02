@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Dict, List
-
 from haystack import Document, component
 from haystack.utils.filters import document_matches_filter
 
@@ -36,7 +34,7 @@ class MetadataRouter:
     ```
     """
 
-    def __init__(self, rules: Dict[str, Dict]):
+    def __init__(self, rules: dict[str, dict]):
         """
         Initializes the MetadataRouter component.
 
@@ -83,9 +81,9 @@ class MetadataRouter:
                 raise ValueError(
                     "Invalid filter syntax. See https://docs.haystack.deepset.ai/docs/metadata-filtering for details."
                 )
-        component.set_output_types(self, unmatched=List[Document], **dict.fromkeys(rules, List[Document]))
+        _component_instance.set_output_types(self, unmatched=list[Document], **dict.fromkeys(rules, list[Document]))
 
-    def run(self, documents: List[Document]):
+    def run(self, documents: list[Document]) -> dict[str, list[Document]]:
         """
         Routes the documents.
 
@@ -97,7 +95,7 @@ class MetadataRouter:
             and the values are lists of routed documents.
         """
         unmatched_documents = []
-        output: Dict[str, List[Document]] = {edge: [] for edge in self.rules}
+        output: dict[str, list[Document]] = {edge: [] for edge in self.rules}
 
         for document in documents:
             cur_document_matched = False

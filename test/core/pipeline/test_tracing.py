@@ -6,7 +6,6 @@ from typing import Optional
 from unittest.mock import ANY
 
 import pytest
-from _pytest.monkeypatch import MonkeyPatch
 
 from haystack import Pipeline, component
 from haystack.tracing.tracer import tracer
@@ -96,7 +95,7 @@ class TestTracing:
         ]
 
     def test_with_enabled_content_tracing(
-        self, spying_tracer: SpyingTracer, monkeypatch: MonkeyPatch, pipeline: Pipeline
+        self, spying_tracer: SpyingTracer, monkeypatch: pytest.MonkeyPatch, pipeline: Pipeline
     ) -> None:
         # Monkeypatch to avoid impact on other tests
         monkeypatch.setattr(tracer, "is_content_tracing_enabled", True)

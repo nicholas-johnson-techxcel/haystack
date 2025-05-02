@@ -121,7 +121,7 @@ class TestSimilarityRanker:
             ({"": "cpu:0"}, ComponentDevice.from_multiple(DeviceMap.from_hf({"": "cpu:0"})).to_hf()),
         ],
     )
-    def test_to_dict_device_map(self, device_map, expected):
+    def test_to_dict_device_map(self, device_map: str | dict[str, str], expected: str | dict[str, str]):
         component = TransformersSimilarityRanker(model_kwargs={"device_map": device_map}, token=None)
         data = component.to_dict()
 
@@ -320,7 +320,9 @@ class TestSimilarityRanker:
 
     @patch("haystack.components.rankers.transformers_similarity.AutoTokenizer.from_pretrained")
     @patch("haystack.components.rankers.transformers_similarity.AutoModelForSequenceClassification.from_pretrained")
-    def test_device_map_dict(self, mocked_automodel, _mocked_autotokenizer, monkeypatch):
+    def test_device_map_dict(
+        self, mocked_automodel: MagicMock, _mocked_autotokenizer: MagicMock, monkeypatch: pytest.MonkeyPatch
+    ):
         monkeypatch.delenv("HF_API_TOKEN", raising=False)
         monkeypatch.delenv("HF_TOKEN", raising=False)
         ranker = TransformersSimilarityRanker("model", model_kwargs={"device_map": {"layer_1": 1, "classifier": "cpu"}})

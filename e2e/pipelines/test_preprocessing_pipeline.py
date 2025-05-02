@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+from pathlib import Path
+
 from haystack import Pipeline
 from haystack.components.classifiers import DocumentLanguageClassifier
 from haystack.components.converters import TextFileToDocument
@@ -12,7 +14,7 @@ from haystack.components.writers import DocumentWriter
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 
 
-def test_preprocessing_pipeline(tmp_path):
+def test_preprocessing_pipeline(tmp_path: Path):
     # Create the pipeline and its components
     document_store = InMemoryDocumentStore()
     preprocessing_pipeline = Pipeline()

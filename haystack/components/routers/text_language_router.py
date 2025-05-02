@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Dict, List, Optional
-
 from haystack import component, logging
 from haystack.lazy_imports import LazyImport
 
@@ -50,7 +48,7 @@ class TextLanguageRouter:
     ```
     """
 
-    def __init__(self, languages: Optional[List[str]] = None):
+    def __init__(self, languages: list[str] | None = None):
         """
         Initialize the TextLanguageRouter component.
 
@@ -62,9 +60,9 @@ class TextLanguageRouter:
         if not languages:
             languages = ["en"]
         self.languages = languages
-        component.set_output_types(self, unmatched=str, **dict.fromkeys(languages, str))
+        _component_instance.set_output_types(self, unmatched=str, **dict.fromkeys(languages, str))
 
-    def run(self, text: str) -> Dict[str, str]:
+    def run(self, text: str) -> dict[str, str]:
         """
         Routes the text strings to different output connections based on their language.
 
@@ -84,7 +82,7 @@ class TextLanguageRouter:
             )
             raise TypeError(msg)
 
-        output: Dict[str, str] = {}
+        output: dict[str, str] = {}
 
         detected_language = self._detect_language(text)
         if detected_language in self.languages:
@@ -94,7 +92,7 @@ class TextLanguageRouter:
 
         return output
 
-    def _detect_language(self, text: str) -> Optional[str]:
+    def _detect_language(self, text: str) -> str | None:
         try:
             language = langdetect.detect(text)
         except langdetect.LangDetectException as exception:

@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 import os
+from pathlib import Path
 
 import pytest
 from openai import OpenAIError
@@ -35,7 +36,7 @@ def tools():
 
 
 class TestAzureOpenAIChatGenerator:
-    def test_init_default(self, monkeypatch):
+    def test_init_default(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "test-api-key")
         component = AzureOpenAIChatGenerator(azure_endpoint="some-non-existing-endpoint")
         assert component.client.api_key == "test-api-key"
@@ -43,13 +44,13 @@ class TestAzureOpenAIChatGenerator:
         assert component.streaming_callback is None
         assert not component.generation_kwargs
 
-    def test_init_fail_wo_api_key(self, monkeypatch):
+    def test_init_fail_wo_api_key(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv("AZURE_OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("AZURE_OPENAI_AD_TOKEN", raising=False)
         with pytest.raises(OpenAIError):
             AzureOpenAIChatGenerator(azure_endpoint="some-non-existing-endpoint")
 
-    def test_init_with_parameters(self, tools):
+    def test_init_with_parameters(self, tools: list[Tool]):
         component = AzureOpenAIChatGenerator(
             api_key=Secret.from_token("test-api-key"),
             azure_endpoint="some-non-existing-endpoint",
@@ -68,7 +69,7 @@ class TestAzureOpenAIChatGenerator:
         assert component.azure_ad_token_provider is not None
         assert component.max_retries == 5
 
-    def test_init_with_0_max_retries(self, tools):
+    def test_init_with_0_max_retries(self, tools: list[Tool]):
         """Tests that the max_retries init param is set correctly if equal 0"""
         component = AzureOpenAIChatGenerator(
             api_key=Secret.from_token("test-api-key"),
@@ -89,7 +90,7 @@ class TestAzureOpenAIChatGenerator:
         assert component.azure_ad_token_provider is not None
         assert component.max_retries == 0
 
-    def test_to_dict_default(self, monkeypatch):
+    def test_to_dict_default(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "test-api-key")
         component = AzureOpenAIChatGenerator(azure_endpoint="some-non-existing-endpoint")
         data = component.to_dict()
@@ -114,7 +115,7 @@ class TestAzureOpenAIChatGenerator:
             },
         }
 
-    def test_to_dict_with_parameters(self, monkeypatch):
+    def test_to_dict_with_parameters(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("ENV_VAR", "test-api-key")
         component = AzureOpenAIChatGenerator(
             api_key=Secret.from_env_var("ENV_VAR", strict=False),
@@ -149,7 +150,7 @@ class TestAzureOpenAIChatGenerator:
             },
         }
 
-    def test_from_dict(self, monkeypatch):
+    def test_from_dict(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "test-api-key")
         monkeypatch.setenv("AZURE_OPENAI_AD_TOKEN", "test-ad-token")
         data = {
@@ -202,7 +203,7 @@ class TestAzureOpenAIChatGenerator:
         assert generator.tools_strict == False
         assert generator.http_client_kwargs is None
 
-    def test_pipeline_serialization_deserialization(self, tmp_path, monkeypatch):
+    def test_pipeline_serialization_deserialization(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "test-api-key")
         generator = AzureOpenAIChatGenerator(azure_endpoint="some-non-existing-endpoint")
         p = Pipeline()
@@ -240,14 +241,14 @@ class TestAzureOpenAIChatGenerator:
         q = Pipeline.loads(p_str)
         assert p.to_dict() == q.to_dict(), "Pipeline serialization/deserialization w/ AzureOpenAIChatGenerator failed."
 
-    def test_azure_chat_generator_with_toolset_initialization(self, tools, monkeypatch):
+    def test_azure_chat_generator_with_toolset_initialization(self, tools: list[Tool], monkeypatch: pytest.MonkeyPatch):
         """Test that the AzureOpenAIChatGenerator can be initialized with a Toolset."""
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "test-api-key")
         toolset = Toolset(tools)
         generator = AzureOpenAIChatGenerator(azure_endpoint="some-non-existing-endpoint", tools=toolset)
         assert generator.tools == toolset
 
-    def test_from_dict_with_toolset(self, tools, monkeypatch):
+    def test_from_dict_with_toolset(self, tools: list[Tool], monkeypatch: pytest.MonkeyPatch):
         """Test that the AzureOpenAIChatGenerator can be deserialized from a dictionary with a Toolset."""
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "test-api-key")
         toolset = Toolset(tools)
@@ -288,7 +289,7 @@ class TestAzureOpenAIChatGenerator:
             "the Azure OpenAI endpoint URL to run this test."
         ),
     )
-    def test_live_run_with_tools(self, tools):
+    def test_live_run_with_tools(self, tools: list[Tool]):
         chat_messages = [ChatMessage.from_user("What's the weather like in Paris?")]
         component = AzureOpenAIChatGenerator(organization="HaystackCI", tools=tools)
         results = component.run(chat_messages)
@@ -304,7 +305,7 @@ class TestAzureOpenAIChatGenerator:
         assert tool_call.arguments == {"city": "Paris"}
         assert message.meta["finish_reason"] == "tool_calls"
 
-    def test_to_dict_with_toolset(self, tools, monkeypatch):
+    def test_to_dict_with_toolset(self, tools: list[Tool], monkeypatch: pytest.MonkeyPatch):
         """Test that the AzureOpenAIChatGenerator can be serialized to a dictionary with a Toolset."""
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "test-api-key")
         toolset = Toolset(tools)
@@ -338,7 +339,7 @@ class TestAzureOpenAIChatGenerator:
 
 
 class TestAzureOpenAIChatGeneratorAsync:
-    def test_init_should_also_create_async_client_with_same_args(self, tools):
+    def test_init_should_also_create_async_client_with_same_args(self, tools: list[Tool]):
         component = AzureOpenAIChatGenerator(
             api_key=Secret.from_token("test-api-key"),
             azure_endpoint="some-non-existing-endpoint",
@@ -384,7 +385,7 @@ class TestAzureOpenAIChatGeneratorAsync:
         ),
     )
     @pytest.mark.asyncio
-    async def test_live_run_with_tools_async(self, tools):
+    async def test_live_run_with_tools_async(self, tools: list[Tool]):
         chat_messages = [ChatMessage.from_user("What's the weather like in Paris?")]
         component = AzureOpenAIChatGenerator(tools=tools)
         results = await component.run_async(chat_messages)

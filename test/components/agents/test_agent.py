@@ -13,6 +13,7 @@ import pytest
 from openai import Stream
 from openai.types.chat import ChatCompletionChunk, chat_completion_chunk
 
+from haystack.core.component.component import Component
 from haystack.tracing.logging_tracer import LoggingTracer
 from haystack import Pipeline, tracing
 from haystack.components.agents import Agent
@@ -34,7 +35,7 @@ def streaming_callback_for_serde(chunk: StreamingChunk):
     pass
 
 
-def weather_function(location):
+def weather_function(location: str) -> dict[str, Any]:
     weather_info = {
         "Berlin": {"weather": "mostly sunny", "temperature": 7, "unit": "celsius"},
         "Paris": {"weather": "mostly cloudy", "temperature": 8, "unit": "celsius"},
@@ -127,7 +128,7 @@ class MockChatGeneratorWithoutRunAsync(ChatGenerator):
         return cls()
 
     def run(
-        self, messages: List[ChatMessage], tools: Optional[Union[List[Tool], Toolset]] = None, **kwargs
+        self, messages: List[ChatMessage], tools: Optional[Union[List[Tool], Toolset]] = None, **kwargs: Any
     ) -> Dict[str, Any]:
         return {"replies": [ChatMessage.from_assistant("Hello")]}
 
@@ -145,18 +146,18 @@ class MockChatGeneratorWithRunAsync(ChatGenerator):
         return cls()
 
     def run(
-        self, messages: List[ChatMessage], tools: Optional[Union[List[Tool], Toolset]] = None, **kwargs
+        self, messages: List[ChatMessage], tools: Optional[Union[List[Tool], Toolset]] = None, **kwargs: Any
     ) -> Dict[str, Any]:
         return {"replies": [ChatMessage.from_assistant("Hello")]}
 
     async def run_async(
-        self, messages: List[ChatMessage], tools: Optional[Union[List[Tool], Toolset]] = None, **kwargs
+        self, messages: List[ChatMessage], tools: Optional[Union[List[Tool], Toolset]] = None, **kwargs: Any
     ) -> Dict[str, Any]:
         return {"replies": [ChatMessage.from_assistant("Hello from run_async")]}
 
 
 class TestAgent:
-    def test_output_types(self, weather_tool, component_tool, monkeypatch):
+    def test_output_types(self, weather_tool: Tool, component_tool: Tool, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-key")
         chat_generator = OpenAIChatGenerator()
         agent = Agent(chat_generator=chat_generator, tools=[weather_tool, component_tool])
@@ -164,7 +165,7 @@ class TestAgent:
             "messages": OutputSocket(name="messages", type=List[ChatMessage], receivers=[])
         }
 
-    def test_to_dict(self, weather_tool, component_tool, monkeypatch):
+    def test_to_dict(self, weather_tool: Tool, component_tool: Tool, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-key")
         generator = OpenAIChatGenerator()
         agent = Agent(
@@ -239,7 +240,7 @@ class TestAgent:
             },
         }
 
-    def test_to_dict_with_toolset(self, monkeypatch, weather_tool):
+    def test_to_dict_with_toolset(self, monkeypatch: pytest.MonkeyPatch, weather_tool: Tool):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-key")
         toolset = Toolset(tools=[weather_tool])
         agent = Agent(chat_generator=OpenAIChatGenerator(), tools=toolset)
@@ -295,7 +296,7 @@ class TestAgent:
             },
         }
 
-    def test_from_dict(self, weather_tool, component_tool, monkeypatch):
+    def test_from_dict(self, weather_tool: Tool, component_tool: Component, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-key")
         data = {
             "type": "haystack.components.agents.agent.Agent",
@@ -374,7 +375,7 @@ class TestAgent:
             "messages": {"handler": merge_lists, "type": List[ChatMessage]},
         }
 
-    def test_from_dict_with_toolset(self, monkeypatch):
+    def test_from_dict_with_toolset(self, monkeypatch: pytest.MonkeyPatch, weather_tool: Tool):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-key")
         data = {
             "type": "haystack.components.agents.agent.Agent",
@@ -435,7 +436,7 @@ class TestAgent:
         assert agent.tools[0].function is weather_function
         assert agent.exit_conditions == ["text"]
 
-    def test_serde(self, weather_tool, component_tool, monkeypatch):
+    def test_serde(self, weather_tool: Tool, component_tool: Tool, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("FAKE_OPENAI_KEY", "fake-key")
         generator = OpenAIChatGenerator(api_key=Secret.from_env_var("FAKE_OPENAI_KEY"))
         agent = Agent(
@@ -474,7 +475,9 @@ class TestAgent:
             "messages": {"handler": merge_lists, "type": List[ChatMessage]},
         }
 
-    def test_serde_with_streaming_callback(self, weather_tool, component_tool, monkeypatch):
+    def test_serde_with_streaming_callback(
+        self, weather_tool: Tool, component_tool: Tool, monkeypatch: pytest.MonkeyPatch
+    ):
         monkeypatch.setenv("FAKE_OPENAI_KEY", "fake-key")
         generator = OpenAIChatGenerator(api_key=Secret.from_env_var("FAKE_OPENAI_KEY"))
         agent = Agent(
@@ -491,7 +494,9 @@ class TestAgent:
         deserialized_agent = Agent.from_dict(serialized_agent)
         assert deserialized_agent.streaming_callback is streaming_callback_for_serde
 
-    def test_exit_conditions_validation(self, weather_tool, component_tool, monkeypatch):
+    def test_exit_conditions_validation(
+        self, weather_tool: Tool, component_tool: Tool, monkeypatch: pytest.MonkeyPatch
+    ):
         monkeypatch.setenv("FAKE_OPENAI_KEY", "fake-key")
         generator = OpenAIChatGenerator(api_key=Secret.from_env_var("FAKE_OPENAI_KEY"))
 
@@ -509,7 +514,9 @@ class TestAgent:
         )
         assert agent.exit_conditions == ["text", "weather_tool"]
 
-    def test_run_with_params_streaming(self, openai_mock_chat_completion_chunk, weather_tool):
+    def test_run_with_params_streaming(
+        self, openai_mock_chat_completion_chunk: ChatCompletionChunk, weather_tool: Tool
+    ) -> None:
         chat_generator = OpenAIChatGenerator(api_key=Secret.from_token("test-api-key"))
         streaming_callback_called = False
 
@@ -532,7 +539,7 @@ class TestAgent:
         assert [isinstance(reply, ChatMessage) for reply in response["messages"]]
         assert "Hello" in response["messages"][1].text  # see openai_mock_chat_completion_chunk
 
-    def test_run_with_run_streaming(self, openai_mock_chat_completion_chunk, weather_tool):
+    def test_run_with_run_streaming(self, openai_mock_chat_completion_chunk: ChatCompletionChunk, weather_tool: Tool):
         chat_generator = OpenAIChatGenerator(api_key=Secret.from_token("test-api-key"))
 
         streaming_callback_called = False
@@ -556,7 +563,7 @@ class TestAgent:
         assert [isinstance(reply, ChatMessage) for reply in response["messages"]]
         assert "Hello" in response["messages"][1].text  # see openai_mock_chat_completion_chunk
 
-    def test_keep_generator_streaming(self, openai_mock_chat_completion_chunk, weather_tool):
+    def test_keep_generator_streaming(self, openai_mock_chat_completion_chunk: ChatCompletionChunk, weather_tool: Tool):
         streaming_callback_called = False
 
         def streaming_callback(chunk: StreamingChunk) -> None:
@@ -582,13 +589,13 @@ class TestAgent:
         assert [isinstance(reply, ChatMessage) for reply in response["messages"]]
         assert "Hello" in response["messages"][1].text  # see openai_mock_chat_completion_chunk
 
-    def test_chat_generator_must_support_tools(self, weather_tool):
+    def test_chat_generator_must_support_tools(self, weather_tool: Tool):
         chat_generator = MockChatGeneratorWithoutTools()
 
         with pytest.raises(TypeError, match="MockChatGeneratorWithoutTools does not accept tools"):
             Agent(chat_generator=chat_generator, tools=[weather_tool])
 
-    def test_multiple_llm_responses_with_tool_call(self, monkeypatch, weather_tool):
+    def test_multiple_llm_responses_with_tool_call(self, monkeypatch: pytest.MonkeyPatch, weather_tool: Tool):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-key")
         generator = OpenAIChatGenerator()
 
@@ -614,7 +621,9 @@ class TestAgent:
             == "{'weather': 'mostly sunny', 'temperature': 7, 'unit': 'celsius'}"
         )
 
-    def test_exceed_max_steps(self, monkeypatch, weather_tool, caplog):
+    def test_exceed_max_steps(
+        self, monkeypatch: pytest.MonkeyPatch, weather_tool: Tool, caplog: pytest.LogCaptureFixture
+    ):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-key")
         generator = OpenAIChatGenerator()
 
@@ -635,7 +644,7 @@ class TestAgent:
             agent.run([ChatMessage.from_user("Hello")])
             assert "Agent reached maximum agent steps" in caplog.text
 
-    def test_exit_conditions_checked_across_all_llm_messages(self, monkeypatch, weather_tool):
+    def test_exit_conditions_checked_across_all_llm_messages(self, monkeypatch: pytest.MonkeyPatch, weather_tool: Tool):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-key")
         generator = OpenAIChatGenerator()
 
@@ -663,7 +672,7 @@ class TestAgent:
             == "{'weather': 'mostly sunny', 'temperature': 7, 'unit': 'celsius'}"
         )
 
-    def test_agent_with_no_tools(self, monkeypatch, caplog):
+    def test_agent_with_no_tools(self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-key")
         generator = OpenAIChatGenerator()
 
@@ -688,14 +697,14 @@ class TestAgent:
         assert response["messages"][0].text == "What is the capital of Germany?"
         assert response["messages"][1].text == "Berlin"
 
-    def test_run_with_system_prompt(self, weather_tool):
+    def test_run_with_system_prompt(self, weather_tool: Tool):
         chat_generator = MockChatGeneratorWithoutRunAsync()
         agent = Agent(chat_generator=chat_generator, tools=[weather_tool], system_prompt="This is a system prompt.")
         agent.warm_up()
         response = agent.run([ChatMessage.from_user("What is the weather in Berlin?")])
         assert response["messages"][0].text == "This is a system prompt."
 
-    def test_run_not_warmed_up(self, weather_tool):
+    def test_run_not_warmed_up(self, weather_tool: Tool):
         chat_generator = MockChatGeneratorWithoutRunAsync()
         chat_generator.warm_up = MagicMock()
         agent = Agent(chat_generator=chat_generator, tools=[weather_tool], system_prompt="This is a system prompt.")
@@ -704,7 +713,7 @@ class TestAgent:
 
     @pytest.mark.skipif(not os.environ.get("OPENAI_API_KEY"), reason="OPENAI_API_KEY not set")
     @pytest.mark.integration
-    def test_run(self, weather_tool):
+    def test_run(self, weather_tool: Tool):
         chat_generator = OpenAIChatGenerator(model="gpt-4o-mini")
         agent = Agent(chat_generator=chat_generator, tools=[weather_tool], max_agent_steps=3)
         agent.warm_up()
@@ -732,7 +741,7 @@ class TestAgent:
         assert response["messages"][2].tool_call_results[0].origin is not None
 
     @pytest.mark.asyncio
-    async def test_run_async_falls_back_to_run_when_chat_generator_has_no_run_async(self, weather_tool):
+    async def test_run_async_falls_back_to_run_when_chat_generator_has_no_run_async(self, weather_tool: Tool):
         chat_generator = MockChatGeneratorWithoutRunAsync()
 
         agent = Agent(chat_generator=chat_generator, tools=[weather_tool])
@@ -755,7 +764,7 @@ class TestAgent:
         assert "Hello" in result["messages"][1].text
 
     @pytest.mark.asyncio
-    async def test_run_async_uses_chat_generator_run_async_when_available(self, weather_tool):
+    async def test_run_async_uses_chat_generator_run_async_when_available(self, weather_tool: Tool):
         chat_generator = MockChatGeneratorWithRunAsync()
         agent = Agent(chat_generator=chat_generator, tools=[weather_tool])
         agent.warm_up()
@@ -780,7 +789,9 @@ class TestAgent:
 
 
 class TestAgentTracing:
-    def test_agent_tracing_span_run(self, caplog, monkeypatch, weather_tool):
+    def test_agent_tracing_span_run(
+        self, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch, weather_tool: Tool
+    ):
         chat_generator = MockChatGeneratorWithoutRunAsync()
         agent = Agent(chat_generator=chat_generator, tools=[weather_tool])
 
@@ -840,7 +851,9 @@ class TestAgentTracing:
         tracing.disable_tracing()
 
     @pytest.mark.asyncio
-    async def test_agent_tracing_span_async_run(self, caplog, monkeypatch, weather_tool):
+    async def test_agent_tracing_span_async_run(
+        self, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch, weather_tool: Tool
+    ):
         chat_generator = MockChatGeneratorWithRunAsync()
         agent = Agent(chat_generator=chat_generator, tools=[weather_tool])
 
@@ -899,7 +912,9 @@ class TestAgentTracing:
         tracing.tracer.is_content_tracing_enabled = False
         tracing.disable_tracing()
 
-    def test_agent_tracing_in_pipeline(self, caplog, monkeypatch, weather_tool):
+    def test_agent_tracing_in_pipeline(
+        self, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch, weather_tool: Tool
+    ):
         chat_generator = MockChatGeneratorWithoutRunAsync()
         agent = Agent(chat_generator=chat_generator, tools=[weather_tool])
         agent.warm_up()

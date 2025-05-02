@@ -18,7 +18,6 @@ from unittest.mock import ANY
 import pytest
 from _pytest.capture import CaptureFixture
 from _pytest.logging import LogCaptureFixture
-from _pytest.monkeypatch import MonkeyPatch
 
 import haystack.utils.jupyter
 from haystack import logging as haystack_logging
@@ -43,7 +42,7 @@ def set_context_var_key() -> Generator[str, None, None]:
 
 class TestSkipLoggingConfiguration:
     def test_skip_logging_configuration(
-        self, monkeypatch: MonkeyPatch, capfd: CaptureFixture, caplog: LogCaptureFixture
+        self, monkeypatch: pytest.MonkeyPatch, capfd: CaptureFixture[str], caplog: LogCaptureFixture
     ) -> None:
         monkeypatch.setenv("HAYSTACK_LOGGING_IGNORE_STRUCTLOG", "true")
         haystack_logging.configure_logging()
@@ -59,7 +58,7 @@ class TestSkipLoggingConfiguration:
 
 
 class TestStructuredLoggingConsoleRendering:
-    def test_log_filtering_when_using_debug(self, capfd: CaptureFixture) -> None:
+    def test_log_filtering_when_using_debug(self, capfd: CaptureFixture[str]) -> None:
         haystack_logging.configure_logging(use_json=False)
 
         logger = logging.getLogger(__name__)
@@ -70,7 +69,7 @@ class TestStructuredLoggingConsoleRendering:
         output = capfd.readouterr().err
         assert output == ""
 
-    def test_log_filtering_when_using_debug_and_log_level_is_debug(self, capfd: CaptureFixture) -> None:
+    def test_log_filtering_when_using_debug_and_log_level_is_debug(self, capfd: CaptureFixture[str]) -> None:
         haystack_logging.configure_logging(use_json=False)
 
         logger = logging.getLogger(__name__)
@@ -84,7 +83,7 @@ class TestStructuredLoggingConsoleRendering:
         assert "{" not in output, "Seems JSON rendering is enabled when it should not be"
 
     def test_console_rendered_structured_log_even_if_no_tty_but_python_config(
-        self, capfd: CaptureFixture, monkeypatch: MonkeyPatch
+        self, capfd: CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr(sys.stderr, "isatty", lambda: False)
 
@@ -100,7 +99,7 @@ class TestStructuredLoggingConsoleRendering:
         assert "{" not in output, "Seems JSON rendering is enabled when it should not be"
 
     def test_console_rendered_structured_log_if_in_ipython(
-        self, capfd: CaptureFixture, monkeypatch: MonkeyPatch
+        self, capfd: CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr(builtins, "__IPYTHON__", "true", raising=False)
 
@@ -116,7 +115,7 @@ class TestStructuredLoggingConsoleRendering:
         assert "{" not in output, "Seems JSON rendering is enabled when it should not be"
 
     def test_console_rendered_structured_log_even_in_jupyter(
-        self, capfd: CaptureFixture, monkeypatch: MonkeyPatch
+        self, capfd: CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr(haystack.utils.jupyter, haystack.utils.jupyter.is_in_jupyter.__name__, lambda: True)
 
@@ -132,7 +131,7 @@ class TestStructuredLoggingConsoleRendering:
         assert "{" not in output, "Seems JSON rendering is enabled when it should not be"
 
     def test_console_rendered_structured_log_even_if_no_tty_but_forced_through_env(
-        self, capfd: CaptureFixture, monkeypatch: MonkeyPatch
+        self, capfd: CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setenv("HAYSTACK_LOGGING_USE_JSON", "false")
 
@@ -147,7 +146,7 @@ class TestStructuredLoggingConsoleRendering:
         assert "Hello, structured logging!" in output
         assert "{" not in output, "Seems JSON rendering is enabled when it should not be"
 
-    def test_console_rendered_structured_log(self, capfd: CaptureFixture) -> None:
+    def test_console_rendered_structured_log(self, capfd: CaptureFixture[str]) -> None:
         haystack_logging.configure_logging()
 
         logger = logging.getLogger(__name__)
@@ -168,7 +167,7 @@ class TestStructuredLoggingConsoleRendering:
         assert "key1" in output
         assert "value1" in output
 
-    def test_logging_exceptions(self, capfd: CaptureFixture) -> None:
+    def test_logging_exceptions(self, capfd: CaptureFixture[str]) -> None:
         haystack_logging.configure_logging()
 
         logger = logging.getLogger(__name__)
@@ -186,7 +185,7 @@ class TestStructuredLoggingConsoleRendering:
 
         assert "An error happened" in output
 
-    def test_logging_of_contextvars(self, capfd: CaptureFixture, set_context_var_key: str) -> None:
+    def test_logging_of_contextvars(self, capfd: CaptureFixture[str], set_context_var_key: str) -> None:
         haystack_logging.configure_logging()
 
         logger = logging.getLogger(__name__)
@@ -199,7 +198,7 @@ class TestStructuredLoggingConsoleRendering:
 
 
 class TestStructuredLoggingJSONRendering:
-    def test_logging_as_json_if_not_atty(self, capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
+    def test_logging_as_json_if_not_atty(self, capfd: CaptureFixture[str], monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(sys.stderr, "isatty", lambda: False)
         haystack_logging.configure_logging()
 
@@ -220,7 +219,7 @@ class TestStructuredLoggingJSONRendering:
             "module": "test.test_logging",
         }
 
-    def test_logging_as_json(self, capfd: CaptureFixture) -> None:
+    def test_logging_as_json(self, capfd: CaptureFixture[str]) -> None:
         haystack_logging.configure_logging(use_json=True)
 
         logger = logging.getLogger(__name__)
@@ -240,7 +239,9 @@ class TestStructuredLoggingJSONRendering:
             "module": "test.test_logging",
         }
 
-    def test_logging_as_json_enabling_via_env(self, capfd: CaptureFixture, monkeypatch: MonkeyPatch) -> None:
+    def test_logging_as_json_enabling_via_env(
+        self, capfd: CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         monkeypatch.setenv("HAYSTACK_LOGGING_USE_JSON", "true")
         haystack_logging.configure_logging()
 
@@ -262,7 +263,7 @@ class TestStructuredLoggingJSONRendering:
         }
 
     def test_logging_of_contextvars(
-        self, capfd: CaptureFixture, monkeypatch: MonkeyPatch, set_context_var_key: str
+        self, capfd: CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, set_context_var_key: str
     ) -> None:
         monkeypatch.setenv("HAYSTACK_LOGGING_USE_JSON", "true")
         haystack_logging.configure_logging()
@@ -285,7 +286,7 @@ class TestStructuredLoggingJSONRendering:
             "module": "test.test_logging",
         }
 
-    def test_logging_exceptions_json(self, capfd: CaptureFixture) -> None:
+    def test_logging_exceptions_json(self, capfd: CaptureFixture[str]) -> None:
         haystack_logging.configure_logging(use_json=True)
 
         logger = logging.getLogger(__name__)
@@ -334,7 +335,7 @@ class TestStructuredLoggingJSONRendering:
 
 class TestLogTraceCorrelation:
     def test_trace_log_correlation_python_logs_with_console_rendering(
-        self, spying_tracer: SpyingTracer, capfd: CaptureFixture
+        self, spying_tracer: SpyingTracer, capfd: CaptureFixture[str]
     ) -> None:
         haystack_logging.configure_logging(use_json=False)
 
@@ -345,7 +346,7 @@ class TestLogTraceCorrelation:
         output = capfd.readouterr().err
         assert "trace_id" not in output
 
-    def test_trace_log_correlation_python_logs(self, spying_tracer: SpyingTracer, capfd: CaptureFixture) -> None:
+    def test_trace_log_correlation_python_logs(self, spying_tracer: SpyingTracer, capfd: CaptureFixture[str]) -> None:
         haystack_logging.configure_logging(use_json=True)
 
         with spying_tracer.trace("test-operation") as span:
@@ -367,7 +368,7 @@ class TestLogTraceCorrelation:
             "module": "test.test_logging",
         }
 
-    def test_trace_log_correlation_no_span(self, spying_tracer: SpyingTracer, capfd: CaptureFixture) -> None:
+    def test_trace_log_correlation_no_span(self, spying_tracer: SpyingTracer, capfd: CaptureFixture[str]) -> None:
         haystack_logging.configure_logging(use_json=True)
 
         logger = logging.getLogger(__name__)
@@ -387,7 +388,7 @@ class TestLogTraceCorrelation:
             "module": "test.test_logging",
         }
 
-    def test_trace_log_correlation_no_tracer(self, capfd: CaptureFixture) -> None:
+    def test_trace_log_correlation_no_tracer(self, capfd: CaptureFixture[str]) -> None:
         haystack_logging.configure_logging(use_json=True)
 
         logger = logging.getLogger(__name__)
@@ -410,7 +411,7 @@ class TestLogTraceCorrelation:
 
 class TestCompositeLogger:
     def test_correct_stack_level_with_stdlib_rendering(
-        self, monkeypatch: MonkeyPatch, capfd: CaptureFixture, caplog: LogCaptureFixture
+        self, monkeypatch: pytest.MonkeyPatch, capfd: CaptureFixture[str], caplog: LogCaptureFixture
     ) -> None:
         monkeypatch.setenv("HAYSTACK_LOGGING_IGNORE_STRUCTLOG", "true")
         haystack_logging.configure_logging()
@@ -425,7 +426,7 @@ class TestCompositeLogger:
         # Nothing should be captured by capfd since structlog is not configured
         assert capfd.readouterr().err == ""
 
-    def test_correct_stack_level_with_consoler_rendering(self, capfd: CaptureFixture) -> None:
+    def test_correct_stack_level_with_consoler_rendering(self, capfd: CaptureFixture[str]) -> None:
         haystack_logging.configure_logging(use_json=False)
 
         logger = haystack_logging.getLogger(__name__)
@@ -446,7 +447,7 @@ class TestCompositeLogger:
             ("critical", "critical"),
         ],
     )
-    def test_various_levels(self, capfd: LogCaptureFixture, method: str, expected_level: str) -> None:
+    def test_various_levels(self, capfd: CaptureFixture[str], method: str, expected_level: str) -> None:
         haystack_logging.configure_logging(use_json=True)
 
         logger = haystack_logging.getLogger(__name__)
@@ -469,7 +470,7 @@ class TestCompositeLogger:
             "module": "test.test_logging",
         }
 
-    def test_log(self, capfd: LogCaptureFixture) -> None:
+    def test_log(self, capfd: CaptureFixture[str]) -> None:
         haystack_logging.configure_logging(use_json=True)
 
         logger = haystack_logging.getLogger(__name__)
@@ -491,7 +492,7 @@ class TestCompositeLogger:
             "module": "test.test_logging",
         }
 
-    def test_log_json_content(self, capfd: LogCaptureFixture) -> None:
+    def test_log_json_content(self, capfd: CaptureFixture[str]) -> None:
         haystack_logging.configure_logging(use_json=True)
 
         logger = haystack_logging.getLogger(__name__)
@@ -513,7 +514,7 @@ class TestCompositeLogger:
             "module": "test.test_logging",
         }
 
-    def test_log_with_string_cast(self, capfd: LogCaptureFixture) -> None:
+    def test_log_with_string_cast(self, capfd: CaptureFixture[str]) -> None:
         haystack_logging.configure_logging(use_json=True)
 
         logger = haystack_logging.getLogger(__name__)

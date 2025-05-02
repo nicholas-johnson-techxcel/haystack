@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from requests import HTTPError, RequestException, Timeout
@@ -370,12 +370,12 @@ def mock_searchapi_search_result():
 
 
 class TestSearchApiSearchAPI:
-    def test_init_fail_wo_api_key(self, monkeypatch):
+    def test_init_fail_wo_api_key(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv("SEARCHAPI_API_KEY", raising=False)
         with pytest.raises(ValueError, match="None of the .* environment variables are set"):
             SearchApiWebSearch()
 
-    def test_to_dict(self, monkeypatch):
+    def test_to_dict(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("SEARCHAPI_API_KEY", "test-api-key")
         component = SearchApiWebSearch(
             top_k=10, allowed_domains=["testdomain.com"], search_params={"param": "test params"}
@@ -392,7 +392,7 @@ class TestSearchApiSearchAPI:
         }
 
     @pytest.mark.parametrize("top_k", [1, 5, 7])
-    def test_web_search_top_k(self, mock_searchapi_search_result, top_k: int):
+    def test_web_search_top_k(self, mock_searchapi_search_result: MagicMock, top_k: int):
         ws = SearchApiWebSearch(api_key=Secret.from_token("test-api-key"), top_k=top_k)
         results = ws.run(query="Who is CEO of Microsoft?")
         documents = results["documents"]
@@ -403,7 +403,7 @@ class TestSearchApiSearchAPI:
         assert all(link.startswith("http") for link in links)
 
     @patch("requests.get")
-    def test_timeout_error(self, mock_get):
+    def test_timeout_error(self, mock_get: MagicMock):
         mock_get.side_effect = Timeout
         ws = SearchApiWebSearch(api_key=Secret.from_token("test-api-key"))
 
@@ -411,7 +411,7 @@ class TestSearchApiSearchAPI:
             ws.run(query="Who is CEO of Microsoft?")
 
     @patch("requests.get")
-    def test_request_exception(self, mock_get):
+    def test_request_exception(self, mock_get: MagicMock):
         mock_get.side_effect = RequestException
         ws = SearchApiWebSearch(api_key=Secret.from_token("test-api-key"))
 
@@ -419,7 +419,7 @@ class TestSearchApiSearchAPI:
             ws.run(query="Who is CEO of Microsoft?")
 
     @patch("requests.get")
-    def test_bad_response_code(self, mock_get):
+    def test_bad_response_code(self, mock_get: MagicMock):
         mock_response = mock_get.return_value
         mock_response.status_code = 404
         mock_response.raise_for_status.side_effect = HTTPError
@@ -439,6 +439,6 @@ class TestSearchApiSearchAPI:
         documents = results["documents"]
         links = results["links"]
         assert len(documents) == len(links) == 10
-        assert all(isinstance(doc, Document) for doc in results)
+        assert all(isinstance(doc, Document) for doc in documents)
         assert all(isinstance(link, str) for link in links)
         assert all(link.startswith("http") for link in links)

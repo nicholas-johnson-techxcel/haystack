@@ -2,12 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Callable, List, Literal, Optional
+from collections.abc import Callable
+from typing import Any, Literal
 
 from haystack import Pipeline, default_from_dict, default_to_dict, super_component
 from haystack.components.preprocessors.document_cleaner import DocumentCleaner
 from haystack.components.preprocessors.document_splitter import DocumentSplitter, Language
-from haystack.dataclasses import Document
 from haystack.utils import deserialize_callable, serialize_callable
 
 
@@ -39,7 +39,7 @@ class DocumentPreprocessor:
         split_length: int = 250,
         split_overlap: int = 0,
         split_threshold: int = 0,
-        splitting_function: Optional[Callable[[str], List[str]]] = None,
+        splitting_function: Callable[[str], list[str]] | None = None,
         respect_sentence_boundary: bool = False,
         language: Language = "en",
         use_split_rules: bool = True,
@@ -49,9 +49,9 @@ class DocumentPreprocessor:
         remove_extra_whitespaces: bool = True,
         remove_repeated_substrings: bool = False,
         keep_id: bool = False,
-        remove_substrings: Optional[List[str]] = None,
-        remove_regex: Optional[str] = None,
-        unicode_normalization: Optional[Literal["NFC", "NFKC", "NFD", "NFKD"]] = None,
+        remove_substrings: list[str] | None = None,
+        remove_regex: str | None = None,
+        unicode_normalization: Literal["NFC", "NFKC", "NFD", "NFKD"] | None = None,
         ascii_only: bool = False,
     ) -> None:
         """

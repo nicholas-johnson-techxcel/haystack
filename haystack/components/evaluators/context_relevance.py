@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from statistics import mean
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from haystack import component, default_from_dict, default_to_dict
 from haystack.components.evaluators.llm_evaluator import LLMEvaluator
@@ -102,10 +102,10 @@ class ContextRelevanceEvaluator(LLMEvaluator):
 
     def __init__(  # pylint: disable=too-many-positional-arguments
         self,
-        examples: Optional[List[Dict[str, Any]]] = None,
+        examples: list[dict[str, Any]] | None = None,
         progress_bar: bool = True,
         raise_on_failure: bool = True,
-        chat_generator: Optional[ChatGenerator] = None,
+        chat_generator: ChatGenerator | None = None,
     ):
         """
         Creates an instance of ContextRelevanceEvaluator.
@@ -143,7 +143,7 @@ class ContextRelevanceEvaluator(LLMEvaluator):
             "required to answer the following question. If no relevant sentences are found, or if you "
             "believe the question cannot be answered from the given context, return an empty list, example: []"
         )
-        self.inputs = [("questions", List[str]), ("contexts", List[List[str]])]
+        self.inputs = [("questions", list[str]), ("contexts", list[list[str]])]
         self.outputs = ["relevant_statements"]
         self.examples = examples or _DEFAULT_EXAMPLES
 
@@ -157,8 +157,8 @@ class ContextRelevanceEvaluator(LLMEvaluator):
             progress_bar=progress_bar,
         )
 
-    @_component_instance.output_types(score=float, results=List[Dict[str, Any]])
-    def run(self, **inputs) -> Dict[str, Any]:
+    @_component_instance.output_types(score=float, results=list[dict[str, Any]])
+    def run(self, **inputs: dict[str, Any]) -> dict[str, Any]:
         """
         Run the LLM evaluator.
 
@@ -188,7 +188,7 @@ class ContextRelevanceEvaluator(LLMEvaluator):
 
         return result
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize this component to a dictionary.
 
@@ -204,7 +204,7 @@ class ContextRelevanceEvaluator(LLMEvaluator):
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ContextRelevanceEvaluator":
+    def from_dict(cls, data: dict[str, Any]) -> "ContextRelevanceEvaluator":
         """
         Deserialize this component from a dictionary.
 

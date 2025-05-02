@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 import io
 import sys
-from unittest.mock import mock_open, patch
+from pathlib import Path
+from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
@@ -99,7 +100,7 @@ class TestFileTypeRouter:
         assert len(output["application/vnd.ms-outlook"]) == 1
         assert not output.get("unclassified")
 
-    def test_run_with_single_meta(self, test_files_path):
+    def test_run_with_single_meta(self, test_files_path: Path):
         """
         Test if the component runs correctly when a single metadata dictionary is provided.
         """
@@ -218,7 +219,7 @@ class TestFileTypeRouter:
         assert len(output[r"image/jpeg"]) == 1
         assert len(output.get("unclassified")) == 1
 
-    def test_run_with_bytestreams_and_file_paths(self, test_files_path):
+    def test_run_with_bytestreams_and_file_paths(self, test_files_path: Path):
         """
         Test if the component raises an error for unsupported data source types.
         """
@@ -253,7 +254,7 @@ class TestFileTypeRouter:
         output = router.run(sources=[])
         assert not output
 
-    def test_unlisted_extensions(self, test_files_path):
+    def test_unlisted_extensions(self, test_files_path: Path):
         """
         Test that the component correctly handles files with non specified mime types.
         """
@@ -268,7 +269,7 @@ class TestFileTypeRouter:
         assert "mp3" not in output
         assert len(output.get("unclassified")) == 2
 
-    def test_no_extension(self, test_files_path):
+    def test_no_extension(self, test_files_path: Path):
         """
         Test that the component ignores files with no extension.
         """
@@ -297,7 +298,7 @@ class TestFileTypeRouter:
         with pytest.raises(ValueError, match="Invalid regex pattern"):
             FileTypeRouter(mime_types=["[Invalid-Regex"])
 
-    def test_regex_mime_type_matching(self, test_files_path):
+    def test_regex_mime_type_matching(self, test_files_path: Path):
         """
         Test if the component correctly matches mime types using regex.
         """
@@ -313,7 +314,7 @@ class TestFileTypeRouter:
         assert len(output[r"image\/.*"]) == 1, "Failed to match image file with regex"
 
     @patch("pathlib.Path.open", new_callable=mock_open, read_data=b"Mock file content.")
-    def test_exact_mime_type_matching(self, mock_file):
+    def test_exact_mime_type_matching(self, mock_file: Mock):
         """
         Test if the component correctly matches mime types exactly, without regex patterns.
         """
@@ -370,7 +371,7 @@ class TestFileTypeRouter:
         assert new_pipeline == pipeline
 
     @pytest.mark.integration
-    def test_pipeline_with_converters(self, test_files_path):
+    def test_pipeline_with_converters(self, test_files_path: Path):
         """
         Test if the component runs correctly in a pipeline with converters and passes metadata correctly.
         """

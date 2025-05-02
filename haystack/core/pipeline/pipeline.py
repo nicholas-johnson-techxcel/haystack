@@ -2,8 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+from collections.abc import Mapping
 from copy import deepcopy
-from typing import Any, Dict, Mapping, Optional, Set, cast
+from typing import Any, cast
 
 from haystack import logging, tracing
 from haystack.core.component import Component
@@ -30,11 +31,11 @@ class Pipeline(PipelineBase):
     @staticmethod
     def _run_component(
         component_name: str,
-        component: Dict[str, Any],
-        inputs: Dict[str, Any],
-        component_visits: Dict[str, int],
-        parent_span: Optional[tracing.Span] = None,
-    ) -> Dict[str, Any]:
+        component: dict[str, Any],
+        inputs: dict[str, Any],
+        component_visits: dict[str, int],
+        parent_span: tracing.Span | None = None,
+    ) -> dict[str, Any]:
         """
         Runs a Component with the given inputs.
 
@@ -68,11 +69,9 @@ class Pipeline(PipelineBase):
             span.set_tag(_COMPONENT_VISITS, component_visits[component_name])
             span.set_content_tag(_COMPONENT_OUTPUT, component_output)
 
-            return cast(Dict[Any, Any], component_output)
+            return cast(dict[Any, Any], component_output)
 
-    def run(  # noqa: PLR0915, PLR0912
-        self, data: Dict[str, Any], include_outputs_from: Optional[Set[str]] = None
-    ) -> Dict[str, Any]:
+    def run(self, data: dict[str, Any], include_outputs_from: set[str] | None = None) -> dict[str, Any]:
         """
         Runs the Pipeline with given input data.
 
@@ -190,7 +189,7 @@ class Pipeline(PipelineBase):
 
         cached_topological_sort = None
 
-        pipeline_outputs: Dict[str, Any] = {}
+        pipeline_outputs: dict[str, Any] = {}
         with tracing.tracer.trace(
             "haystack.pipeline.run",
             tags={

@@ -1,8 +1,6 @@
 # SPDX-FileCopyrightText: 2022-present deepset GmbH <info@deepset.ai>
 #
 # SPDX-License-Identifier: Apache-2.0
-import pytest
-
 from haystack.dataclasses import Document
 from haystack.testing.factory import document_store_class, component_class
 from haystack.core.component import component

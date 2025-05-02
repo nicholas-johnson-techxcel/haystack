@@ -86,6 +86,7 @@ path=".venv"
 
 # we override dependencies from the default environment
 dependencies = [
+  #"spacy>=3.8,<3.9",
   "cmake==3.27", # https://github.com/google/sentencepiece/issues/932#issuecomment-2778586629
   "numpy>=2", # Haystack is compatible both with numpy 1.x and 2.x, but we test with 2.x
   "numba>=0.54.0", # This pin helps uv resolve the dependency tree. See https://github.com/astral-sh/uv/issues/7881
@@ -304,6 +305,7 @@ skip-magic-trailing-comma = true
 isort.split-on-trailing-comma = false
 exclude = ["test/**", "e2e/**"]
 select = [
+  "UP",
   "ASYNC", # flake8-async
   "C4",    # flake8-comprehensions
   "C90",   # McCabe cyclomatic complexity

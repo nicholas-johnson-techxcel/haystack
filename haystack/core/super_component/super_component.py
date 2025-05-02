@@ -4,10 +4,10 @@
 
 import functools
 from types import new_class
-from typing import Any, Optional, Tuple, Union
+from typing import Any
 
 from haystack import logging
-from haystack.core.component.component import Component, component
+from haystack.core.component.component import component
 from haystack.core.pipeline.async_pipeline import AsyncPipeline
 from haystack.core.pipeline.pipeline import Pipeline
 from haystack.core.pipeline.utils import parse_connect_string
@@ -36,9 +36,9 @@ _component_instance = component()
 class _SuperComponent:
     def __init__(
         self,
-        pipeline: Union[Pipeline, AsyncPipeline],
-        input_mapping: Optional[dict[str, list[str]]] = None,
-        output_mapping: Optional[dict[str, str]] = None,
+        pipeline: Pipeline | AsyncPipeline,
+        input_mapping: dict[str, list[str]] | None = None,
+        output_mapping: dict[str, str] | None = None,
     ) -> None:
         """
         Creates a SuperComponent with optional input and output mappings.
@@ -54,7 +54,7 @@ class _SuperComponent:
         if pipeline is None:
             raise ValueError("Pipeline must be provided to SuperComponent.")
 
-        self.pipeline: Union[Pipeline, AsyncPipeline] = pipeline
+        self.pipeline: Pipeline | AsyncPipeline = pipeline
         self._warmed_up = False
 
         # Determine input types based on pipeline and mapping
@@ -66,7 +66,7 @@ class _SuperComponent:
         input_types = self._resolve_input_types_from_mapping(pipeline_inputs, resolved_input_mapping)
         # Set input types on the component
         for input_name, info in input_types.items():
-            component.set_input_type(self, name=input_name, **info)
+            _component_instance.set_input_type(self, name=input_name, **info)
 
         self.input_mapping: dict[str, list[str]] = resolved_input_mapping
         self._original_input_mapping = input_mapping
@@ -81,7 +81,7 @@ class _SuperComponent:
         self._validate_output_mapping(all_possible_pipeline_outputs, resolved_output_mapping)
         output_types = self._resolve_output_types_from_mapping(all_possible_pipeline_outputs, resolved_output_mapping)
         # Set output types on the component
-        component.set_output_types(self, **output_types)
+        _component_instance.set_output_types(self, **output_types)
         self.output_mapping: dict[str, str] = resolved_output_mapping
         self._original_output_mapping = output_mapping
 
@@ -140,7 +140,7 @@ class _SuperComponent:
         return self._map_explicit_outputs(pipeline_outputs, self.output_mapping)
 
     @staticmethod
-    def _split_component_path(path: str) -> Tuple[str, str]:
+    def _split_component_path(path: str) -> tuple[str, str]:
         """
         Splits a component path into a component name and a socket name.
 
@@ -373,7 +373,6 @@ class _SuperComponent:
         return serialized
 
 
-@_component_instance
 class SuperComponent(_SuperComponent):
     """
     A class for creating super components that wrap around a Pipeline.
@@ -528,4 +527,4 @@ def super_component[T: type](cls: T) -> T:
     new_cls.__doc__ = cls.__doc__
 
     # Apply the component decorator to the new class
-    return _component_instance(new_cls)
+    return component()(new_cls)

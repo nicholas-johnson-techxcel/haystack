@@ -6,6 +6,7 @@
 # Spacy is not installed in the test environment to keep the CI fast.
 # We test the Spacy backend in e2e/pipelines/test_named_entity_extractor.py.
 
+from pathlib import Path
 from haystack.utils.auth import Secret
 import pytest
 
@@ -45,7 +46,7 @@ def test_named_entity_extractor_serde():
         _ = NamedEntityExtractor.from_dict(serde_data)
 
 
-def test_to_dict_default(monkeypatch):
+def test_to_dict_default(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("HF_API_TOKEN", raising=False)
 
     component = NamedEntityExtractor(
@@ -94,7 +95,7 @@ def test_to_dict_with_parameters():
     }
 
 
-def test_named_entity_extractor_from_dict_no_default_parameters_hf(monkeypatch):
+def test_named_entity_extractor_from_dict_no_default_parameters_hf(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("HF_API_TOKEN", raising=False)
 
     data = {
@@ -108,7 +109,7 @@ def test_named_entity_extractor_from_dict_no_default_parameters_hf(monkeypatch):
 
 
 # tests for NamedEntityExtractor serialization/deserialization in a pipeline
-def test_named_entity_extractor_pipeline_serde(tmp_path):
+def test_named_entity_extractor_pipeline_serde(tmp_path: Path):
     extractor = NamedEntityExtractor(backend=NamedEntityExtractorBackend.HUGGING_FACE, model="dslim/bert-base-NER")
     p = Pipeline()
     p.add_component(instance=extractor, name="extractor")

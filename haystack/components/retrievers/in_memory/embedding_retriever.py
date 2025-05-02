@@ -2,15 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Dict, Optional
+from typing import Any
 
-from haystack import (
-    DeserializationError,
-    Document,
-    component,
-    default_from_dict,
-    default_to_dict,
-)
+from haystack import DeserializationError, Document, component, default_from_dict, default_to_dict
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 from haystack.document_stores.types import FilterPolicy
 
@@ -62,7 +56,7 @@ class InMemoryEmbeddingRetriever:
     def __init__(
         self,
         document_store: InMemoryDocumentStore,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
         top_k: int = 10,
         scale_score: bool = False,
         return_embedding: bool = False,
@@ -92,16 +86,12 @@ class InMemoryEmbeddingRetriever:
             If the specified top_k is not > 0.
         """
         if not isinstance(document_store, InMemoryDocumentStore):
-            raise ValueError(
-                "document_store must be an instance of InMemoryDocumentStore"
-            )
+            raise ValueError("document_store must be an instance of InMemoryDocumentStore")
 
         self.document_store = document_store
 
         if top_k <= 0:
-            raise ValueError(
-                f"top_k must be greater than 0. Currently, top_k is {top_k}"
-            )
+            raise ValueError(f"top_k must be greater than 0. Currently, top_k is {top_k}")
 
         self.filters = filters
         self.top_k = top_k
@@ -109,13 +99,13 @@ class InMemoryEmbeddingRetriever:
         self.return_embedding = return_embedding
         self.filter_policy = filter_policy
 
-    def _get_telemetry_data(self) -> Dict[str, Any]:
+    def _get_telemetry_data(self) -> dict[str, Any]:
         """
         Data that is sent to Posthog for usage analytics.
         """
         return {"document_store": type(self.document_store).__name__}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serializes the component to a dictionary.
 
@@ -134,7 +124,7 @@ class InMemoryEmbeddingRetriever:
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "InMemoryEmbeddingRetriever":
+    def from_dict(cls, data: dict[str, Any]) -> "InMemoryEmbeddingRetriever":
         """
         Deserializes the component from a dictionary.
 
@@ -147,13 +137,9 @@ class InMemoryEmbeddingRetriever:
         if "document_store" not in init_params:
             raise DeserializationError("Missing 'document_store' in serialization data")
         if "type" not in init_params["document_store"]:
-            raise DeserializationError(
-                "Missing 'type' in document store's serialization data"
-            )
+            raise DeserializationError("Missing 'type' in document store's serialization data")
         if "filter_policy" in init_params:
-            init_params["filter_policy"] = FilterPolicy.from_str(
-                init_params["filter_policy"]
-            )
+            init_params["filter_policy"] = FilterPolicy.from_str(init_params["filter_policy"])
         data["init_parameters"]["document_store"] = InMemoryDocumentStore.from_dict(
             data["init_parameters"]["document_store"]
         )
@@ -163,10 +149,10 @@ class InMemoryEmbeddingRetriever:
     def run(
         self,
         query_embedding: list[float],
-        filters: Optional[Dict[str, Any]] = None,
-        top_k: Optional[int] = None,
-        scale_score: Optional[bool] = None,
-        return_embedding: Optional[bool] = None,
+        filters: dict[str, Any] | None = None,
+        top_k: int | None = None,
+        scale_score: bool | None = None,
+        return_embedding: bool | None = None,
     ) -> dict[str, Any]:
         """
         Run the InMemoryEmbeddingRetriever on the given input data.
@@ -213,10 +199,10 @@ class InMemoryEmbeddingRetriever:
     async def run_async(
         self,
         query_embedding: list[float],
-        filters: Optional[Dict[str, Any]] = None,
-        top_k: Optional[int] = None,
-        scale_score: Optional[bool] = None,
-        return_embedding: Optional[bool] = None,
+        filters: dict[str, Any] | None = None,
+        top_k: int | None = None,
+        scale_score: bool | None = None,
+        return_embedding: bool | None = None,
     ) -> dict[str, Any]:
         """
         Run the InMemoryEmbeddingRetriever on the given input data.

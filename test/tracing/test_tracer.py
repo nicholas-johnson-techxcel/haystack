@@ -7,7 +7,6 @@ from unittest.mock import Mock, patch
 import ddtrace
 import opentelemetry.trace
 import pytest
-from _pytest.monkeypatch import MonkeyPatch
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace import TracerProvider
@@ -109,7 +108,7 @@ class TestAutoEnableTracer:
         assert tracer.actual_tracer is my_tracker
 
     def test_skip_auto_enable_if_tracing_disabled_via_env(
-        self, monkeypatch: MonkeyPatch, configured_opentelemetry_tracing: None
+        self, monkeypatch: pytest.MonkeyPatch, configured_opentelemetry_tracing: None
     ) -> None:
         monkeypatch.setenv("HAYSTACK_AUTO_TRACE_ENABLED", "false")
 
@@ -133,20 +132,20 @@ class TestAutoEnableTracer:
         assert isinstance(activated_tracer, DatadogTracer)
         assert is_tracing_enabled()
 
-    def test__auto_configured_opentelemetry_tracer(self, configured_opentelemetry_tracing):
+    def test__auto_configured_opentelemetry_tracer(self, configured_opentelemetry_tracing: None) -> None:
         tracer = _auto_configured_opentelemetry_tracer()
         assert isinstance(tracer, OpenTelemetryTracer)
 
-    def test__auto_configured_opentelemetry_tracer_with_failing_import(self, monkeypatch):
+    def test__auto_configured_opentelemetry_tracer_with_failing_import(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delitem(sys.modules, "opentelemetry.trace", raising=False)
         tracer = _auto_configured_opentelemetry_tracer()
         assert tracer is None
 
-    def test__auto_configured_datadog_tracer(self):
+    def test__auto_configured_datadog_tracer(self) -> None:
         tracer = _auto_configured_datadog_tracer()
         assert isinstance(tracer, DatadogTracer)
 
-    def test__auto_configured_datadog_tracer_with_failing_import(self, monkeypatch):
+    def test__auto_configured_datadog_tracer_with_failing_import(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(ddtrace.tracer, "enabled", False)
         tracer = _auto_configured_datadog_tracer()
         assert tracer is None
@@ -164,7 +163,7 @@ class TestTracingContent:
         span = spying_tracer.spans[0]
         assert span.tags == {"my_content": "my_content"}
 
-    def test_set_content_tag_when_disabled_via_env_variable(self, monkeypatch: MonkeyPatch) -> None:
+    def test_set_content_tag_when_disabled_via_env_variable(self, monkeypatch: pytest.MonkeyPatch) -> None:
         # we test if content tracing is disabled when the env variable is set to false
         monkeypatch.setenv(HAYSTACK_CONTENT_TRACING_ENABLED_ENV_VAR, "false")
 

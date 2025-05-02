@@ -164,7 +164,6 @@ class TestOutputAdapter:
     def test_output_adapter_in_pipeline(self):
         _component_instance = component()
 
-
         @_component_instance
         class DocumentProducer:
             @_component_instance.output_types(documents=dict)

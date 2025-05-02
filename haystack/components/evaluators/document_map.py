@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Dict, List
+from typing import Any
 
 from haystack import Document, component
 
@@ -46,10 +46,10 @@ class DocumentMAPEvaluator:
     """
 
     # Refer to https://www.pinecone.io/learn/offline-evaluation/ for the algorithm.
-    @_component_instance.output_types(score=float, individual_scores=List[float])
+    @_component_instance.output_types(score=float, individual_scores=list[float])
     def run(
-        self, ground_truth_documents: List[List[Document]], retrieved_documents: List[List[Document]]
-    ) -> Dict[str, Any]:
+        self, ground_truth_documents: list[list[Document]], retrieved_documents: list[list[Document]]
+    ) -> dict[str, Any]:
         """
         Run the DocumentMAPEvaluator on the given inputs.
 

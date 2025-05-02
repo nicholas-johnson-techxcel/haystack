@@ -42,9 +42,9 @@ class RemoteWhisperTranscriber:
         self,
         api_key: Secret = Secret.from_env_var("OPENAI_API_KEY"),
         model: str = "whisper-1",
-        api_base_url: Optional[str] = None,
-        organization: Optional[str] = None,
-        http_client_kwargs: Optional[Dict[str, Any]] = None,
+        api_base_url: str | None = None,
+        organization: str | None = None,
+        http_client_kwargs: dict[str, Any] | None = None,
         **kwargs,
     ):
         """
@@ -107,7 +107,7 @@ class RemoteWhisperTranscriber:
             http_client=init_http_client(self.http_client_kwargs, async_client=False),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serializes the component to a dictionary.
 
@@ -125,7 +125,7 @@ class RemoteWhisperTranscriber:
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "RemoteWhisperTranscriber":
+    def from_dict(cls, data: dict[str, Any]) -> "RemoteWhisperTranscriber":
         """
         Deserializes the component from a dictionary.
 
@@ -137,8 +137,8 @@ class RemoteWhisperTranscriber:
         deserialize_secrets_inplace(data["init_parameters"], keys=["api_key"])
         return default_from_dict(cls, data)
 
-    @_component_instance.output_types(documents=List[Document])
-    def run(self, sources: List[Union[str, Path, ByteStream]]):
+    @_component_instance.output_types(documents=list[Document])
+    def run(self, sources: list[str | Path | ByteStream]) -> dict[str, list[Document]]:
         """
         Transcribes the list of audio files into a list of documents.
 

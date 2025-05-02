@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List
-
 from haystack.core.component import component
 
 _component_instance = component()
@@ -11,7 +9,7 @@ _component_instance = component()
 
 @_component_instance
 class TextSplitter:
-    @_component_instance.output_types(output=List[str])
+    @_component_instance.output_types(output=list[str])
     def run(self, sentence: str):
         """Takes a sentence in input and returns its words in output."""
         return {"output": sentence.split()}

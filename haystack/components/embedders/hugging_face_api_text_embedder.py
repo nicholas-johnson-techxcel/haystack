@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from haystack import component, default_from_dict, default_to_dict, logging
 from haystack.lazy_imports import LazyImport
@@ -77,13 +77,13 @@ class HuggingFaceAPITextEmbedder:
 
     def __init__(
         self,
-        api_type: Union[HFEmbeddingAPIType, str],
-        api_params: Dict[str, str],
-        token: Optional[Secret] = Secret.from_env_var(["HF_API_TOKEN", "HF_TOKEN"], strict=False),
+        api_type: HFEmbeddingAPIType | str,
+        api_params: dict[str, str],
+        token: Secret | None = Secret.from_env_var(["HF_API_TOKEN", "HF_TOKEN"], strict=False),
         prefix: str = "",
         suffix: str = "",
-        truncate: Optional[bool] = True,
-        normalize: Optional[bool] = False,
+        truncate: bool | None = True,
+        normalize: bool | None = False,
     ):  # pylint: disable=too-many-positional-arguments
         """
         Creates a HuggingFaceAPITextEmbedder component.
@@ -150,7 +150,7 @@ class HuggingFaceAPITextEmbedder:
         self._client = InferenceClient(model_or_url, token=token.resolve_value() if token else None)
         self._async_client = AsyncInferenceClient(model_or_url, token=token.resolve_value() if token else None)
 
-    def _prepare_input(self, text: str) -> tuple[str, Optional[bool], Optional[bool]]:
+    def _prepare_input(self, text: str) -> tuple[str, bool | None, bool | None]:
         if not isinstance(text, str):
             raise TypeError(
                 "HuggingFaceAPITextEmbedder expects a string as an input."
@@ -174,7 +174,7 @@ class HuggingFaceAPITextEmbedder:
 
         return text_to_embed, truncate, normalize
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serializes the component to a dictionary.
 
@@ -193,7 +193,7 @@ class HuggingFaceAPITextEmbedder:
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "HuggingFaceAPITextEmbedder":
+    def from_dict(cls, data: dict[str, Any]) -> "HuggingFaceAPITextEmbedder":
         """
         Deserializes the component from a dictionary.
 
@@ -205,7 +205,7 @@ class HuggingFaceAPITextEmbedder:
         deserialize_secrets_inplace(data["init_parameters"], keys=["token"])
         return default_from_dict(cls, data)
 
-    @_component_instance.output_types(embedding=List[float])
+    @_component_instance.output_types(embedding=list[float])
     def run(self, text: str):
         """
         Embeds a single string.
@@ -233,7 +233,7 @@ class HuggingFaceAPITextEmbedder:
 
         return {"embedding": embedding}
 
-    @_component_instance.output_types(embedding=List[float])
+    @_component_instance.output_types(embedding=list[float])
     async def run_async(self, text: str):
         """
         Embeds a single string asynchronously.

@@ -3,8 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
+from pathlib import Path
 from typing import Any, List, Optional
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -32,30 +33,30 @@ from haystack.testing.sample_components import AddFixedValue, Double, Greet
 logging.basicConfig(level=logging.DEBUG)
 
 
-_component_instance = component()
+_fake_component_instance = component()
 
 
-@_component_instance
+@_fake_component_instance
 class FakeComponent:
-    def __init__(self, an_init_param: Optional[str] = None):
+    def __init__(self, an_init_param: str | None = None):
         pass
 
-    @_component_instance.output_types(value=str)
-    def run(self, input_: str):
+    @_fake_component_instance.output_types(value=str)
+    def run(self, input_: str) -> dict[str, Any]:
         return {"value": input_}
 
 
-_component_instance = component()
+_fake_component_squared_instance = component()
 
 
-@_component_instance
+@_fake_component_squared_instance
 class FakeComponentSquared:
-    def __init__(self, an_init_param: Optional[str] = None):
+    def __init__(self, an_init_param: str | None = None):
         self.an_init_param = an_init_param
         self.inner = FakeComponent()
 
-    @_component_instance.output_types(value=str)
-    def run(self, input_: str):
+    @_fake_component_squared_instance.output_types(value=str)
+    def run(self, input_: str) -> dict[str, Any]:
         return {"value": input_}
 
 
@@ -83,7 +84,7 @@ class TestPipelineBase:
     It doesn't test Pipeline.run(), that is done separately in a different way.
     """
 
-    def test_pipeline_dumps(self, test_files_path):
+    def test_pipeline_dumps(self, test_files_path: Path):
         pipeline = PipelineBase(max_runs_per_component=99)
         pipeline.add_component("Comp1", FakeComponent("Foo"))
         pipeline.add_component("Comp2", FakeComponent())
@@ -129,7 +130,7 @@ class TestPipelineBase:
         with pytest.raises(DeserializationError, match=".*Comp1.*unknown.*"):
             pipeline = PipelineBase.loads(invalid_init_parameter_yaml)
 
-    def test_pipeline_dump(self, test_files_path, tmp_path):
+    def test_pipeline_dump(self, test_files_path: Path, tmp_path: Path):
         pipeline = PipelineBase(max_runs_per_component=99)
         pipeline.add_component("Comp1", FakeComponent("Foo"))
         pipeline.add_component("Comp2", FakeComponent())
@@ -173,7 +174,7 @@ class TestPipelineBase:
             pipe.show()
 
     @patch("haystack.core.pipeline.base._to_mermaid_image")
-    def test_draw(self, mock_to_mermaid_image, tmp_path):
+    def test_draw(self, mock_to_mermaid_image: Any, tmp_path: Path):
         pipe = PipelineBase()
         mock_to_mermaid_image.return_value = b"some_image_data"
 
@@ -341,7 +342,7 @@ class TestPipelineBase:
         assert res == expected
 
     def test_from_dict(self):
-        data = {
+        data: dict[str, Any] = {
             "metadata": {"test": "test"},
             "max_runs_per_component": 101,
             "components": {
@@ -421,7 +422,7 @@ class TestPipelineBase:
     # TODO: Remove this, this should be a component test.
     # The pipeline can't handle this in any case nor way.
     def test_from_dict_with_callbacks(self):
-        data = {
+        data: dict[str, Any] = {
             "metadata": {"test": "test"},
             "components": {
                 "add_two": {
@@ -516,7 +517,7 @@ class TestPipelineBase:
         add_two = AddFixedValue(add=2)
         add_default = AddFixedValue()
         components = {"add_two": add_two, "add_default": add_default}
-        data = {
+        data: dict[str, Any] = {
             "metadata": {"test": "test"},
             "components": {
                 "add_two": {},
@@ -563,7 +564,7 @@ class TestPipelineBase:
         assert double["visits"] == 0
 
         # Connections
-        connections = list(pipe.graph.edges(data=True))
+        connections: list[tuple[str, str, dict[str, Any]]] = list(pipe.graph.edges(data=True))
         assert len(connections) == 2
         assert connections[0] == (
             "add_two",
@@ -772,7 +773,7 @@ class TestPipelineBase:
             "b": {"y": {"type": int}},
         }
 
-    def test_from_template(self, monkeypatch):
+    def test_from_template(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "fake_key")
         pipe = PipelineBase.from_template(PredefinedPipeline.INDEXING)
         assert pipe.get_component("cleaner")
@@ -785,23 +786,21 @@ class TestPipelineBase:
 
         _component_instance = component()
 
-
         @_component_instance
         class Hello:
             @_component_instance.output_types(output=str)
-            def run(self, word: str):
+            def run(self, word: str) -> dict[str, str]:
                 """
                 Takes a string in input and returns "Hello, <string>!" in output.
                 """
                 return {"output": f"Hello, {word}!"}
 
-        _component_instance = component()
+        _joiner_component_instance = component()
 
-
-        @_component_instance
+        @_joiner_component_instance
         class Joiner:
-            @_component_instance.output_types(output=str)
-            def run(self, word1: str, word2: str):
+            @_joiner_component_instance.output_types(output=str)
+            def run(self, word1: str, word2: str) -> dict[str, str]:
                 """
                 Takes two strings in input and returns "Hello, <string1> and <string2>!" in output.
                 """
@@ -831,7 +830,6 @@ class TestPipelineBase:
         """
 
         _component_instance = component()
-
 
         @_component_instance
         class Hello:
@@ -883,7 +881,7 @@ class TestPipelineBase:
         assert res == {"first_mock": {"x": ["some data"], "y": "some other data"}, "second_mock": {"x": ["some data"]}}
         assert id(res["first_mock"]["x"]) != id(res["second_mock"]["x"])
 
-    def test__prepare_component_input_data_with_non_existing_input(self, caplog):
+    def test__prepare_component_input_data_with_non_existing_input(self, caplog: pytest.LogCaptureFixture):
         pipe = PipelineBase()
         res = pipe._prepare_component_input_data({"input_name": 1})
         assert res == {}
@@ -1556,7 +1554,7 @@ class TestPipelineBase:
         ],
         ids=["empty-queue", "ready-component", "deferred-component"],
     )
-    def test__is_queue_stale(self, queue_setup, expected_stale):
+    def test__is_queue_stale(self, queue_setup: tuple[ComponentPriority | None, str] | None, expected_stale: bool):
         queue = FIFOPriorityQueue()
         if queue_setup:
             priority, component_name = queue_setup
@@ -1567,7 +1565,7 @@ class TestPipelineBase:
 
     @patch("haystack.core.pipeline.base.PipelineBase._calculate_priority")
     @patch("haystack.core.pipeline.base.PipelineBase._get_component_with_graph_metadata_and_visits")
-    def test_fill_queue(self, mock_get_metadata, mock_calc_priority):
+    def test_fill_queue(self, mock_get_metadata: MagicMock, mock_calc_priority: MagicMock):
         pipeline = PipelineBase()
         component_names = ["comp1", "comp2"]
         inputs = {"comp1": {"input1": "value1"}, "comp2": {"input2": "value2"}}
@@ -1677,21 +1675,29 @@ class TestPipelineBase:
             "no-output-filtering",
         ],
     )
-    def test__consume_component_inputs(self, input_sockets, component_inputs, expected_consumed, expected_remaining):
+    def test__consume_component_inputs(
+        self,
+        input_sockets: dict[str, InputSocket],
+        component_inputs: dict[str, list[dict[str, Any]]],
+        expected_consumed: dict[str, Any],
+        expected_remaining: dict[str, list[dict[str, Any]]],
+    ):
         # Setup
-        component = {"input_sockets": input_sockets}
-        inputs = {"test_component": component_inputs}
+        component: dict[str, Any] = {"input_sockets": input_sockets}
+        inputs: dict[str, Any] = {"test_component": component_inputs}
 
         # Run
-        consumed = PipelineBase._consume_component_inputs("test_component", component, inputs)
+        consumed: dict[str, Any] = PipelineBase._consume_component_inputs("test_component", component, inputs)
 
         # Verify
         assert consumed == expected_consumed
         assert inputs["test_component"] == expected_remaining
 
-    def test__consume_component_inputs_with_df(self, regular_input_socket):
-        component = {"input_sockets": {"input1": regular_input_socket}}
-        inputs = {"test_component": {"input1": [{"sender": "sender1", "value": DataFrame({"a": [1, 2], "b": [1, 2]})}]}}
+    def test__consume_component_inputs_with_df(self, regular_input_socket: InputSocket):
+        component: dict[str, Any] = {"input_sockets": {"input1": regular_input_socket}}
+        inputs: dict[str, Any] = {
+            "test_component": {"input1": [{"sender": "sender1", "value": DataFrame({"a": [1, 2], "b": [1, 2]})}]}
+        }
 
         consumed = PipelineBase._consume_component_inputs("test_component", component, inputs)
 

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal
 
 from haystack import Document, component, default_from_dict, default_to_dict
 from haystack.lazy_imports import LazyImport
@@ -116,20 +116,20 @@ class SentenceTransformersDiversityRanker:
         self,
         model: str = "sentence-transformers/all-MiniLM-L6-v2",
         top_k: int = 10,
-        device: Optional[ComponentDevice] = None,
-        token: Optional[Secret] = Secret.from_env_var(["HF_API_TOKEN", "HF_TOKEN"], strict=False),
-        similarity: Union[str, DiversityRankingSimilarity] = "cosine",
+        device: ComponentDevice | None = None,
+        token: Secret | None = Secret.from_env_var(["HF_API_TOKEN", "HF_TOKEN"], strict=False),
+        similarity: str | DiversityRankingSimilarity = "cosine",
         query_prefix: str = "",
         query_suffix: str = "",
         document_prefix: str = "",
         document_suffix: str = "",
-        meta_fields_to_embed: Optional[List[str]] = None,
+        meta_fields_to_embed: list[str] | None = None,
         embedding_separator: str = "\n",
-        strategy: Union[str, DiversityRankingStrategy] = "greedy_diversity_order",
+        strategy: str | DiversityRankingStrategy = "greedy_diversity_order",
         lambda_threshold: float = 0.5,
-        model_kwargs: Optional[Dict[str, Any]] = None,
-        tokenizer_kwargs: Optional[Dict[str, Any]] = None,
-        config_kwargs: Optional[Dict[str, Any]] = None,
+        model_kwargs: dict[str, Any] | None = None,
+        tokenizer_kwargs: dict[str, Any] | None = None,
+        config_kwargs: dict[str, Any] | None = None,
         backend: Literal["torch", "onnx", "openvino"] = "torch",
     ):
         """
@@ -209,7 +209,7 @@ class SentenceTransformersDiversityRanker:
                 backend=self.backend,
             )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serializes the component to a dictionary.
 
@@ -241,7 +241,7 @@ class SentenceTransformersDiversityRanker:
         return serialization_dict
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SentenceTransformersDiversityRanker":
+    def from_dict(cls, data: dict[str, Any]) -> "SentenceTransformersDiversityRanker":
         """
         Deserializes the component from a dictionary.
 
@@ -258,7 +258,7 @@ class SentenceTransformersDiversityRanker:
             deserialize_hf_model_kwargs(init_params["model_kwargs"])
         return default_from_dict(cls, data)
 
-    def _prepare_texts_to_embed(self, documents: List[Document]) -> List[str]:
+    def _prepare_texts_to_embed(self, documents: list[Document]) -> list[str]:
         """
         Prepare the texts to embed by concatenating the Document text with the metadata fields to embed.
         """
@@ -276,7 +276,7 @@ class SentenceTransformersDiversityRanker:
 
         return texts_to_embed
 
-    def _greedy_diversity_order(self, query: str, documents: List[Document]) -> List[Document]:
+    def _greedy_diversity_order(self, query: str, documents: list[Document]) -> list[Document]:
         """
         Orders the given list of documents to maximize diversity.
 
@@ -296,7 +296,7 @@ class SentenceTransformersDiversityRanker:
         doc_embeddings, query_embedding = self._embed_and_normalize(query, texts_to_embed)
 
         n = len(documents)
-        selected: List[int] = []
+        selected: list[int] = []
 
         # Compute the similarity vector between the query and documents
         query_doc_sim = query_embedding @ doc_embeddings.T
@@ -318,7 +318,7 @@ class SentenceTransformersDiversityRanker:
             # It's divided by n for numerical stability
             selected_sum += doc_embeddings[index_unselected] / n
 
-        ranked_docs: List[Document] = [documents[i] for i in selected]
+        ranked_docs: list[Document] = [documents[i] for i in selected]
 
         return ranked_docs
 
@@ -334,8 +334,8 @@ class SentenceTransformersDiversityRanker:
         return doc_embeddings, query_embedding
 
     def _maximum_margin_relevance(
-        self, query: str, documents: List[Document], lambda_threshold: float, top_k: int
-    ) -> List[Document]:
+        self, query: str, documents: list[Document], lambda_threshold: float, top_k: int
+    ) -> list[Document]:
         """
         Orders the given list of documents according to the Maximum Margin Relevance (MMR) scores.
 
@@ -356,7 +356,7 @@ class SentenceTransformersDiversityRanker:
         doc_embeddings, query_embedding = self._embed_and_normalize(query, texts_to_embed)
         top_k = top_k if top_k else len(documents)
 
-        selected: List[int] = []
+        selected: list[int] = []
         query_similarities_as_tensor = query_embedding @ doc_embeddings.T
         query_similarities = query_similarities_as_tensor.reshape(-1)
         idx = int(torch.argmax(query_similarities))
@@ -384,14 +384,10 @@ class SentenceTransformersDiversityRanker:
         if (strategy == DiversityRankingStrategy.MAXIMUM_MARGIN_RELEVANCE) and not 0 <= lambda_threshold <= 1:
             raise ValueError(f"lambda_threshold must be between 0 and 1, but got {lambda_threshold}.")
 
-    @_component_instance.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=list[Document])
     def run(
-        self,
-        query: str,
-        documents: List[Document],
-        top_k: Optional[int] = None,
-        lambda_threshold: Optional[float] = None,
-    ) -> Dict[str, List[Document]]:
+        self, query: str, documents: list[Document], top_k: int | None = None, lambda_threshold: float | None = None
+    ) -> dict[str, list[Document]]:
         """
         Rank the documents based on their diversity.
 

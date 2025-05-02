@@ -48,7 +48,7 @@ def document_store(documents: list[Document]):
 
 
 @pytest.fixture
-def rag_pipeline(document_store: InMemoryDocumentStore):
+def rag_pipeline(document_store: InMemoryDocumentStore) -> Pipeline:
     """Create a simple RAG pipeline."""
 
     _component_instance = component()
@@ -81,7 +81,7 @@ def rag_pipeline(document_store: InMemoryDocumentStore):
 
 
 @pytest.fixture
-def async_rag_pipeline(document_store: InMemoryDocumentStore):
+def async_rag_pipeline(document_store: InMemoryDocumentStore) -> AsyncPipeline:
     """Create a simple asyncRAG pipeline."""
 
     _component_instance = component()
@@ -137,7 +137,7 @@ class TestSuperComponent:
     def test_invalid_input_mapping_type(self, rag_pipeline: Pipeline):
         input_mapping = {"search_query": "not_a_list"}  # Should be a list
         with pytest.raises(InvalidMappingTypeError):
-            SuperComponent(pipeline=rag_pipeline, input_mapping=input_mapping)
+            SuperComponent(pipeline=rag_pipeline, input_mapping=input_mapping)  # type: ignore - deliberate for test
 
     def test_invalid_input_mapping_value(self, rag_pipeline: Pipeline):
         input_mapping = {"search_query": ["nonexistent_component.query"]}
@@ -147,7 +147,7 @@ class TestSuperComponent:
     def test_invalid_output_mapping_type(self, rag_pipeline: Pipeline):
         output_mapping = {"answer_builder.answers": 123}  # Should be a string
         with pytest.raises(InvalidMappingTypeError):
-            SuperComponent(pipeline=rag_pipeline, output_mapping=output_mapping)
+            SuperComponent(pipeline=rag_pipeline, output_mapping=output_mapping)  # type: ignore - deliberate for test
 
     def test_invalid_output_mapping_value(self, rag_pipeline: Pipeline):
         output_mapping = {"nonexistent_component.answers": "final_answers"}
@@ -174,7 +174,7 @@ class TestSuperComponent:
         wrapper = SuperComponent(pipeline=rag_pipeline, output_mapping=output_mapping)
         output_sockets = wrapper.__haystack_output__._sockets_dict
         assert set(output_sockets.keys()) == {"final_answers"}
-        assert output_sockets["final_answers"].type == List[GeneratedAnswer]
+        assert output_sockets["final_answers"].type == list[GeneratedAnswer]
 
     def test_auto_input_mapping(self, rag_pipeline: Pipeline):
         wrapper = SuperComponent(pipeline=rag_pipeline)

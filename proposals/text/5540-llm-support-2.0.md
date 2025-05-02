@@ -176,7 +176,7 @@ class PromptBuilder:
     def __init__(self, template: Union[str, Path]):
         self.template = # Download the template
         template_variables = # extracts the variables from the template text
-		component.set_input_parameters(**{var: Any for var in template_variables})
+		_component_instance.set_input_parameters(**{var: Any for var in template_variables})
 
   	@_component_instance.output_types(prompts=List[str])
     def run(self, **kwargs):

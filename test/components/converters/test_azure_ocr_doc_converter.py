@@ -5,8 +5,9 @@
 import json
 import os
 import os.path
+from pathlib import Path
 from typing import Literal
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from azure.ai.formrecognizer import AnalyzeResult
@@ -99,13 +100,13 @@ def mock_poller(test_files_path):
 
 
 class TestAzureOCRDocumentConverter:
-    def test_init_fail_wo_api_key(self, monkeypatch):
+    def test_init_fail_wo_api_key(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv("AZURE_AI_API_KEY", raising=False)
         with pytest.raises(ValueError):
             AzureOCRDocumentConverter(endpoint="test_endpoint")
 
     @patch("haystack.utils.auth.EnvVarSecret.resolve_value")
-    def test_to_dict(self, mock_resolve_value):
+    def test_to_dict(self, mock_resolve_value: MagicMock):
         mock_resolve_value.return_value = "test_api_key"
         component = AzureOCRDocumentConverter(endpoint="test_endpoint")
         data = component.to_dict()
@@ -139,7 +140,7 @@ class TestAzureOCRDocumentConverter:
     @pytest.mark.parametrize("page_layout", ["natural", "single_column"])
     @patch("haystack.utils.auth.EnvVarSecret.resolve_value")
     def test_azure_converter_with_table(
-        self, mock_resolve_value, page_layout: Literal["natural", "single_column"], test_files_path, mock_poller
+        self, mock_resolve_value, page_layout: Literal["natural", "single_column"], test_files_path: Path, mock_poller
     ) -> None:
         mock_resolve_value.return_value = "test_api_key"
 
@@ -247,7 +248,7 @@ D,$54.35,$6345.,
     @pytest.mark.skipif(not os.environ.get("CORE_AZURE_CS_ENDPOINT", None), reason="Azure endpoint not available")
     @pytest.mark.skipif(not os.environ.get("CORE_AZURE_CS_API_KEY", None), reason="Azure credentials not available")
     @pytest.mark.flaky(reruns=5, reruns_delay=5)
-    def test_run_with_pdf_file(self, test_files_path):
+    def test_run_with_pdf_file(self, test_files_path: Path):
         component = AzureOCRDocumentConverter(
             endpoint=os.environ["CORE_AZURE_CS_ENDPOINT"], api_key=Secret.from_env_var("CORE_AZURE_CS_API_KEY")
         )
@@ -261,7 +262,7 @@ D,$54.35,$6345.,
     @pytest.mark.integration
     @pytest.mark.skipif(not os.environ.get("CORE_AZURE_CS_ENDPOINT", None), reason="Azure endpoint not available")
     @pytest.mark.skipif(not os.environ.get("CORE_AZURE_CS_API_KEY", None), reason="Azure credentials not available")
-    def test_with_image_file(self, test_files_path):
+    def test_with_image_file(self, test_files_path: Path):
         component = AzureOCRDocumentConverter(
             endpoint=os.environ["CORE_AZURE_CS_ENDPOINT"], api_key=Secret.from_env_var("CORE_AZURE_CS_API_KEY")
         )

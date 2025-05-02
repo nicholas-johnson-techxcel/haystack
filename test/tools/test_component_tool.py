@@ -22,15 +22,15 @@ from haystack.utils.auth import Secret
 ### Component and Model Definitions
 
 
-_component_instance = component()
+_simple_component_instance = component()
 
 
-@_component_instance
+@_simple_component_instance
 class SimpleComponent:
     """A simple component that generates text."""
 
-    @_component_instance.output_types(reply=str)
-    def run(self, text: str) -> Dict[str, str]:
+    @_simple_component_instance.output_types(reply=str)
+    def run(self, text: str) -> dict[str, str]:
         """
         A simple component that generates text.
 
@@ -48,15 +48,15 @@ class User:
     age: int = 0
 
 
-_component_instance = component()
+_user_greeter_component_instance = component()
 
 
-@_component_instance
+@_user_greeter_component_instance
 class UserGreeter:
     """A simple component that processes a User."""
 
-    @_component_instance.output_types(message=str)
-    def run(self, user: User) -> Dict[str, str]:
+    @_user_greeter_component_instance.output_types(message=str)
+    def run(self, user: User) -> dict[str, str]:
         """
         A simple component that processes a User.
 
@@ -66,15 +66,15 @@ class UserGreeter:
         return {"message": f"User {user.name} is {user.age} years old"}
 
 
-_component_instance = component()
+_list_processor_component_instance = component()
 
 
-@_component_instance
+@_list_processor_component_instance
 class ListProcessor:
     """A component that processes a list of strings."""
 
-    @_component_instance.output_types(concatenated=str)
-    def run(self, texts: List[str]) -> Dict[str, str]:
+    @_list_processor_component_instance.output_types(concatenated=str)
+    def run(self, texts: List[str]) -> dict[str, str]:
         """
         Concatenates a list of strings into a single string.
 
@@ -100,15 +100,15 @@ class Person:
     address: Address
 
 
-_component_instance = component()
+_person_processor_component_instance = component()
 
 
-@_component_instance
+@_person_processor_component_instance
 class PersonProcessor:
     """A component that processes a Person with nested Address."""
 
-    @_component_instance.output_types(info=str)
-    def run(self, person: Person) -> Dict[str, str]:
+    @_person_processor_component_instance.output_types(info=str)
+    def run(self, person: Person) -> dict[str, str]:
         """
         Creates information about the person.
 
@@ -118,15 +118,15 @@ class PersonProcessor:
         return {"info": f"{person.name} lives at {person.address.street}, {person.address.city}."}
 
 
-_component_instance = component()
+_document_processor_component_instance = component()
 
 
-@_component_instance
+@_document_processor_component_instance
 class DocumentProcessor:
     """A component that processes a list of Documents."""
 
-    @_component_instance.output_types(concatenated=str)
-    def run(self, documents: List[Document], top_k: int = 5) -> Dict[str, str]:
+    @_document_processor_component_instance.output_types(concatenated=str)
+    def run(self, documents: List[Document], top_k: int = 5) -> dict[str, str]:
         """
         Concatenates the content of multiple documents with newlines.
 
@@ -137,7 +137,7 @@ class DocumentProcessor:
         return {"concatenated": "\n".join(doc.content for doc in documents[:top_k])}
 
 
-def output_handler(old, new):
+def output_handler(old: str, new: str) -> str:
     """
     Output handler to test serialization.
     """
@@ -362,9 +362,10 @@ class TestToolComponentInPipelineWithOpenAI:
             component=component, name="hello_tool", description="A tool that generates a greeting message for the user"
         )
 
+        llm = OpenAIChatGenerator(model="gpt-4o-mini", tools=[tool])
         # Create pipeline with OpenAIChatGenerator and ToolInvoker
         pipeline = Pipeline()
-        pipeline.add_component("llm", OpenAIChatGenerator(model="gpt-4o-mini", tools=[tool]))
+        pipeline.add_component("llm", llm)
         pipeline.add_component("tool_invoker", ToolInvoker(tools=[tool]))
 
         # Connect components
@@ -579,7 +580,7 @@ class TestToolComponentInPipelineWithOpenAI:
         assert "Nikola Tesla" in tool_message.tool_call_result.result
         assert not tool_message.tool_call_result.error
 
-    def test_serde_in_pipeline(self, monkeypatch):
+    def test_serde_in_pipeline(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("SERPERDEV_API_KEY", "test-key")
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
@@ -612,7 +613,7 @@ class TestToolComponentInPipelineWithOpenAI:
         new_pipeline = Pipeline.loads(pipeline_yaml)
         assert new_pipeline == pipeline
 
-    def test_component_tool_serde(self):
+    def test_component_tool_serde(self) -> None:
         component = SimpleComponent()
 
         tool = ComponentTool(
@@ -641,7 +642,7 @@ class TestToolComponentInPipelineWithOpenAI:
         assert new_tool.outputs_to_state == tool.outputs_to_state
         assert isinstance(new_tool._component, SimpleComponent)
 
-    def test_pipeline_component_fails(self):
+    def test_pipeline_component_fails(self) -> None:
         component = SimpleComponent()
 
         # Create a pipeline and add the component to it

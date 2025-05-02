@@ -4,7 +4,7 @@
 
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 from jinja2 import PackageLoader, TemplateSyntaxError, meta
 from jinja2.sandbox import SandboxedEnvironment
@@ -87,7 +87,7 @@ class PipelineTemplate:
         self.template_variables = meta.find_undeclared_variables(env.parse(template_content))
         self._template_content = template_content
 
-    def render(self, template_params: Optional[Dict[str, Any]] = None) -> str:
+    def render(self, template_params: dict[str, Any] | None = None) -> str:
         """
         Constructs a `Pipeline` instance based on the template.
 
@@ -99,14 +99,14 @@ class PipelineTemplate:
         return self._template.render(**template_params)
 
     @classmethod
-    def from_file(cls, file_path: Union[Path, str]) -> "PipelineTemplate":
+    def from_file(cls, file_path: Path | str) -> "PipelineTemplate":
         """
         Create a PipelineTemplate from a file.
 
         :param file_path: The path to the file containing the template. Must contain valid Jinja2 syntax.
         :returns: An instance of `PipelineTemplate`.
         """
-        with open(file_path, "r") as file:
+        with open(file_path) as file:
             return cls(file.read())
 
     @classmethod

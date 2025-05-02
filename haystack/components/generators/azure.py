@@ -3,20 +3,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
-from typing import Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import Any
 
 from openai.lib.azure import AzureADTokenProvider, AzureOpenAI
 
-from haystack import component, default_from_dict, default_to_dict
+from haystack import default_from_dict, default_to_dict
 from haystack.components.generators import OpenAIGenerator
 from haystack.dataclasses import StreamingChunk
 from haystack.utils import Secret, deserialize_callable, deserialize_secrets_inplace, serialize_callable
 from haystack.utils.http_client import init_http_client
 
-_component_instance = component()
 
-
-@_component_instance
 class AzureOpenAIGenerator(OpenAIGenerator):
     """
     Generates text using OpenAI's large language models (LLMs).
@@ -59,21 +57,21 @@ class AzureOpenAIGenerator(OpenAIGenerator):
     # pylint: disable=super-init-not-called
     def __init__(  # pylint: disable=too-many-positional-arguments
         self,
-        azure_endpoint: Optional[str] = None,
-        api_version: Optional[str] = "2023-05-15",
-        azure_deployment: Optional[str] = "gpt-4o-mini",
-        api_key: Optional[Secret] = Secret.from_env_var("AZURE_OPENAI_API_KEY", strict=False),
-        azure_ad_token: Optional[Secret] = Secret.from_env_var("AZURE_OPENAI_AD_TOKEN", strict=False),
-        organization: Optional[str] = None,
-        streaming_callback: Optional[Callable[[StreamingChunk], None]] = None,
-        system_prompt: Optional[str] = None,
-        timeout: Optional[float] = None,
-        max_retries: Optional[int] = None,
-        http_client_kwargs: Optional[Dict[str, Any]] = None,
-        generation_kwargs: Optional[Dict[str, Any]] = None,
-        default_headers: Optional[Dict[str, str]] = None,
+        azure_endpoint: str | None = None,
+        api_version: str | None = "2023-05-15",
+        azure_deployment: str | None = "gpt-4o-mini",
+        api_key: Secret | None = Secret.from_env_var("AZURE_OPENAI_API_KEY", strict=False),
+        azure_ad_token: Secret | None = Secret.from_env_var("AZURE_OPENAI_AD_TOKEN", strict=False),
+        organization: str | None = None,
+        streaming_callback: Callable[[StreamingChunk], None] | None = None,
+        system_prompt: str | None = None,
+        timeout: float | None = None,
+        max_retries: int | None = None,
+        http_client_kwargs: dict[str, Any] | None = None,
+        generation_kwargs: dict[str, Any] | None = None,
+        default_headers: dict[str, str] | None = None,
         *,
-        azure_ad_token_provider: Optional[AzureADTokenProvider] = None,
+        azure_ad_token_provider: AzureADTokenProvider | None = None,
     ):
         """
         Initialize the Azure OpenAI Generator.
@@ -166,7 +164,7 @@ class AzureOpenAIGenerator(OpenAIGenerator):
             default_headers=self.default_headers,
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize this component to a dictionary.
 
@@ -196,7 +194,7 @@ class AzureOpenAIGenerator(OpenAIGenerator):
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AzureOpenAIGenerator":
+    def from_dict(cls, data: dict[str, Any]) -> "AzureOpenAIGenerator":
         """
         Deserialize this component from a dictionary.
 

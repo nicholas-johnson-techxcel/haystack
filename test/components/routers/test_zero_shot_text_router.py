@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2022-present deepset GmbH <info@deepset.ai>
 #
 # SPDX-License-Identifier: Apache-2.0
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -26,7 +27,7 @@ class TestTransformersZeroShotTextRouter:
             },
         }
 
-    def test_from_dict(self, monkeypatch):
+    def test_from_dict(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("HF_API_TOKEN", raising=False)
         monkeypatch.delenv("HF_TOKEN", raising=False)
         data = {
@@ -55,7 +56,7 @@ class TestTransformersZeroShotTextRouter:
             "token": None,
         }
 
-    def test_from_dict_no_default_parameters(self, monkeypatch):
+    def test_from_dict_no_default_parameters(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("HF_API_TOKEN", raising=False)
         monkeypatch.delenv("HF_TOKEN", raising=False)
         data = {
@@ -76,18 +77,18 @@ class TestTransformersZeroShotTextRouter:
         }
 
     @patch("haystack.components.routers.zero_shot_text_router.pipeline")
-    def test_warm_up(self, hf_pipeline_mock):
+    def test_warm_up(self, hf_pipeline_mock: Any) -> None:
         router = TransformersZeroShotTextRouter(labels=["query", "passage"])
         router.warm_up()
         assert router.pipeline is not None
 
-    def test_run_fails_without_warm_up(self):
+    def test_run_fails_without_warm_up(self) -> None:
         router = TransformersZeroShotTextRouter(labels=["query", "passage"])
         with pytest.raises(RuntimeError):
             router.run(text="test")
 
     @patch("haystack.components.routers.zero_shot_text_router.pipeline")
-    def test_run_fails_with_non_string_input(self, hf_pipeline_mock):
+    def test_run_fails_with_non_string_input(self, hf_pipeline_mock: Any) -> None:
         hf_pipeline_mock.return_value = " "
         router = TransformersZeroShotTextRouter(labels=["query", "passage"])
         router.warm_up()
@@ -95,7 +96,7 @@ class TestTransformersZeroShotTextRouter:
             router.run(text=["wrong_input"])
 
     @patch("haystack.components.routers.zero_shot_text_router.pipeline")
-    def test_run_unit(self, hf_pipeline_mock):
+    def test_run_unit(self, hf_pipeline_mock: Any) -> None:
         hf_pipeline_mock.return_value = [
             {"sequence": "What is the color of the sky?", "labels": ["query", "passage"], "scores": [0.9, 0.1]}
         ]
@@ -107,7 +108,7 @@ class TestTransformersZeroShotTextRouter:
 
     @pytest.mark.integration
     @pytest.mark.slow
-    def test_run(self, monkeypatch):
+    def test_run(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("HF_API_TOKEN", raising=False)  # https://github.com/deepset-ai/haystack/issues/8811
         router = TransformersZeroShotTextRouter(labels=["query", "passage"])
         router.warm_up()

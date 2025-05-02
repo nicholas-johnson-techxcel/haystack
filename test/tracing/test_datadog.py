@@ -3,19 +3,18 @@
 # SPDX-License-Identifier: Apache-2.0
 import functools
 import json
-from typing import List, Dict
+from typing import Any
 
 from ddtrace.trace import Span as ddSpan
 from ddtrace.trace import Tracer as ddTracer
 from ddtrace._trace.processor import SpanAggregator
 import pytest
 from _pytest.capture import CaptureFixture
-from _pytest.monkeypatch import MonkeyPatch
 
 from haystack.tracing.datadog import DatadogTracer
 
 
-def safe_patch(monkeypatch, target, attr_name, replacement):
+def safe_patch(monkeypatch: pytest.MonkeyPatch, target: Any, attr_name: str, replacement: Any):
     if hasattr(target, attr_name):
         attr = getattr(target, attr_name)
         name = attr.__name__ if callable(attr) and hasattr(attr, "__name__") else attr_name
@@ -23,7 +22,7 @@ def safe_patch(monkeypatch, target, attr_name, replacement):
 
 
 @pytest.fixture()
-def datadog_tracer(monkeypatch: MonkeyPatch) -> ddTracer:
+def datadog_tracer(monkeypatch: pytest.MonkeyPatch) -> ddTracer:
     # For the purpose of the tests we want to use the log writer
     safe_patch(monkeypatch, SpanAggregator, "_use_log_writer", lambda *_: True)
     safe_patch(monkeypatch, ddTracer, "_use_log_writer", lambda *_: True)
@@ -33,7 +32,7 @@ def datadog_tracer(monkeypatch: MonkeyPatch) -> ddTracer:
     return tracer
 
 
-def get_traces_from_console(capfd: CaptureFixture) -> List[Dict]:
+def get_traces_from_console(capfd: CaptureFixture[str]) -> list[dict[str, Any]]:
     output = capfd.readouterr().out
     parsed = json.loads(output)
     nested_traces = parsed["traces"]
@@ -43,7 +42,7 @@ def get_traces_from_console(capfd: CaptureFixture) -> List[Dict]:
 
 
 class TestDatadogTracer:
-    def test_opentelemetry_tracer(self, datadog_tracer: ddTracer, capfd: CaptureFixture) -> None:
+    def test_opentelemetry_tracer(self, datadog_tracer: ddTracer, capfd: CaptureFixture[str]) -> None:
         tracer = DatadogTracer(datadog_tracer)
 
         with tracer.trace("test") as span:
@@ -56,7 +55,7 @@ class TestDatadogTracer:
 
         assert trace["name"] == "test"
 
-    def test_tagging(self, datadog_tracer: ddTracer, capfd: CaptureFixture) -> None:
+    def test_tagging(self, datadog_tracer: ddTracer, capfd: CaptureFixture[str]) -> None:
         tracer = DatadogTracer(datadog_tracer)
 
         with tracer.trace("test", tags={"key1": "value1"}) as span:
@@ -67,7 +66,7 @@ class TestDatadogTracer:
         assert spans[0]["meta"]["key1"] == "value1"
         assert spans[0]["meta"]["key2"] == "value2"
 
-    def test_current_span(self, datadog_tracer: ddTracer, capfd: CaptureFixture) -> None:
+    def test_current_span(self, datadog_tracer: ddTracer, capfd: CaptureFixture[str]) -> None:
         tracer = DatadogTracer(datadog_tracer)
 
         with tracer.trace("test"):
@@ -87,7 +86,7 @@ class TestDatadogTracer:
         assert spans[0]["meta"]["key1"] == "value1"
         assert spans[0]["meta"]["key2"] == "value2"
 
-    def test_tracing_complex_values(self, datadog_tracer: ddTracer, capfd: CaptureFixture) -> None:
+    def test_tracing_complex_values(self, datadog_tracer: ddTracer, capfd: CaptureFixture[str]) -> None:
         tracer = DatadogTracer(datadog_tracer)
 
         with tracer.trace("test") as span:

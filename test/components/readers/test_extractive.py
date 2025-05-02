@@ -3,13 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 import logging
 from math import ceil, exp
-from typing import List
-from unittest.mock import Mock, patch
+from typing import Any, List
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 import torch
-from _pytest.monkeypatch import MonkeyPatch
-from transformers import pipeline
+from transformers.pipelines import pipeline
 
 from haystack import Document, ExtractedAnswer
 from haystack.components.readers import ExtractiveReader
@@ -18,7 +17,7 @@ from haystack.utils.device import ComponentDevice, DeviceMap
 
 
 @pytest.fixture()
-def initialized_token(monkeypatch: MonkeyPatch) -> Secret:
+def initialized_token(monkeypatch: pytest.MonkeyPatch) -> Secret:
     monkeypatch.setenv("HF_API_TOKEN", "secret-token")
 
     return Secret.from_env_var(["HF_API_TOKEN", "HF_TOKEN"], strict=False)
@@ -63,7 +62,7 @@ def mock_tokenizer():
 
 
 @pytest.fixture()
-def mock_reader(mock_tokenizer):
+def mock_reader(mock_tokenizer: Any) -> ExtractiveReader:
     class MockModel(torch.nn.Module):
         def __init__(self):
             super().__init__()
@@ -517,7 +516,9 @@ def test_warm_up_use_hf_token(mocked_automodel, mocked_autotokenizer, initialize
 
 @patch("haystack.components.readers.extractive.AutoTokenizer.from_pretrained")
 @patch("haystack.components.readers.extractive.AutoModelForQuestionAnswering.from_pretrained")
-def test_device_map_auto(mocked_automodel, _mocked_autotokenizer, monkeypatch):
+def test_device_map_auto(
+    mocked_automodel: MagicMock, _mocked_autotokenizer: MagicMock, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.delenv("HF_API_TOKEN", raising=False)
     monkeypatch.delenv("HF_TOKEN", raising=False)
     reader = ExtractiveReader("deepset/roberta-base-squad2", model_kwargs={"device_map": "auto"})
@@ -536,7 +537,9 @@ def test_device_map_auto(mocked_automodel, _mocked_autotokenizer, monkeypatch):
 
 @patch("haystack.components.readers.extractive.AutoTokenizer.from_pretrained")
 @patch("haystack.components.readers.extractive.AutoModelForQuestionAnswering.from_pretrained")
-def test_device_map_str(mocked_automodel, _mocked_autotokenizer, monkeypatch):
+def test_device_map_str(
+    mocked_automodel: MagicMock, _mocked_autotokenizer: MagicMock, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.delenv("HF_API_TOKEN", raising=False)
     monkeypatch.delenv("HF_TOKEN", raising=False)
     reader = ExtractiveReader("deepset/roberta-base-squad2", model_kwargs={"device_map": "cpu:0"})
@@ -554,7 +557,9 @@ def test_device_map_str(mocked_automodel, _mocked_autotokenizer, monkeypatch):
 
 @patch("haystack.components.readers.extractive.AutoTokenizer.from_pretrained")
 @patch("haystack.components.readers.extractive.AutoModelForQuestionAnswering.from_pretrained")
-def test_device_map_dict(mocked_automodel, _mocked_autotokenizer, monkeypatch):
+def test_device_map_dict(
+    mocked_automodel: MagicMock, _mocked_autotokenizer: MagicMock, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.delenv("HF_API_TOKEN", raising=False)
     monkeypatch.delenv("HF_TOKEN", raising=False)
     reader = ExtractiveReader(
@@ -574,7 +579,7 @@ def test_device_map_dict(mocked_automodel, _mocked_autotokenizer, monkeypatch):
     assert reader.device == ComponentDevice.from_multiple(DeviceMap.from_hf({"layer_1": 1, "classifier": "cpu"}))
 
 
-def test_device_map_and_device_warning(caplog):
+def test_device_map_and_device_warning(caplog: pytest.LogCaptureFixture) -> None:
     with caplog.at_level(logging.WARNING):
         _ = ExtractiveReader(
             "deepset/roberta-base-squad2", model_kwargs={"device_map": "cpu"}, device=ComponentDevice.from_str("cuda")
@@ -777,7 +782,7 @@ class TestDeduplication:
 
 @pytest.mark.integration
 @pytest.mark.slow
-def test_t5(monkeypatch):
+def test_t5(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("HF_API_TOKEN", raising=False)  # https://github.com/deepset-ai/haystack/issues/8811
     reader = ExtractiveReader("sjrhuschlee/flan-t5-base-squad2")
     reader.warm_up()
@@ -803,7 +808,7 @@ def test_t5(monkeypatch):
 
 @pytest.mark.integration
 @pytest.mark.slow
-def test_roberta(monkeypatch):
+def test_roberta(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("HF_API_TOKEN", raising=False)  # https://github.com/deepset-ai/haystack/issues/8811
     reader = ExtractiveReader("deepset/tinyroberta-squad2")
     reader.warm_up()
@@ -834,7 +839,7 @@ def test_roberta(monkeypatch):
 
 @pytest.mark.integration
 @pytest.mark.slow
-def test_matches_hf_pipeline(monkeypatch):
+def test_matches_hf_pipeline(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("HF_API_TOKEN", raising=False)  # https://github.com/deepset-ai/haystack/issues/8811
     reader = ExtractiveReader(
         "deepset/tinyroberta-squad2", device=ComponentDevice.from_str("cpu"), overlap_threshold=None

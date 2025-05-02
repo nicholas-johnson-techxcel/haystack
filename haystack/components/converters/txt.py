@@ -4,7 +4,7 @@
 
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from haystack import Document, component, logging
 from haystack.components.converters.utils import get_bytestream_from_source, normalize_metadata
@@ -53,12 +53,10 @@ class TextFileToDocument:
         self.encoding = encoding
         self.store_full_path = store_full_path
 
-    @_component_instance.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=list[Document])
     def run(
-        self,
-        sources: List[Union[str, Path, ByteStream]],
-        meta: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None,
-    ):
+        self, sources: list[str | Path | ByteStream], meta: dict[str, Any] | list[dict[str, Any]] | None = None
+    ) -> dict[str, list[Document]]:
         """
         Converts text files to documents.
 

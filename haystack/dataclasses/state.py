@@ -2,8 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+from collections.abc import Callable
 from copy import deepcopy
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from haystack.dataclasses import ChatMessage
 from haystack.dataclasses.state_utils import _is_list_type, _is_valid_type, merge_lists, replace_values
@@ -11,7 +12,7 @@ from haystack.utils.callable_serialization import deserialize_callable, serializ
 from haystack.utils.type_serialization import deserialize_type, serialize_type
 
 
-def _schema_to_dict(schema: Dict[str, Any]) -> Dict[str, Any]:
+def _schema_to_dict(schema: dict[str, Any]) -> dict[str, Any]:
     """
     Convert a schema dictionary to a serializable format.
 
@@ -30,7 +31,7 @@ def _schema_to_dict(schema: Dict[str, Any]) -> Dict[str, Any]:
     return serialized_schema
 
 
-def _schema_from_dict(schema: Dict[str, Any]) -> Dict[str, Any]:
+def _schema_from_dict(schema: dict[str, Any]) -> dict[str, Any]:
     """
     Convert a serialized schema dictionary back to its original format.
 
@@ -50,7 +51,7 @@ def _schema_from_dict(schema: Dict[str, Any]) -> Dict[str, Any]:
     return deserialized_schema
 
 
-def _validate_schema(schema: Dict[str, Any]) -> None:
+def _validate_schema(schema: dict[str, Any]) -> None:
     """
     Validate that a schema dictionary meets all required constraints.
 
@@ -67,7 +68,7 @@ def _validate_schema(schema: Dict[str, Any]) -> None:
             raise ValueError(f"StateSchema: 'type' for key '{param}' must be a Python type, got {definition['type']}")
         if definition.get("handler") is not None and not callable(definition["handler"]):
             raise ValueError(f"StateSchema: 'handler' for key '{param}' must be callable or None")
-        if param == "messages" and definition["type"] is not List[ChatMessage]:
+        if param == "messages" and definition["type"] is not list[ChatMessage]:
             raise ValueError(f"StateSchema: 'messages' must be of type List[ChatMessage], got {definition['type']}")
 
 
@@ -82,7 +83,7 @@ class State:
       }
     """
 
-    def __init__(self, schema: Dict[str, Any], data: Optional[Dict[str, Any]] = None):
+    def __init__(self, schema: dict[str, Any], data: dict[str, Any] | None = None):
         """
         Initialize a State object with a schema and optional data.
 
@@ -96,7 +97,7 @@ class State:
         _validate_schema(schema)
         self.schema = deepcopy(schema)
         if self.schema.get("messages") is None:
-            self.schema["messages"] = {"type": List[ChatMessage], "handler": merge_lists}
+            self.schema["messages"] = {"type": list[ChatMessage], "handler": merge_lists}
         self._data = data or {}
 
         # Set default handlers if not provided in schema
@@ -120,7 +121,7 @@ class State:
         """
         return deepcopy(self._data.get(key, default))
 
-    def set(self, key: str, value: Any, handler_override: Optional[Callable[[Any, Any], Any]] = None) -> None:
+    def set(self, key: str, value: Any, handler_override: Callable[[Any, Any], Any] | None = None) -> None:
         """
         Set or merge a value in the state according to schema rules.
 

@@ -9,7 +9,7 @@ from dataclasses import asdict, dataclass
 from enum import Enum
 from io import StringIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from haystack import Document, component, default_from_dict, default_to_dict, logging
 from haystack.components.converters.utils import get_bytestream_from_source, normalize_metadata
@@ -54,13 +54,13 @@ class DOCXMetadata:
     category: str
     comments: str
     content_status: str
-    created: Optional[str]
+    created: str | None
     identifier: str
     keywords: str
     language: str
     last_modified_by: str
-    last_printed: Optional[str]
-    modified: Optional[str]
+    last_printed: str | None
+    modified: str | None
     revision: int
     subject: str
     title: str
@@ -141,8 +141,8 @@ class DOCXToDocument:
 
     def __init__(
         self,
-        table_format: Union[str, DOCXTableFormat] = DOCXTableFormat.CSV,
-        link_format: Union[str, DOCXLinkFormat] = DOCXLinkFormat.NONE,
+        table_format: str | DOCXTableFormat = DOCXTableFormat.CSV,
+        link_format: str | DOCXLinkFormat = DOCXLinkFormat.NONE,
         store_full_path: bool = False,
     ):
         """
@@ -163,7 +163,7 @@ class DOCXToDocument:
         self.link_format = DOCXLinkFormat.from_str(link_format) if isinstance(link_format, str) else link_format
         self.store_full_path = store_full_path
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serializes the component to a dictionary.
 
@@ -178,7 +178,7 @@ class DOCXToDocument:
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DOCXToDocument":
+    def from_dict(cls, data: dict[str, Any]) -> "DOCXToDocument":
         """
         Deserializes the component from a dictionary.
 
@@ -193,12 +193,10 @@ class DOCXToDocument:
             data["init_parameters"]["link_format"] = DOCXLinkFormat.from_str(data["init_parameters"]["link_format"])
         return default_from_dict(cls, data)
 
-    @_component_instance.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=list[Document])
     def run(
-        self,
-        sources: List[Union[str, Path, ByteStream]],
-        meta: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None,
-    ):
+        self, sources: list[str | Path | ByteStream], meta: dict[str, Any] | list[dict[str, Any]] | None = None
+    ) -> dict[str, list[Document]]:
         """
         Converts DOCX files to Documents.
 
@@ -249,7 +247,7 @@ class DOCXToDocument:
 
         return {"documents": documents}
 
-    def _extract_elements(self, document: "DocxDocument") -> List[str]:
+    def _extract_elements(self, document: "DocxDocument") -> list[str]:
         """
         Extracts elements from a DOCX file.
 
@@ -268,7 +266,7 @@ class DOCXToDocument:
                     para_text = self._process_links_in_paragraph(paragraph)
                 elements.append(para_text)
             elif element.tag.endswith("tbl"):
-                table = docx.table.Table(element, document)
+                table = Table(element, document)
                 table_str = (
                     self._table_to_markdown(table)
                     if self.table_format == DOCXTableFormat.MARKDOWN
@@ -334,8 +332,8 @@ class DOCXToDocument:
         :param table: The DOCX table to convert.
         :returns: A Markdown string representation of the table.
         """
-        markdown: List[str] = []
-        max_col_widths: List[int] = []
+        markdown: list[str] = []
+        max_col_widths: list[int] = []
 
         # Calculate max width for each column
         for row in table.rows:

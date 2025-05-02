@@ -11,7 +11,7 @@ from openai.types import CreateEmbeddingResponse, Embedding
 
 
 class TestOpenAITextEmbedder:
-    def test_init_default(self, monkeypatch):
+    def test_init_default(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-api-key")
         embedder = OpenAITextEmbedder()
 
@@ -24,7 +24,7 @@ class TestOpenAITextEmbedder:
         assert embedder.client.timeout == 30
         assert embedder.client.max_retries == 5
 
-    def test_init_with_parameters(self, monkeypatch):
+    def test_init_with_parameters(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_TIMEOUT", "100")
         monkeypatch.setenv("OPENAI_MAX_RETRIES", "10")
         embedder = OpenAITextEmbedder(
@@ -46,7 +46,7 @@ class TestOpenAITextEmbedder:
         assert embedder.client.timeout == 40.0
         assert embedder.client.max_retries == 1
 
-    def test_init_with_parameters_and_env_vars(self, monkeypatch):
+    def test_init_with_parameters_and_env_vars(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_TIMEOUT", "100")
         monkeypatch.setenv("OPENAI_MAX_RETRIES", "10")
         embedder = OpenAITextEmbedder(
@@ -66,12 +66,12 @@ class TestOpenAITextEmbedder:
         assert embedder.client.timeout == 100.0
         assert embedder.client.max_retries == 10
 
-    def test_init_fail_wo_api_key(self, monkeypatch):
+    def test_init_fail_wo_api_key(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         with pytest.raises(ValueError, match="None of the .* environment variables are set"):
             OpenAITextEmbedder()
 
-    def test_to_dict(self, monkeypatch):
+    def test_to_dict(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-api-key")
         component = OpenAITextEmbedder()
         data = component.to_dict()
@@ -89,7 +89,7 @@ class TestOpenAITextEmbedder:
             },
         }
 
-    def test_to_dict_with_custom_init_parameters(self, monkeypatch):
+    def test_to_dict_with_custom_init_parameters(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("ENV_VAR", "fake-api-key")
         component = OpenAITextEmbedder(
             api_key=Secret.from_env_var("ENV_VAR", strict=False),
@@ -115,7 +115,7 @@ class TestOpenAITextEmbedder:
             },
         }
 
-    def test_from_dict(self, monkeypatch):
+    def test_from_dict(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-api-key")
         data = {
             "type": "haystack.components.embedders.openai_text_embedder.OpenAITextEmbedder",
@@ -138,7 +138,7 @@ class TestOpenAITextEmbedder:
         assert component.prefix == "prefix"
         assert component.suffix == "suffix"
 
-    def test_prepare_input(self, monkeypatch):
+    def test_prepare_input(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-api-key")
         embedder = OpenAITextEmbedder(dimensions=1536)
 
@@ -150,7 +150,7 @@ class TestOpenAITextEmbedder:
             "dimensions": 1536,
         }
 
-    def test_prepare_output(self, monkeypatch):
+    def test_prepare_output(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-api-key")
 
         response = CreateEmbeddingResponse(

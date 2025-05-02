@@ -4,23 +4,12 @@
 
 import itertools
 from collections import defaultdict
+from collections.abc import Iterator
 from copy import deepcopy
 from datetime import datetime
 from enum import IntEnum
 from pathlib import Path
-from typing import (
-    Any,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    TextIO,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Any, TextIO
 
 import networkx  # type:ignore
 
@@ -46,11 +35,7 @@ from haystack.core.pipeline.component_checks import (
     is_socket_lazy_variadic,
 )
 from haystack.core.pipeline.utils import FIFOPriorityQueue, parse_connect_string
-from haystack.core.serialization import (
-    DeserializationCallbacks,
-    component_from_dict,
-    component_to_dict,
-)
+from haystack.core.serialization import DeserializationCallbacks, component_from_dict, component_to_dict
 from haystack.core.type_utils import _type_name, _types_are_compatible
 from haystack.marshal import Marshaller, YamlMarshaller
 from haystack.utils import is_in_jupyter, type_serialization
@@ -78,6 +63,10 @@ class ComponentPriority(IntEnum):
     BLOCKED = 5
 
 
+_component_instance = component()
+
+
+@_component_instance
 class PipelineBase:
     """
     Components orchestration engine.
@@ -87,7 +76,7 @@ class PipelineBase:
 
     def __init__(
         self,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
         max_runs_per_component: int = 100,
         connection_type_validation: bool = True,
     ):
@@ -105,7 +94,7 @@ class PipelineBase:
             Defaults to True.
         """
         self._telemetry_runs = 0
-        self._last_telemetry_sent: Optional[datetime] = None
+        self._last_telemetry_sent: datetime | None = None
         self.metadata = metadata or {}
         self.graph = networkx.MultiDiGraph()
         self._max_runs_per_component = max_runs_per_component
@@ -144,7 +133,11 @@ class PipelineBase:
 
         return res
 
-    def to_dict(self) -> Dict[str, Any]:
+    @_component_instance.output_types(output_1=int, output_2=str)
+    def run(self, **kwargs: Any) -> dict[str, Any]:
+        return {}
+
+    def to_dict(self) -> dict[str, Any]:
         """
         Serializes the pipeline to a dictionary.
 
@@ -161,12 +154,7 @@ class PipelineBase:
         for sender, receiver, edge_data in self.graph.edges.data():
             sender_socket = edge_data["from_socket"].name
             receiver_socket = edge_data["to_socket"].name
-            connections.append(
-                {
-                    "sender": f"{sender}.{sender_socket}",
-                    "receiver": f"{receiver}.{receiver_socket}",
-                }
-            )
+            connections.append({"sender": f"{sender}.{sender_socket}", "receiver": f"{receiver}.{receiver_socket}"})
         return {
             "metadata": self.metadata,
             "max_runs_per_component": self._max_runs_per_component,
@@ -177,10 +165,7 @@ class PipelineBase:
 
     @classmethod
     def from_dict[T: PipelineBase](
-        cls: Type[T],
-        data: Dict[str, Any],
-        callbacks: Optional[DeserializationCallbacks] = None,
-        **kwargs: Any,
+        cls: type[T], data: dict[str, Any], callbacks: DeserializationCallbacks | None = None, **kwargs: Any
     ) -> T:
         """
         Deserializes the pipeline from a dictionary.
@@ -213,21 +198,19 @@ class PipelineBase:
                 if "type" not in component_data:
                     raise PipelineError(f"Missing 'type' in component '{name}'")
 
-                if component_data["type"] not in component.registry:
+                if component_data["type"] not in _component_instance.registry:
                     try:
                         # Import the module first...
                         module, _ = component_data["type"].rsplit(".", 1)
-                        logger.debug(
-                            "Trying to import module {module_name}", module_name=module
-                        )
+                        logger.debug("Trying to import module {module_name}", module_name=module)
                         type_serialization.thread_safe_import(module)
                         # ...then try again
-                        if component_data["type"] not in component.registry:
+                        if component_data["type"] not in _component_instance.registry:
                             raise PipelineError(
                                 f"Successfully imported module '{module}' but couldn't find "
                                 f"'{component_data['type']}' in the component registry.\n"
                                 f"The component might be registered under a different path. "
-                                f"Here are the registered components:\n {list(component.registry.keys())}\n"
+                                f"Here are the registered components:\n {list(_component_instance.registry.keys())}\n"
                             )
                     except (ImportError, PipelineError, ValueError) as e:
                         raise PipelineError(
@@ -236,12 +219,10 @@ class PipelineBase:
                         ) from e
 
                 # Create a new one
-                component_class = component.registry[component_data["type"]]
+                component_class = _component_instance.registry[component_data["type"]]
 
                 try:
-                    instance = component_from_dict(
-                        component_class, component_data, name, callbacks
-                    )
+                    instance = component_from_dict(component_class, component_data, name, callbacks)
                 except Exception as e:
                     msg = (
                         f"Couldn't deserialize component '{name}' of class '{component_class.__name__}' "
@@ -286,10 +267,10 @@ class PipelineBase:
 
     @classmethod
     def loads[T: PipelineBase](
-        cls: Type[T],
-        data: Union[str, bytes, bytearray],
+        cls: type[T],
+        data: str | bytes | bytearray,
         marshaller: Marshaller = DEFAULT_MARSHALLER,
-        callbacks: Optional[DeserializationCallbacks] = None,
+        callbacks: DeserializationCallbacks | None = None,
     ) -> T:
         """
         Creates a `Pipeline` object from the string representation passed in the `data` argument.
@@ -317,10 +298,10 @@ class PipelineBase:
 
     @classmethod
     def load[T: PipelineBase](
-        cls: Type[T],
+        cls: type[T],
         fp: TextIO,
         marshaller: Marshaller = DEFAULT_MARSHALLER,
-        callbacks: Optional[DeserializationCallbacks] = None,
+        callbacks: DeserializationCallbacks | None = None,
     ) -> T:
         """
         Creates a `Pipeline` object a string representation.
@@ -360,21 +341,15 @@ class PipelineBase:
         """
         # Component names are unique
         if name in self.graph.nodes:
-            raise ValueError(
-                f"A component named '{name}' already exists in this pipeline: choose another name."
-            )
+            raise ValueError(f"A component named '{name}' already exists in this pipeline: choose another name.")
 
         # Components can't be named `_debug`
         if name == "_debug":
-            raise ValueError(
-                "'_debug' is a reserved name for debug output. Choose another name."
-            )
+            raise ValueError("'_debug' is a reserved name for debug output. Choose another name.")
 
         # Component names can't have "."
         if "." in name:
-            raise ValueError(
-                f"{name} is an invalid component name, cannot contain '.' (dot) characters."
-            )
+            raise ValueError(f"{name} is an invalid component name, cannot contain '.' (dot) characters.")
 
         # Component instances must be components
         if not isinstance(instance, Component):
@@ -392,11 +367,7 @@ class PipelineBase:
         setattr(instance, "__haystack_added_to_pipeline__", self)
 
         # Add component to the graph, disconnected
-        logger.debug(
-            "Adding component '{component_name}' ({component})",
-            component_name=name,
-            component=instance,
-        )
+        logger.debug("Adding component '{component_name}' ({component})", component_name=name, component=instance)
         # We're completely sure the fields exist so we ignore the type error
         self.graph.add_node(
             name,
@@ -476,43 +447,30 @@ class PipelineBase:
         receiver_component_name, receiver_socket_name = parse_connect_string(receiver)
 
         if sender_component_name == receiver_component_name:
-            raise PipelineConnectError(
-                "Connecting a Component to itself is not supported."
-            )
+            raise PipelineConnectError("Connecting a Component to itself is not supported.")
 
         # Get the nodes data.
         try:
             sender_sockets = self.graph.nodes[sender_component_name]["output_sockets"]
         except KeyError as exc:
-            raise ValueError(
-                f"Component named {sender_component_name} not found in the pipeline."
-            ) from exc
+            raise ValueError(f"Component named {sender_component_name} not found in the pipeline.") from exc
         try:
-            receiver_sockets = self.graph.nodes[receiver_component_name][
-                "input_sockets"
-            ]
+            receiver_sockets = self.graph.nodes[receiver_component_name]["input_sockets"]
         except KeyError as exc:
-            raise ValueError(
-                f"Component named {receiver_component_name} not found in the pipeline."
-            ) from exc
+            raise ValueError(f"Component named {receiver_component_name} not found in the pipeline.") from exc
 
         # If the name of either socket is given, get the socket
-        sender_socket: Optional[OutputSocket] = None
+        sender_socket: OutputSocket | None = None
         if sender_socket_name:
             sender_socket = sender_sockets.get(sender_socket_name)
             if not sender_socket:
                 raise PipelineConnectError(
                     f"'{sender} does not exist. "
                     f"Output connections of {sender_component_name} are: "
-                    + ", ".join(
-                        [
-                            f"{name} (type {_type_name(socket.type)})"
-                            for name, socket in sender_sockets.items()
-                        ]
-                    )
+                    + ", ".join([f"{name} (type {_type_name(socket.type)})" for name, socket in sender_sockets.items()])
                 )
 
-        receiver_socket: Optional[InputSocket] = None
+        receiver_socket: InputSocket | None = None
         if receiver_socket_name:
             receiver_socket = receiver_sockets.get(receiver_socket_name)
             if not receiver_socket:
@@ -520,30 +478,23 @@ class PipelineBase:
                     f"'{receiver} does not exist. "
                     f"Input connections of {receiver_component_name} are: "
                     + ", ".join(
-                        [
-                            f"{name} (type {_type_name(socket.type)})"
-                            for name, socket in receiver_sockets.items()
-                        ]
+                        [f"{name} (type {_type_name(socket.type)})" for name, socket in receiver_sockets.items()]
                     )
                 )
 
         # Look for a matching connection among the possible ones.
         # Note that if there is more than one possible connection but two sockets match by name, they're paired.
-        sender_socket_candidates: List[OutputSocket] = (
+        sender_socket_candidates: list[OutputSocket] = (
             [sender_socket] if sender_socket else list(sender_sockets.values())
         )
-        receiver_socket_candidates: List[InputSocket] = (
+        receiver_socket_candidates: list[InputSocket] = (
             [receiver_socket] if receiver_socket else list(receiver_sockets.values())
         )
 
         # Find all possible connections between these two components
         possible_connections = []
-        for sender_sock, receiver_sock in itertools.product(
-            sender_socket_candidates, receiver_socket_candidates
-        ):
-            if _types_are_compatible(
-                sender_sock.type, receiver_sock.type, self._connection_type_validation
-            ):
+        for sender_sock, receiver_sock in itertools.product(sender_socket_candidates, receiver_socket_candidates):
+            if _types_are_compatible(sender_sock.type, receiver_sock.type, self._connection_type_validation):
                 possible_connections.append((sender_sock, receiver_sock))
 
         # We need this status for error messages, since we might need it in multiple places we calculate it here
@@ -577,9 +528,7 @@ class PipelineBase:
         if len(possible_connections) > 1:
             # There are multiple possible connection, let's try to match them by name
             name_matches = [
-                (out_sock, in_sock)
-                for out_sock, in_sock in possible_connections
-                if in_sock.name == out_sock.name
+                (out_sock, in_sock) for out_sock, in_sock in possible_connections if in_sock.name == out_sock.name
             ]
             if len(name_matches) != 1:
                 # There's are either no matches or more than one, we can't pick one reliably
@@ -597,12 +546,7 @@ class PipelineBase:
             receiver_socket = name_matches[0][1]
 
         # Connection must be valid on both sender/receiver sides
-        if (
-            not sender_socket
-            or not receiver_socket
-            or not sender_component_name
-            or not receiver_component_name
-        ):
+        if not sender_socket or not receiver_socket or not sender_component_name or not receiver_component_name:
             if sender_component_name and sender_socket:
                 sender_repr = f"{sender_component_name}.{sender_socket.name} ({_type_name(sender_socket.type)})"
             else:
@@ -623,10 +567,7 @@ class PipelineBase:
             receiver_socket_name=receiver_socket.name,
         )
 
-        if (
-            receiver_component_name in sender_socket.receivers
-            and sender_component_name in receiver_socket.senders
-        ):
+        if receiver_component_name in sender_socket.receivers and sender_component_name in receiver_socket.senders:
             # This is already connected, nothing to do
             return self
 
@@ -670,9 +611,7 @@ class PipelineBase:
         try:
             return self.graph.nodes[name]["instance"]
         except KeyError as exc:
-            raise ValueError(
-                f"Component named {name} not found in the pipeline."
-            ) from exc
+            raise ValueError(f"Component named {name} not found in the pipeline.") from exc
 
     def get_component_name(self, instance: Component) -> str:
         """
@@ -688,9 +627,7 @@ class PipelineBase:
                 return name
         return ""
 
-    def inputs(
-        self, include_components_with_connected_inputs: bool = False
-    ) -> Dict[str, Dict[str, Any]]:
+    def inputs(self, include_components_with_connected_inputs: bool = False) -> dict[str, dict[str, Any]]:
         """
         Returns a dictionary containing the inputs of a pipeline.
 
@@ -704,28 +641,19 @@ class PipelineBase:
             A dictionary where each key is a pipeline component name and each value is a dictionary of
             inputs sockets of that component.
         """
-        inputs: Dict[str, Dict[str, Any]] = {}
-        for component_name, data in find_pipeline_inputs(
-            self.graph, include_components_with_connected_inputs
-        ).items():
+        inputs: dict[str, dict[str, Any]] = {}
+        for component_name, data in find_pipeline_inputs(self.graph, include_components_with_connected_inputs).items():
             sockets_description = {}
             for socket in data:
-                sockets_description[socket.name] = {
-                    "type": socket.type,
-                    "is_mandatory": socket.is_mandatory,
-                }
+                sockets_description[socket.name] = {"type": socket.type, "is_mandatory": socket.is_mandatory}
                 if not socket.is_mandatory:
-                    sockets_description[socket.name]["default_value"] = (
-                        socket.default_value
-                    )
+                    sockets_description[socket.name]["default_value"] = socket.default_value
 
             if sockets_description:
                 inputs[component_name] = sockets_description
         return inputs
 
-    def outputs(
-        self, include_components_with_connected_outputs: bool = False
-    ) -> Dict[str, Dict[str, Any]]:
+    def outputs(self, include_components_with_connected_outputs: bool = False) -> dict[str, dict[str, Any]]:
         """
         Returns a dictionary containing the outputs of a pipeline.
 
@@ -741,18 +669,13 @@ class PipelineBase:
         """
         outputs = {
             comp: {socket.name: {"type": socket.type} for socket in data}
-            for comp, data in find_pipeline_outputs(
-                self.graph, include_components_with_connected_outputs
-            ).items()
+            for comp, data in find_pipeline_outputs(self.graph, include_components_with_connected_outputs).items()
             if data
         }
         return outputs
 
     def show(
-        self,
-        server_url: str = "https://mermaid.ink",
-        params: Optional[dict[str, Any]] = None,
-        timeout: int = 30,
+        self, server_url: str = "https://mermaid.ink", params: dict[str, Any] | None = None, timeout: int = 30
     ) -> None:
         """
         Display an image representing this `Pipeline` in a Jupyter notebook.
@@ -788,9 +711,7 @@ class PipelineBase:
         if is_in_jupyter():
             from IPython.display import Image, display  # type: ignore
 
-            image_data = _to_mermaid_image(
-                self.graph, server_url=server_url, params=params, timeout=timeout
-            )
+            image_data = _to_mermaid_image(self.graph, server_url=server_url, params=params, timeout=timeout)
             display(Image(image_data))
         else:
             msg = "This method is only supported in Jupyter notebooks. Use Pipeline.draw() to save an image locally."
@@ -800,7 +721,7 @@ class PipelineBase:
         self,
         path: Path,
         server_url: str = "https://mermaid.ink",
-        params: Optional[dict] = None,
+        params: dict[str, Any] | None = None,
         timeout: int = 30,
     ) -> None:
         """
@@ -836,12 +757,10 @@ class PipelineBase:
         """
         # Before drawing we edit a bit the graph, to avoid modifying the original that is
         # used for running the pipeline we copy it.
-        image_data = _to_mermaid_image(
-            self.graph, server_url=server_url, params=params, timeout=timeout
-        )
+        image_data = _to_mermaid_image(self.graph, server_url=server_url, params=params, timeout=timeout)
         Path(path).write_bytes(image_data)
 
-    def walk(self) -> Iterator[Tuple[str, Component]]:
+    def walk(self) -> Iterator[tuple[str, Component]]:
         """
         Visits each component in the pipeline exactly once and yields its name and instance.
 
@@ -867,37 +786,24 @@ class PipelineBase:
 
     @staticmethod
     def _create_component_span(
-        component_name: str,
-        instance: Component,
-        inputs: Dict[str, Any],
-        parent_span: Optional[tracing.Span] = None,
+        component_name: str, instance: Component, inputs: dict[str, Any], parent_span: tracing.Span | None = None
     ):
         return tracing.tracer.trace(
             "haystack.component.run",
             tags={
                 "haystack.component.name": component_name,
                 "haystack.component.type": instance.__class__.__name__,
-                "haystack.component.input_types": {
-                    k: type(v).__name__ for k, v in inputs.items()
-                },
+                "haystack.component.input_types": {k: type(v).__name__ for k, v in inputs.items()},
                 "haystack.component.input_spec": {
                     key: {
-                        "type": (
-                            value.type.__name__
-                            if isinstance(value.type, type)
-                            else str(value.type)
-                        ),
+                        "type": (value.type.__name__ if isinstance(value.type, type) else str(value.type)),
                         "senders": value.senders,
                     }
                     for key, value in instance.__haystack_input__._sockets_dict.items()  # type: ignore
                 },
                 "haystack.component.output_spec": {
                     key: {
-                        "type": (
-                            value.type.__name__
-                            if isinstance(value.type, type)
-                            else str(value.type)
-                        ),
+                        "type": (value.type.__name__ if isinstance(value.type, type) else str(value.type)),
                         "receivers": value.receivers,
                     }
                     for key, value in instance.__haystack_output__._sockets_dict.items()  # type: ignore
@@ -906,7 +812,7 @@ class PipelineBase:
             parent_span=parent_span,
         )
 
-    def _validate_input(self, data: Dict[str, Any]):
+    def _validate_input(self, data: dict[str, Any]):
         """
         Validates pipeline input data.
 
@@ -924,55 +830,27 @@ class PipelineBase:
         """
         for component_name, component_inputs in data.items():
             if component_name not in self.graph.nodes:
-                raise ValueError(
-                    f"Component named {component_name} not found in the pipeline."
-                )
+                raise ValueError(f"Component named {component_name} not found in the pipeline.")
             instance = self.graph.nodes[component_name]["instance"]
-            for (
-                socket_name,
-                socket,
-            ) in instance.__haystack_input__._sockets_dict.items():
-                if (
-                    socket.senders == []
-                    and socket.is_mandatory
-                    and socket_name not in component_inputs
-                ):
-                    raise ValueError(
-                        f"Missing input for component {component_name}: {socket_name}"
-                    )
+            for socket_name, socket in instance.__haystack_input__._sockets_dict.items():
+                if socket.senders == [] and socket.is_mandatory and socket_name not in component_inputs:
+                    raise ValueError(f"Missing input for component {component_name}: {socket_name}")
             for input_name in component_inputs.keys():
                 if input_name not in instance.__haystack_input__._sockets_dict:
-                    raise ValueError(
-                        f"Input {input_name} not found in component {component_name}."
-                    )
+                    raise ValueError(f"Input {input_name} not found in component {component_name}.")
 
         for component_name in self.graph.nodes:
             instance = self.graph.nodes[component_name]["instance"]
-            for (
-                socket_name,
-                socket,
-            ) in instance.__haystack_input__._sockets_dict.items():
+            for socket_name, socket in instance.__haystack_input__._sockets_dict.items():
                 component_inputs = data.get(component_name, {})
-                if (
-                    socket.senders == []
-                    and socket.is_mandatory
-                    and socket_name not in component_inputs
-                ):
-                    raise ValueError(
-                        f"Missing input for component {component_name}: {socket_name}"
-                    )
-                if (
-                    socket.senders
-                    and socket_name in component_inputs
-                    and not socket.is_variadic
-                ):
+                if socket.senders == [] and socket.is_mandatory and socket_name not in component_inputs:
+                    raise ValueError(f"Missing input for component {component_name}: {socket_name}")
+                if socket.senders and socket_name in component_inputs and not socket.is_variadic:
                     raise ValueError(
                         f"Input {socket_name} for component {component_name} is already sent by {socket.senders}."
                     )
 
-    def _prepare_component_input_data(
-        self, data: Dict[str, Any]
-    ) -> Dict[str, Dict[str, Any]]:
+    def _prepare_component_input_data(self, data: dict[str, Any]) -> dict[str, dict[str, Any]]:
         """
         Prepares input data for pipeline components.
 
@@ -991,18 +869,16 @@ class PipelineBase:
         """
         # check whether the data is a nested dictionary of component inputs where each key is a component name
         # and each value is a dictionary of input parameters for that component
-        is_nested_component_input = all(
-            isinstance(value, dict) for value in data.values()
-        )
+        is_nested_component_input = all(isinstance(value, dict) for value in data.values())
         if not is_nested_component_input:
             # flat input, a dict where keys are input names and values are the corresponding values
             # we need to convert it to a nested dictionary of component inputs and then run the pipeline
             # just like in the previous case
-            pipeline_input_data: Dict[str, Dict[str, Any]] = defaultdict(dict)
+            pipeline_input_data: dict[str, dict[str, Any]] = defaultdict(dict)
             unresolved_kwargs = {}
 
             # Retrieve the input slots for each component in the pipeline
-            available_inputs: Dict[str, Dict[str, Any]] = self.inputs()
+            available_inputs: dict[str, dict[str, Any]] = self.inputs()
 
             # Go through all provided to distribute them to the appropriate component inputs
             for input_name, input_value in data.items():
@@ -1035,9 +911,7 @@ class PipelineBase:
 
     @classmethod
     def from_template(
-        cls,
-        predefined_pipeline: PredefinedPipeline,
-        template_params: Optional[Dict[str, Any]] = None,
+        cls, predefined_pipeline: PredefinedPipeline, template_params: dict[str, Any] | None = None
     ) -> "PipelineBase":
         """
         Create a Pipeline from a predefined template. See `PredefinedPipeline` for available options.
@@ -1062,9 +936,7 @@ class PipelineBase:
             msg += f"Source:\n{rendered}"
             raise PipelineUnmarshalError(msg)
 
-    def _find_receivers_from(
-        self, component_name: str
-    ) -> List[Tuple[str, OutputSocket, InputSocket]]:
+    def _find_receivers_from(self, component_name: str) -> list[tuple[str, OutputSocket, InputSocket]]:
         """
         Utility function to find all Components that receive input from `component_name`.
 
@@ -1076,18 +948,14 @@ class PipelineBase:
             and receiver InputSocket instances
         """
         res = []
-        for _, receiver_name, connection in self.graph.edges(
-            nbunch=component_name, data=True
-        ):
+        for _, receiver_name, connection in self.graph.edges(nbunch=component_name, data=True):
             sender_socket: OutputSocket = connection["from_socket"]
             receiver_socket: InputSocket = connection["to_socket"]
             res.append((receiver_name, sender_socket, receiver_socket))
         return res
 
     @staticmethod
-    def _convert_to_internal_format(
-        pipeline_inputs: Dict[str, Any],
-    ) -> Dict[str, Dict[str, List]]:
+    def _convert_to_internal_format(pipeline_inputs: dict[str, Any]) -> dict[str, dict[str, list]]:
         """
         Converts the inputs to the pipeline to the format that is needed for the internal `Pipeline.run` logic.
 
@@ -1100,7 +968,7 @@ class PipelineBase:
         :param pipeline_inputs: Inputs to the pipeline.
         :returns: Converted inputs that can be used by the internal `Pipeline.run` logic.
         """
-        inputs: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
+        inputs: dict[str, dict[str, list[dict[str, Any]]]] = {}
         for component_name, socket_dict in pipeline_inputs.items():
             inputs[component_name] = {}
             for socket_name, value in socket_dict.items():
@@ -1110,8 +978,8 @@ class PipelineBase:
 
     @staticmethod
     def _consume_component_inputs(
-        component_name: str, component: Dict, inputs: Dict
-    ) -> Dict[str, Any]:
+        component_name: str, component: dict[str, Any], inputs: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Extracts the inputs needed to run for the component and removes them from the global inputs state.
 
@@ -1125,11 +993,7 @@ class PipelineBase:
         greedy_inputs_to_remove = set()
         for socket_name, socket in component["input_sockets"].items():
             socket_inputs = component_inputs.get(socket_name, [])
-            socket_inputs = [
-                sock["value"]
-                for sock in socket_inputs
-                if sock["value"] is not _NO_OUTPUT_PRODUCED
-            ]
+            socket_inputs = [sock["value"] for sock in socket_inputs if sock["value"] is not _NO_OUTPUT_PRODUCED]
             if socket_inputs:
                 if not socket.is_variadic:
                     # We only care about the first input provided to the socket.
@@ -1147,27 +1011,18 @@ class PipelineBase:
         # We prune all inputs except for those that were provided from outside the pipeline (e.g. user inputs).
         pruned_inputs = {
             socket_name: [
-                sock
-                for sock in socket
-                if sock["sender"] is None and socket_name not in greedy_inputs_to_remove
+                sock for sock in socket if sock["sender"] is None and socket_name not in greedy_inputs_to_remove
             ]
             for socket_name, socket in component_inputs.items()
         }
-        pruned_inputs = {
-            socket_name: socket
-            for socket_name, socket in pruned_inputs.items()
-            if len(socket) > 0
-        }
+        pruned_inputs = {socket_name: socket for socket_name, socket in pruned_inputs.items() if len(socket) > 0}
 
         inputs[component_name] = pruned_inputs
 
         return consumed_inputs
 
     def _fill_queue(
-        self,
-        component_names: List[str],
-        inputs: Dict[str, Any],
-        component_visits: Dict[str, int],
+        self, component_names: list[str], inputs: dict[str, Any], component_visits: dict[str, int]
     ) -> FIFOPriorityQueue:
         """
         Calculates the execution priority for each component and inserts it into the priority queue.
@@ -1182,15 +1037,13 @@ class PipelineBase:
             component = self._get_component_with_graph_metadata_and_visits(
                 component_name, component_visits[component_name]
             )
-            priority = self._calculate_priority(
-                component, inputs.get(component_name, {})
-            )
+            priority = self._calculate_priority(component, inputs.get(component_name, {}))
             priority_queue.push(component_name, priority)
 
         return priority_queue
 
     @staticmethod
-    def _calculate_priority(component: Dict, inputs: Dict) -> ComponentPriority:
+    def _calculate_priority(component: dict[str, Any], inputs: dict[str, Any]) -> ComponentPriority:
         """
         Calculates the execution priority for a component depending on the component's inputs.
 
@@ -1200,9 +1053,7 @@ class PipelineBase:
         """
         if not can_component_run(component, inputs):
             return ComponentPriority.BLOCKED
-        elif is_any_greedy_socket_ready(component, inputs) and are_all_sockets_ready(
-            component, inputs
-        ):
+        elif is_any_greedy_socket_ready(component, inputs) and are_all_sockets_ready(component, inputs):
             return ComponentPriority.HIGHEST
         elif all_predecessors_executed(component, inputs):
             return ComponentPriority.READY
@@ -1211,9 +1062,7 @@ class PipelineBase:
         else:
             return ComponentPriority.DEFER_LAST
 
-    def _get_component_with_graph_metadata_and_visits(
-        self, component_name: str, visits: int
-    ) -> Dict[str, Any]:
+    def _get_component_with_graph_metadata_and_visits(self, component_name: str, visits: int) -> dict[str, Any]:
         """
         Returns the component instance alongside input/output-socket metadata from the graph and adds current visits.
 
@@ -1228,8 +1077,8 @@ class PipelineBase:
         return comp_dict
 
     def _get_next_runnable_component(
-        self, priority_queue: FIFOPriorityQueue, component_visits: Dict[str, int]
-    ) -> Union[Tuple[ComponentPriority, str, Dict[str, Any]], None]:
+        self, priority_queue: FIFOPriorityQueue, component_visits: dict[str, int]
+    ) -> tuple[ComponentPriority, str, dict[str, Any]] | None:
         """
         Returns the next runnable component alongside its metadata from the priority queue.
 
@@ -1239,16 +1088,11 @@ class PipelineBase:
             or None if no component in the queue can run.
         :raises: PipelineMaxComponentRuns if the next runnable component has exceeded the maximum number of runs.
         """
-        priority_and_component_name: Union[Tuple[ComponentPriority, str], None] = (
-            None
-            if (item := priority_queue.get()) is None
-            else (ComponentPriority(item[0]), str(item[1]))
+        priority_and_component_name: tuple[ComponentPriority, str] | None = (
+            None if (item := priority_queue.get()) is None else (ComponentPriority(item[0]), str(item[1]))
         )
 
-        if (
-            priority_and_component_name is not None
-            and priority_and_component_name[0] != ComponentPriority.BLOCKED
-        ):
+        if priority_and_component_name is not None and priority_and_component_name[0] != ComponentPriority.BLOCKED:
             priority, component_name = priority_and_component_name
             component = self._get_component_with_graph_metadata_and_visits(
                 component_name, component_visits[component_name]
@@ -1262,10 +1106,7 @@ class PipelineBase:
         return None
 
     @staticmethod
-    def _add_missing_input_defaults(
-        component_inputs: Dict[str, Any],
-        component_input_sockets: Dict[str, InputSocket],
-    ):
+    def _add_missing_input_defaults(component_inputs: dict[str, Any], component_input_sockets: dict[str, InputSocket]):
         """
         Updates the inputs with the default values for the inputs that are missing
 
@@ -1286,7 +1127,7 @@ class PipelineBase:
         component_name: str,
         priority: ComponentPriority,
         priority_queue: FIFOPriorityQueue,
-        topological_sort: Union[Dict[str, int], None],
+        topological_sort: dict[str, int] | None,
     ):
         """
         Decides which component to run when multiple components are waiting for inputs with the same priority.
@@ -1309,26 +1150,18 @@ class PipelineBase:
         if len(components_with_same_priority) > 1:
             if topological_sort is None:
                 if networkx.is_directed_acyclic_graph(self.graph):
-                    topological_sort = networkx.lexicographical_topological_sort(
-                        self.graph
-                    )
-                    topological_sort = {
-                        node: idx for idx, node in enumerate(topological_sort)
-                    }
+                    topological_sort = networkx.lexicographical_topological_sort(self.graph)
+                    topological_sort = {node: idx for idx, node in enumerate(topological_sort)}
                 else:
                     condensed = networkx.condensation(self.graph)
-                    condensed_sorted = {
-                        node: idx
-                        for idx, node in enumerate(networkx.topological_sort(condensed))
-                    }
+                    condensed_sorted = {node: idx for idx, node in enumerate(networkx.topological_sort(condensed))}
                     topological_sort = {
                         component_name: condensed_sorted[node]
                         for component_name, node in condensed.graph["mapping"].items()
                     }
 
             components_with_same_priority = sorted(
-                components_with_same_priority,
-                key=lambda comp_name: (topological_sort[comp_name], comp_name.lower()),
+                components_with_same_priority, key=lambda comp_name: (topological_sort[comp_name], comp_name.lower())
             )
 
             component_name = components_with_same_priority[0]
@@ -1338,11 +1171,11 @@ class PipelineBase:
     @staticmethod
     def _write_component_outputs(
         component_name: str,
-        component_outputs: Dict[str, Any],
-        inputs: Dict[str, Any],
-        receivers: List[Tuple],
-        include_outputs_from: Set[str],
-    ) -> Dict[str, Any]:
+        component_outputs: dict[str, Any],
+        inputs: dict[str, Any],
+        receivers: list[tuple[str, OutputSocket, InputSocket]],
+        include_outputs_from: set[str],
+    ) -> dict[str, Any]:
         """
         Distributes the outputs of a component to the input sockets that it is connected to.
 
@@ -1390,11 +1223,7 @@ class PipelineBase:
         # We prune outputs that were consumed by any receiving sockets.
         # All remaining outputs will be added to the final outputs of the pipeline.
         consumed_outputs = {sender_socket.name for _, sender_socket, __ in receivers}
-        pruned_outputs = {
-            key: value
-            for key, value in component_outputs.items()
-            if key not in consumed_outputs
-        }
+        pruned_outputs = {key: value for key, value in component_outputs.items() if key not in consumed_outputs}
 
         return pruned_outputs
 
@@ -1405,10 +1234,7 @@ class PipelineBase:
 
         :param priority_queue: Priority queue of component names.
         """
-        return (
-            len(priority_queue) == 0
-            or priority_queue.peek()[0] > ComponentPriority.READY
-        )
+        return len(priority_queue) == 0 or priority_queue.peek()[0] > ComponentPriority.READY
 
     @staticmethod
     def validate_pipeline(priority_queue: FIFOPriorityQueue) -> None:
@@ -1428,19 +1254,14 @@ class PipelineBase:
 
 
 def _connections_status(
-    sender_node: str,
-    receiver_node: str,
-    sender_sockets: List[OutputSocket],
-    receiver_sockets: List[InputSocket],
+    sender_node: str, receiver_node: str, sender_sockets: list[OutputSocket], receiver_sockets: list[InputSocket]
 ) -> str:
     """
     Lists the status of the sockets, for error messages.
     """
     sender_sockets_entries = []
     for sender_socket in sender_sockets:
-        sender_sockets_entries.append(
-            f" - {sender_socket.name}: {_type_name(sender_socket.type)}"
-        )
+        sender_sockets_entries.append(f" - {sender_socket.name}: {_type_name(sender_socket.type)}")
     sender_sockets_list = "\n".join(sender_sockets_entries)
 
     receiver_sockets_entries = []
@@ -1461,11 +1282,7 @@ def _connections_status(
 
 
 def _write_to_lazy_variadic_socket(
-    inputs: Dict[str, Any],
-    receiver_name: str,
-    receiver_socket_name: str,
-    component_name: str,
-    value: Any,
+    inputs: dict[str, Any], receiver_name: str, receiver_socket_name: str, component_name: str, value: Any
 ) -> None:
     """
     Write to a lazy variadic socket.
@@ -1475,17 +1292,11 @@ def _write_to_lazy_variadic_socket(
     if not inputs[receiver_name].get(receiver_socket_name):
         inputs[receiver_name][receiver_socket_name] = []
 
-    inputs[receiver_name][receiver_socket_name].append(
-        {"sender": component_name, "value": value}
-    )
+    inputs[receiver_name][receiver_socket_name].append({"sender": component_name, "value": value})
 
 
 def _write_to_standard_socket(
-    inputs: Dict[str, Any],
-    receiver_name: str,
-    receiver_socket_name: str,
-    component_name: str,
-    value: Any,
+    inputs: dict[str, Any], receiver_name: str, receiver_socket_name: str, component_name: str, value: Any
 ) -> None:
     """
     Write to a greedy variadic or non-variadic socket.
@@ -1496,6 +1307,4 @@ def _write_to_standard_socket(
 
     # Only overwrite if there's no existing value, or we have a new value to provide
     if current_value is None or value is not _NO_OUTPUT_PRODUCED:
-        inputs[receiver_name][receiver_socket_name] = [
-            {"sender": component_name, "value": value}
-        ]
+        inputs[receiver_name][receiver_socket_name] = [{"sender": component_name, "value": value}]

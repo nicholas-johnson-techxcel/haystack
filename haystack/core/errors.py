@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Optional, Type
+from typing import Any
 
 
 class PipelineError(Exception):
@@ -10,13 +10,13 @@ class PipelineError(Exception):
 
 
 class PipelineRuntimeError(Exception):
-    def __init__(self, component_name: Optional[str], component_type: Optional[Type], message: str) -> None:
+    def __init__(self, component_name: str | None, component_type: type | None, message: str) -> None:
         self.component_name = component_name
         self.component_type = component_type
         super().__init__(message)
 
     @classmethod
-    def from_exception(cls, component_name: str, component_type: Type, error: Exception):
+    def from_exception(cls, component_name: str, component_type: type, error: Exception):
         """
         Create a PipelineRuntimeError from an exception.
         """
@@ -29,7 +29,7 @@ class PipelineRuntimeError(Exception):
         return cls(component_name, component_type, message)
 
     @classmethod
-    def from_invalid_output(cls, component_name: str, component_type: Type, output: Any):
+    def from_invalid_output(cls, component_name: str, component_type: type, output: Any):
         """
         Create a PipelineRuntimeError from an invalid output.
         """

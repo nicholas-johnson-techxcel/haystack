@@ -10,7 +10,7 @@ from haystack.utils.azure import default_azure_ad_token_provider
 
 
 class TestAzureOpenAITextEmbedder:
-    def test_init_default(self, monkeypatch):
+    def test_init_default(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "fake-api-key")
         embedder = AzureOpenAITextEmbedder(azure_endpoint="https://example-resource.azure.openai.com/")
 
@@ -25,7 +25,7 @@ class TestAzureOpenAITextEmbedder:
         assert embedder.azure_ad_token_provider is None
         assert embedder.http_client_kwargs is None
 
-    def test_init_with_zero_max_retries(self, monkeypatch):
+    def test_init_with_zero_max_retries(self, monkeypatch: pytest.MonkeyPatch):
         """Tests that the max_retries init param is set correctly if equal 0"""
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "fake-api-key")
         embedder = AzureOpenAITextEmbedder(azure_endpoint="https://example-resource.azure.openai.com/", max_retries=0)
@@ -41,7 +41,7 @@ class TestAzureOpenAITextEmbedder:
         assert embedder.azure_ad_token_provider is None
         assert embedder.max_retries == 0
 
-    def test_to_dict_default(self, monkeypatch):
+    def test_to_dict_default(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "fake-api-key")
         component = AzureOpenAITextEmbedder(azure_endpoint="https://example-resource.azure.openai.com/")
         data = component.to_dict()
@@ -65,7 +65,7 @@ class TestAzureOpenAITextEmbedder:
             },
         }
 
-    def test_to_dict_with_params(self, monkeypatch):
+    def test_to_dict_with_params(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "fake-api-key")
         component = AzureOpenAITextEmbedder(
             azure_endpoint="https://example-resource.azure.openai.com/",
@@ -101,7 +101,7 @@ class TestAzureOpenAITextEmbedder:
             },
         }
 
-    def test_from_dict(self, monkeypatch):
+    def test_from_dict(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "fake-api-key")
         data = {
             "type": "haystack.components.embedders.azure_text_embedder.AzureOpenAITextEmbedder",
@@ -134,7 +134,7 @@ class TestAzureOpenAITextEmbedder:
         assert component.azure_ad_token_provider is None
         assert component.http_client_kwargs is None
 
-    def test_from_dict_with_parameters(self, monkeypatch):
+    def test_from_dict_with_parameters(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "fake-api-key")
         data = {
             "type": "haystack.components.embedders.azure_text_embedder.AzureOpenAITextEmbedder",

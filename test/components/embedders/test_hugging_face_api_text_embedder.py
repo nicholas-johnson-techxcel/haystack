@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import random
 import pytest
-from huggingface_hub.utils import RepositoryNotFoundError
+from huggingface_hub.errors import RepositoryNotFoundError
 from numpy import array
 from haystack.components.embedders import HuggingFaceAPITextEmbedder
 from haystack.utils.auth import Secret
@@ -26,7 +26,7 @@ class TestHuggingFaceAPITextEmbedder:
         with pytest.raises(ValueError):
             HuggingFaceAPITextEmbedder(api_type="invalid_api_type", api_params={})
 
-    def test_init_serverless(self, mock_check_valid_model):
+    def test_init_serverless(self, mock_check_valid_model: MagicMock):
         model = "BAAI/bge-small-en-v1.5"
         embedder = HuggingFaceAPITextEmbedder(
             api_type=HFEmbeddingAPIType.SERVERLESS_INFERENCE_API, api_params={"model": model}
@@ -39,7 +39,7 @@ class TestHuggingFaceAPITextEmbedder:
         assert embedder.truncate
         assert not embedder.normalize
 
-    def test_init_serverless_invalid_model(self, mock_check_valid_model):
+    def test_init_serverless_invalid_model(self, mock_check_valid_model: MagicMock):
         mock_check_valid_model.side_effect = RepositoryNotFoundError("Invalid model id")
         with pytest.raises(RepositoryNotFoundError):
             HuggingFaceAPITextEmbedder(
@@ -103,7 +103,7 @@ class TestHuggingFaceAPITextEmbedder:
             },
         }
 
-    def test_from_dict(self, mock_check_valid_model):
+    def test_from_dict(self, mock_check_valid_model: MagicMock):
         data = {
             "type": "haystack.components.embedders.hugging_face_api_text_embedder.HuggingFaceAPITextEmbedder",
             "init_parameters": {
@@ -126,7 +126,7 @@ class TestHuggingFaceAPITextEmbedder:
         assert not embedder.truncate
         assert embedder.normalize
 
-    def test_run_wrong_input_format(self, mock_check_valid_model):
+    def test_run_wrong_input_format(self, mock_check_valid_model: MagicMock):
         embedder = HuggingFaceAPITextEmbedder(
             api_type=HFEmbeddingAPIType.SERVERLESS_INFERENCE_API, api_params={"model": "BAAI/bge-small-en-v1.5"}
         )
@@ -136,7 +136,7 @@ class TestHuggingFaceAPITextEmbedder:
         with pytest.raises(TypeError):
             embedder.run(text=list_integers_input)
 
-    def test_run(self, mock_check_valid_model, caplog):
+    def test_run(self, mock_check_valid_model, caplog: pytest.LogCaptureFixture):
         with patch("huggingface_hub.InferenceClient.feature_extraction") as mock_embedding_patch:
             mock_embedding_patch.return_value = array([[random.random() for _ in range(384)]])
 
@@ -163,7 +163,7 @@ class TestHuggingFaceAPITextEmbedder:
         assert "normalize" in caplog.records[1].message
 
     @pytest.mark.asyncio
-    async def test_run_async(self, mock_check_valid_model, caplog):
+    async def test_run_async(self, mock_check_valid_model, caplog: pytest.LogCaptureFixture):
         with patch("huggingface_hub.AsyncInferenceClient.feature_extraction") as mock_embedding_patch:
             mock_embedding_patch.return_value = array([[random.random() for _ in range(384)]])
 

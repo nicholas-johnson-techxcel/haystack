@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from haystack import component, default_from_dict, default_to_dict
 from haystack.lazy_imports import LazyImport
@@ -10,6 +10,7 @@ from haystack.utils import ComponentDevice, Secret, deserialize_secrets_inplace
 
 with LazyImport(message="Run 'pip install transformers[torch,sentencepiece]'") as torch_and_transformers_import:
     from transformers import pipeline
+    from transformers.pipelines.base import Pipeline as TransformerPipeline
 
     from haystack.utils.hf import (  # pylint: disable=ungrouped-imports
         deserialize_hf_model_kwargs,
@@ -97,12 +98,12 @@ class TransformersZeroShotTextRouter:
 
     def __init__(  # pylint: disable=too-many-positional-arguments
         self,
-        labels: List[str],
+        labels: list[str],
         multi_label: bool = False,
         model: str = "MoritzLaurer/deberta-v3-base-zeroshot-v1.1-all-33",
-        device: Optional[ComponentDevice] = None,
-        token: Optional[Secret] = Secret.from_env_var(["HF_API_TOKEN", "HF_TOKEN"], strict=False),
-        huggingface_pipeline_kwargs: Optional[Dict[str, Any]] = None,
+        device: ComponentDevice | None = None,
+        token: Secret | None = Secret.from_env_var(["HF_API_TOKEN", "HF_TOKEN"], strict=False),
+        huggingface_pipeline_kwargs: dict[str, Any] | None = None,
     ):
         """
         Initializes the TransformersZeroShotTextRouter component.
@@ -128,7 +129,7 @@ class TransformersZeroShotTextRouter:
         self.token = token
         self.labels = labels
         self.multi_label = multi_label
-        component.set_output_types(self, **dict.fromkeys(labels, str))
+        _component_instance.set_output_types(self, **dict.fromkeys(labels, str))
 
         huggingface_pipeline_kwargs = resolve_hf_pipeline_kwargs(
             huggingface_pipeline_kwargs=huggingface_pipeline_kwargs or {},
@@ -139,9 +140,9 @@ class TransformersZeroShotTextRouter:
             token=token,
         )
         self.huggingface_pipeline_kwargs = huggingface_pipeline_kwargs
-        self.pipeline = None
+        self.pipeline: TransformerPipeline | None = None
 
-    def _get_telemetry_data(self) -> Dict[str, Any]:
+    def _get_telemetry_data(self) -> dict[str, Any]:
         """
         Data that is sent to Posthog for usage analytics.
         """
@@ -154,9 +155,9 @@ class TransformersZeroShotTextRouter:
         Initializes the component.
         """
         if self.pipeline is None:
-            self.pipeline = pipeline(**self.huggingface_pipeline_kwargs)
+            self.pipeline: TransformerPipeline = pipeline(**self.huggingface_pipeline_kwargs)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serializes the component to a dictionary.
 
@@ -177,7 +178,7 @@ class TransformersZeroShotTextRouter:
         return serialization_dict
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TransformersZeroShotTextRouter":
+    def from_dict(cls, data: dict[str, Any]) -> "TransformersZeroShotTextRouter":
         """
         Deserializes the component from a dictionary.
 
@@ -191,7 +192,7 @@ class TransformersZeroShotTextRouter:
             deserialize_hf_model_kwargs(data["init_parameters"]["huggingface_pipeline_kwargs"])
         return default_from_dict(cls, data)
 
-    def run(self, text: str) -> Dict[str, str]:
+    def run(self, text: str) -> dict[str, str]:
         """
         Routes the text strings to different connections based on a category label.
 
@@ -212,7 +213,7 @@ class TransformersZeroShotTextRouter:
         if not isinstance(text, str):
             raise TypeError("TransformersZeroShotTextRouter expects a str as input.")
 
-        prediction = self.pipeline(sequences=[text], candidate_labels=self.labels, multi_label=self.multi_label)
+        prediction = self.pipeline(inputs=[text], candidate_labels=self.labels, multi_label=self.multi_label)
         predicted_scores = prediction[0]["scores"]
         max_score_index = max(range(len(predicted_scores)), key=predicted_scores.__getitem__)
         label = prediction[0]["labels"][max_score_index]

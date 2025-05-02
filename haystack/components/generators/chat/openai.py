@@ -5,7 +5,7 @@
 import json
 import os
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from openai import AsyncOpenAI, AsyncStream, OpenAI, Stream
 from openai.types.chat import ChatCompletion, ChatCompletionChunk, ChatCompletionMessage
@@ -36,6 +36,8 @@ logger = logging.getLogger(__name__)
 
 
 _component_instance = component()
+
+
 @_component_instance
 class OpenAIChatGenerator:
     """
@@ -83,15 +85,15 @@ class OpenAIChatGenerator:
         self,
         api_key: Secret = Secret.from_env_var("OPENAI_API_KEY"),
         model: str = "gpt-4o-mini",
-        streaming_callback: Optional[StreamingCallbackT] = None,
-        api_base_url: Optional[str] = None,
-        organization: Optional[str] = None,
-        generation_kwargs: Optional[Dict[str, Any]] = None,
-        timeout: Optional[float] = None,
-        max_retries: Optional[int] = None,
-        tools: Optional[Union[List[Tool], Toolset]] = None,
+        streaming_callback: StreamingCallbackT | None = None,
+        api_base_url: str | None = None,
+        organization: str | None = None,
+        generation_kwargs: dict[str, Any] | None = None,
+        timeout: float | None = None,
+        max_retries: int | None = None,
+        tools: list[Tool] | Toolset | None = None,
         tools_strict: bool = False,
-        http_client_kwargs: Optional[Dict[str, Any]] = None,
+        http_client_kwargs: dict[str, Any] | None = None,
     ):
         """
         Creates an instance of OpenAIChatGenerator. Unless specified otherwise in `model`, uses OpenAI's gpt-4o-mini
@@ -164,7 +166,7 @@ class OpenAIChatGenerator:
         if max_retries is None:
             max_retries = int(os.environ.get("OPENAI_MAX_RETRIES", "5"))
 
-        client_kwargs: Dict[str, Any] = {
+        client_kwargs: dict[str, Any] = {
             "api_key": api_key.resolve_value(),
             "organization": organization,
             "base_url": api_base_url,
@@ -177,13 +179,13 @@ class OpenAIChatGenerator:
             http_client=init_http_client(self.http_client_kwargs, async_client=True), **client_kwargs
         )
 
-    def _get_telemetry_data(self) -> Dict[str, Any]:
+    def _get_telemetry_data(self) -> dict[str, Any]:
         """
         Data that is sent to Posthog for usage analytics.
         """
         return {"model": self.model}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize this component to a dictionary.
 
@@ -207,7 +209,7 @@ class OpenAIChatGenerator:
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "OpenAIChatGenerator":
+    def from_dict(cls, data: dict[str, Any]) -> "OpenAIChatGenerator":
         """
         Deserialize this component from a dictionary.
 
@@ -223,16 +225,16 @@ class OpenAIChatGenerator:
             data["init_parameters"]["streaming_callback"] = deserialize_callable(serialized_callback_handler)
         return default_from_dict(cls, data)
 
-    @_component_instance.output_types(replies=List[ChatMessage])
+    @_component_instance.output_types(replies=list[ChatMessage])
     def run(
         self,
-        messages: List[ChatMessage],
-        streaming_callback: Optional[StreamingCallbackT] = None,
-        generation_kwargs: Optional[Dict[str, Any]] = None,
+        messages: list[ChatMessage],
+        streaming_callback: StreamingCallbackT | None = None,
+        generation_kwargs: dict[str, Any] | None = None,
         *,
-        tools: Optional[Union[List[Tool], Toolset]] = None,
-        tools_strict: Optional[bool] = None,
-    ):
+        tools: list[Tool] | Toolset | None = None,
+        tools_strict: bool | None = None,
+    ) -> dict[str, list[ChatMessage]]:
         """
         Invokes chat completion based on the provided messages and generation parameters.
 
@@ -271,9 +273,7 @@ class OpenAIChatGenerator:
             tools=tools,
             tools_strict=tools_strict,
         )
-        chat_completion: Union[Stream[ChatCompletionChunk], ChatCompletion] = self.client.chat.completions.create(
-            **api_args
-        )
+        chat_completion: Stream[ChatCompletionChunk] | ChatCompletion = self.client.chat.completions.create(**api_args)
 
         if streaming_callback is not None:
             completions = self._handle_stream_response(
@@ -293,16 +293,16 @@ class OpenAIChatGenerator:
 
         return {"replies": completions}
 
-    @_component_instance.output_types(replies=List[ChatMessage])
+    @_component_instance.output_types(replies=list[ChatMessage])
     async def run_async(
         self,
-        messages: List[ChatMessage],
-        streaming_callback: Optional[StreamingCallbackT] = None,
-        generation_kwargs: Optional[Dict[str, Any]] = None,
+        messages: list[ChatMessage],
+        streaming_callback: StreamingCallbackT | None = None,
+        generation_kwargs: dict[str, Any] | None = None,
         *,
-        tools: Optional[Union[List[Tool], Toolset]] = None,
-        tools_strict: Optional[bool] = None,
-    ):
+        tools: list[Tool] | Toolset | None = None,
+        tools_strict: bool | None = None,
+    ) -> dict[str, list[ChatMessage]]:
         """
         Asynchronously invokes chat completion based on the provided messages and generation parameters.
 
@@ -347,9 +347,9 @@ class OpenAIChatGenerator:
             tools_strict=tools_strict,
         )
 
-        chat_completion: Union[
-            AsyncStream[ChatCompletionChunk], ChatCompletion
-        ] = await self.async_client.chat.completions.create(**api_args)
+        chat_completion: (
+            AsyncStream[ChatCompletionChunk] | ChatCompletion
+        ) = await self.async_client.chat.completions.create(**api_args)
 
         if streaming_callback is not None:
             completions = await self._handle_async_stream_response(
@@ -372,12 +372,12 @@ class OpenAIChatGenerator:
     def _prepare_api_call(  # noqa: PLR0913
         self,
         *,
-        messages: List[ChatMessage],
-        streaming_callback: Optional[StreamingCallbackT] = None,
-        generation_kwargs: Optional[Dict[str, Any]] = None,
-        tools: Optional[Union[List[Tool], Toolset]] = None,
-        tools_strict: Optional[bool] = None,
-    ) -> Dict[str, Any]:
+        messages: list[ChatMessage],
+        streaming_callback: StreamingCallbackT | None = None,
+        generation_kwargs: dict[str, Any] | None = None,
+        tools: list[Tool] | Toolset | None = None,
+        tools_strict: bool | None = None,
+    ) -> dict[str, Any]:
         # update generation kwargs by merging with the generation kwargs passed to the run method
         generation_kwargs = {**self.generation_kwargs, **(generation_kwargs or {})}
 
@@ -415,8 +415,10 @@ class OpenAIChatGenerator:
             **generation_kwargs,
         }
 
-    def _handle_stream_response(self, chat_completion: Stream, callback: SyncStreamingCallbackT) -> List[ChatMessage]:
-        chunks: List[StreamingChunk] = []
+    def _handle_stream_response(
+        self, chat_completion: Stream[ChatCompletionChunk], callback: SyncStreamingCallbackT
+    ) -> list[ChatMessage]:
+        chunks: list[StreamingChunk] = []
         chunk = None
         chunk_delta: StreamingChunk
 
@@ -428,9 +430,9 @@ class OpenAIChatGenerator:
         return [self._convert_streaming_chunks_to_chat_message(chunk, chunks)]
 
     async def _handle_async_stream_response(
-        self, chat_completion: AsyncStream, callback: AsyncStreamingCallbackT
-    ) -> List[ChatMessage]:
-        chunks: List[StreamingChunk] = []
+        self, chat_completion: AsyncStream[ChatCompletionChunk], callback: AsyncStreamingCallbackT
+    ) -> list[ChatMessage]:
+        chunks: list[StreamingChunk] = []
         chunk = None
         chunk_delta: StreamingChunk
 
@@ -441,7 +443,7 @@ class OpenAIChatGenerator:
             await callback(chunk_delta)
         return [self._convert_streaming_chunks_to_chat_message(chunk, chunks)]
 
-    def _check_finish_reason(self, meta: Dict[str, Any]) -> None:
+    def _check_finish_reason(self, meta: dict[str, Any]) -> None:
         if meta["finish_reason"] == "length":
             logger.warning(
                 "The completion for index {index} has been truncated before reaching a natural stopping point. "
@@ -457,7 +459,7 @@ class OpenAIChatGenerator:
             )
 
     def _convert_streaming_chunks_to_chat_message(
-        self, last_chunk: ChatCompletionChunk, chunks: List[StreamingChunk]
+        self, last_chunk: ChatCompletionChunk, chunks: list[StreamingChunk]
     ) -> ChatMessage:
         """
         Connects the streaming chunks into a single ChatMessage.
@@ -471,7 +473,7 @@ class OpenAIChatGenerator:
         tool_calls = []
 
         # Process tool calls if present in any chunk
-        tool_call_data: Dict[str, Dict[str, str]] = {}  # Track tool calls by index
+        tool_call_data: dict[str, dict[str, str]] = {}  # Track tool calls by index
         for chunk_payload in chunks:
             tool_calls_meta = chunk_payload.meta.get("tool_calls")
             if tool_calls_meta is not None:
@@ -589,7 +591,7 @@ class OpenAIChatGenerator:
         )
         return chunk_message
 
-    def _serialize_usage(self, usage):
+    def _serialize_usage(self, usage: Any) -> dict[str, Any]:
         """Convert OpenAI usage object to serializable dict recursively"""
         if hasattr(usage, "model_dump"):
             return usage.model_dump()

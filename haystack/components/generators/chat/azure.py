@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from openai.lib.azure import AsyncAzureADTokenProvider, AsyncAzureOpenAI, AzureADTokenProvider, AzureOpenAI
 
@@ -23,7 +23,6 @@ from haystack.utils.http_client import init_http_client
 _component_instance = component()
 
 
-@_component_instance
 class AzureOpenAIChatGenerator(OpenAIChatGenerator):
     """
     Generates text using OpenAI's models on Azure.
@@ -72,22 +71,22 @@ class AzureOpenAIChatGenerator(OpenAIChatGenerator):
     # ruff: noqa: PLR0913
     def __init__(  # pylint: disable=too-many-positional-arguments
         self,
-        azure_endpoint: Optional[str] = None,
-        api_version: Optional[str] = "2023-05-15",
-        azure_deployment: Optional[str] = "gpt-4o-mini",
-        api_key: Optional[Secret] = Secret.from_env_var("AZURE_OPENAI_API_KEY", strict=False),
-        azure_ad_token: Optional[Secret] = Secret.from_env_var("AZURE_OPENAI_AD_TOKEN", strict=False),
-        organization: Optional[str] = None,
-        streaming_callback: Optional[StreamingCallbackT] = None,
-        timeout: Optional[float] = None,
-        max_retries: Optional[int] = None,
-        generation_kwargs: Optional[Dict[str, Any]] = None,
-        default_headers: Optional[Dict[str, str]] = None,
-        tools: Optional[Union[List[Tool], Toolset]] = None,
+        azure_endpoint: str | None = None,
+        api_version: str | None = "2023-05-15",
+        azure_deployment: str | None = "gpt-4o-mini",
+        api_key: Secret | None = Secret.from_env_var("AZURE_OPENAI_API_KEY", strict=False),
+        azure_ad_token: Secret | None = Secret.from_env_var("AZURE_OPENAI_AD_TOKEN", strict=False),
+        organization: str | None = None,
+        streaming_callback: StreamingCallbackT | None = None,
+        timeout: float | None = None,
+        max_retries: int | None = None,
+        generation_kwargs: dict[str, Any] | None = None,
+        default_headers: dict[str, str] | None = None,
+        tools: list[Tool] | Toolset | None = None,
         tools_strict: bool = False,
         *,
-        azure_ad_token_provider: Optional[Union[AzureADTokenProvider, AsyncAzureADTokenProvider]] = None,
-        http_client_kwargs: Optional[Dict[str, Any]] = None,
+        azure_ad_token_provider: AzureADTokenProvider | AsyncAzureADTokenProvider | None = None,
+        http_client_kwargs: dict[str, Any] | None = None,
     ):
         """
         Initialize the Azure OpenAI Chat Generator component.
@@ -171,7 +170,7 @@ class AzureOpenAIChatGenerator(OpenAIChatGenerator):
         self.tools = tools
         self.tools_strict = tools_strict
 
-        client_args: Dict[str, Any] = {
+        client_args: dict[str, Any] = {
             "api_version": api_version,
             "azure_endpoint": azure_endpoint,
             "azure_deployment": azure_deployment,
@@ -185,13 +184,17 @@ class AzureOpenAIChatGenerator(OpenAIChatGenerator):
         }
 
         self.client = AzureOpenAI(
-            http_client=init_http_client(self.http_client_kwargs, async_client=False), **client_args
+            azure_endpoint=self.azure_endpoint,
+            http_client=init_http_client(self.http_client_kwargs, async_client=False),
+            **client_args,
         )
         self.async_client = AsyncAzureOpenAI(
-            http_client=init_http_client(self.http_client_kwargs, async_client=True), **client_args
+            azure_endpoint=self.azure_endpoint,
+            http_client=init_http_client(self.http_client_kwargs, async_client=True),
+            **client_args,
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize this component to a dictionary.
 
@@ -222,7 +225,7 @@ class AzureOpenAIChatGenerator(OpenAIChatGenerator):
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AzureOpenAIChatGenerator":
+    def from_dict(cls, data: dict[str, Any]) -> "AzureOpenAIChatGenerator":
         """
         Deserialize this component from a dictionary.
 

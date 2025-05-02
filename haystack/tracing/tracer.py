@@ -5,7 +5,8 @@
 import abc
 import contextlib
 import os
-from typing import Any, Dict, Iterator, Optional
+from collections.abc import Iterator
+from typing import Any
 
 from haystack import logging
 
@@ -31,7 +32,7 @@ class Span(abc.ABC):
         """
         pass
 
-    def set_tags(self, tags: Dict[str, Any]) -> None:
+    def set_tags(self, tags: dict[str, Any]) -> None:
         """
         Set multiple tags on the span.
 
@@ -69,7 +70,7 @@ class Span(abc.ABC):
         if tracer.is_content_tracing_enabled:
             self.set_tag(key, value)
 
-    def get_correlation_data_for_logs(self) -> Dict[str, Any]:
+    def get_correlation_data_for_logs(self) -> dict[str, Any]:
         """
         Return a dictionary with correlation data for logs.
 
@@ -84,7 +85,7 @@ class Tracer(abc.ABC):
     @abc.abstractmethod
     @contextlib.contextmanager
     def trace(
-        self, operation_name: str, tags: Optional[Dict[str, Any]] = None, parent_span: Optional[Span] = None
+        self, operation_name: str, tags: dict[str, Any] | None = None, parent_span: Span | None = None
     ) -> Iterator[Span]:
         """
         Trace the execution of a block of code.
@@ -98,7 +99,7 @@ class Tracer(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def current_span(self) -> Optional[Span]:
+    def current_span(self) -> Span | None:
         """
         Returns the currently active span. If no span is active, returns `None`.
 
@@ -122,13 +123,13 @@ class ProxyTracer(Tracer):
 
     @contextlib.contextmanager
     def trace(
-        self, operation_name: str, tags: Optional[Dict[str, Any]] = None, parent_span: Optional[Span] = None
+        self, operation_name: str, tags: dict[str, Any] | None = None, parent_span: Span | None = None
     ) -> Iterator[Span]:
         """Activate and return a new span that inherits from the current active span."""
         with self.actual_tracer.trace(operation_name, tags=tags, parent_span=parent_span) as span:
             yield span
 
-    def current_span(self) -> Optional[Span]:
+    def current_span(self) -> Span | None:
         """Return the current active span"""
         return self.actual_tracer.current_span()
 
@@ -146,12 +147,12 @@ class NullTracer(Tracer):
 
     @contextlib.contextmanager
     def trace(
-        self, operation_name: str, tags: Optional[Dict[str, Any]] = None, parent_span: Optional[Span] = None
+        self, operation_name: str, tags: dict[str, Any] | None = None, parent_span: Span | None = None
     ) -> Iterator[Span]:
         """Activate and return a new span that inherits from the current active span."""
         yield NullSpan()
 
-    def current_span(self) -> Optional[Span]:
+    def current_span(self) -> Span | None:
         """Return the current active span"""
         return NullSpan()
 
@@ -199,7 +200,7 @@ def auto_enable_tracing() -> None:
         logger.info("Auto-enabled tracing for '{tracer}'", tracer=tracer.__class__.__name__)
 
 
-def _auto_configured_opentelemetry_tracer() -> Optional[Tracer]:
+def _auto_configured_opentelemetry_tracer() -> Tracer | None:
     # we implement this here and not in the `opentelemetry` module to avoid import warnings when OpenTelemetry is not
     # installed
     try:
@@ -221,7 +222,7 @@ def _auto_configured_opentelemetry_tracer() -> Optional[Tracer]:
     return None
 
 
-def _auto_configured_datadog_tracer() -> Optional[Tracer]:
+def _auto_configured_datadog_tracer() -> Tracer | None:
     # we implement this here and not in the `datadog` module to avoid import warnings when Datadog is not installed
     try:
         from ddtrace.trace import tracer

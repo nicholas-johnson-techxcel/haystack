@@ -13,7 +13,7 @@ class Remainder:
         if divisor == 0:
             raise ValueError("Can't divide by zero")
         self.divisor = divisor
-        component.set_output_types(self, **{f"remainder_is_{val}": int for val in range(divisor)})
+        _component_instance.set_output_types(self, **{f"remainder_is_{val}": int for val in range(divisor)})
 
     def run(self, value: int):
         """

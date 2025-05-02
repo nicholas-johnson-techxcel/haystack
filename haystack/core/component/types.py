@@ -2,10 +2,15 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Annotated, Any, Iterable, List, Type, TypeVar, get_args
-
-from typing_extensions import TypeAlias  # Python 3.9 compatibility
+from typing import (
+    Annotated,
+    Any,
+    TypeAlias,  # Python 3.9 compatibility
+    TypeVar,
+    get_args,
+)
 
 HAYSTACK_VARIADIC_ANNOTATION = "__haystack__variadic_t"
 HAYSTACK_GREEDY_VARIADIC_ANNOTATION = "__haystack__greedy_variadic_t"
@@ -53,11 +58,11 @@ class InputSocket:
     """
 
     name: str
-    type: Type
+    type: type
     default_value: Any = _empty
     is_variadic: bool = field(init=False)
     is_greedy: bool = field(init=False)
-    senders: List[str] = field(default_factory=list)
+    senders: list[str] = field(default_factory=list)
 
     @property
     def is_mandatory(self):
@@ -108,4 +113,4 @@ class OutputSocket:
 
     name: str
     type: type
-    receivers: List[str] = field(default_factory=list)
+    receivers: list[str] = field(default_factory=list)

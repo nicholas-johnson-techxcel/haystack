@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Optional
-
 from haystack.core.component import component
 
 _component_instance = component()
@@ -19,7 +17,7 @@ class AddFixedValue:
         self.add = add
 
     @_component_instance.output_types(result=int)
-    def run(self, value: int, add: Optional[int] = None):
+    def run(self, value: int, add: int | None = None) -> dict[str, int]:
         """
         Adds two values together.
         """

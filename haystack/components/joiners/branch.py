@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Dict, Type
+from typing import Any
 
 from haystack import component, default_from_dict, default_to_dict
 from haystack.core.component.types import GreedyVariadic
@@ -91,17 +91,17 @@ class BranchJoiner:
     have more than one downstream component.
     """
 
-    def __init__(self, type_: Type):
+    def __init__(self, type_: type):
         """
         Creates a `BranchJoiner` component.
 
         :param type_: The expected data type of inputs and outputs.
         """
         self.type_ = type_
-        component.set_input_types(self, value=GreedyVariadic[type_])  # type: ignore
-        component.set_output_types(self, value=type_)
+        _component_instance.set_input_types(self, value=GreedyVariadic[type_])
+        _component_instance.set_output_types(self, value=type_)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serializes the component into a dictionary.
 
@@ -111,7 +111,7 @@ class BranchJoiner:
         return default_to_dict(self, type_=serialize_type(self.type_))
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "BranchJoiner":
+    def from_dict(cls, data: dict[str, Any]) -> "BranchJoiner":
         """
         Deserializes a `BranchJoiner` instance from a dictionary.
 
@@ -122,7 +122,7 @@ class BranchJoiner:
         data["init_parameters"]["type_"] = deserialize_type(data["init_parameters"]["type_"])
         return default_from_dict(cls, data)
 
-    def run(self, **kwargs) -> Dict[str, Any]:
+    def run(self, **kwargs: Any) -> dict[str, Any]:
         """
         Executes the `BranchJoiner`, selecting the first available input value and passing it downstream.
 

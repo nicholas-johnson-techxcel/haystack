@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, cast
+from typing import cast
 
 from haystack import Document, component
 
@@ -58,7 +58,7 @@ class MetaFieldGroupingRanker:
     ```
     """  # noqa: E501
 
-    def __init__(self, group_by: str, subgroup_by: Optional[str] = None, sort_docs_by: Optional[str] = None):
+    def __init__(self, group_by: str, subgroup_by: str | None = None, sort_docs_by: str | None = None):
         """
         Creates an instance of MetaFieldGroupingRanker.
 
@@ -74,8 +74,8 @@ class MetaFieldGroupingRanker:
         self.sort_docs_by = sort_docs_by
         self.subgroup_by = subgroup_by
 
-    @_component_instance.output_types(documents=List[Document])
-    def run(self, documents: List[Document]) -> Dict[str, Any]:
+    @_component_instance.output_types(documents=list[Document])
+    def run(self, documents: list[Document]) -> dict[str, list[Document]]:
         """
         Groups the provided list of documents based on the `group_by` parameter and optionally the `subgroup_by`.
 
@@ -90,7 +90,7 @@ class MetaFieldGroupingRanker:
         if not documents:
             return {"documents": []}
 
-        document_groups: Dict[str, Dict[str, List[Document]]] = defaultdict(lambda: defaultdict(list))
+        document_groups: dict[str, dict[str, list[Document]]] = defaultdict(lambda: defaultdict(list))
         no_group_docs = []
 
         for doc in documents:

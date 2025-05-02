@@ -113,7 +113,7 @@ class CustomData:
         self.b = b
 
 
-@component()
+@component()  # type: ignore - this is intentional for the test
 class UnserializableClass:
     def __init__(self, a: int, b: str, c: CustomData) -> None:
         self.a = a

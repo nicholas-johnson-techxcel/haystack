@@ -1,6 +1,7 @@
 import json
 import os
 import logging
+from pathlib import Path
 import pytest
 import csv
 from io import StringIO
@@ -16,7 +17,7 @@ def docx_converter():
 
 
 class TestDOCXToDocument:
-    def test_init(self, docx_converter):
+    def test_init(self, docx_converter: DOCXToDocument):
         assert isinstance(docx_converter, DOCXToDocument)
 
     def test_init_with_string(self):
@@ -110,7 +111,7 @@ class TestDOCXToDocument:
         assert isinstance(new_converter, DOCXToDocument)
         assert new_converter.table_format == DOCXTableFormat.MARKDOWN
 
-    def test_run(self, test_files_path, docx_converter):
+    def test_run(self, test_files_path: Path, docx_converter: DOCXToDocument):
         """
         Test if the component runs correctly
         """
@@ -141,7 +142,7 @@ class TestDOCXToDocument:
             },
         }
 
-    def test_run_with_table(self, test_files_path):
+    def test_run_with_table(self, test_files_path: Path):
         """
         Test if the component runs correctly
         """
@@ -181,7 +182,7 @@ class TestDOCXToDocument:
             "Text after table not found"
         )
 
-    def test_run_with_store_full_path_false(self, test_files_path):
+    def test_run_with_store_full_path_false(self, test_files_path: Path):
         """
         Test if the component runs correctly with store_full_path=False
         """
@@ -214,7 +215,7 @@ class TestDOCXToDocument:
         }
 
     @pytest.mark.parametrize("table_format", ["markdown", "csv"])
-    def test_table_between_two_paragraphs(self, test_files_path, table_format):
+    def test_table_between_two_paragraphs(self, test_files_path: Path, table_format: str):
         docx_converter = DOCXToDocument(table_format=table_format)
         paths = [test_files_path / "docx" / "sample_docx_3.docx"]
         output = docx_converter.run(sources=paths)
@@ -242,7 +243,7 @@ class TestDOCXToDocument:
             assert rows[-1] == ["Finance", "Fraud detection and prevention", "Reduced financial losses"]
 
     @pytest.mark.parametrize("table_format", ["markdown", "csv"])
-    def test_table_content_correct_parsing(self, test_files_path, table_format):
+    def test_table_content_correct_parsing(self, test_files_path: Path, table_format: str):
         docx_converter = DOCXToDocument(table_format=table_format)
         paths = [test_files_path / "docx" / "sample_docx_3.docx"]
         output = docx_converter.run(sources=paths)
@@ -280,7 +281,7 @@ class TestDOCXToDocument:
             assert rows[1] == expected_row_one
             assert rows[2] == expected_row_two
 
-    def test_run_with_additional_meta(self, test_files_path, docx_converter):
+    def test_run_with_additional_meta(self, test_files_path: Path, docx_converter: DOCXToDocument):
         paths = [test_files_path / "docx" / "sample_docx_1.docx"]
         output = docx_converter.run(sources=paths, meta={"language": "it", "author": "test_author"})
         doc = output["documents"][0]
@@ -307,14 +308,14 @@ class TestDOCXToDocument:
             "author": "test_author",
         }
 
-    def test_run_error_wrong_file_type(self, caplog, test_files_path, docx_converter):
+    def test_run_error_wrong_file_type(self, caplog, test_files_path: Path, docx_converter: DOCXToDocument):
         sources = [str(test_files_path / "txt" / "doc_1.txt")]
         with caplog.at_level(logging.WARNING):
             results = docx_converter.run(sources=sources)
             assert "doc_1.txt and convert it" in caplog.text
             assert results["documents"] == []
 
-    def test_run_error_non_existent_file(self, docx_converter, caplog):
+    def test_run_error_non_existent_file(self, docx_converter: DOCXToDocument, caplog: pytest.LogCaptureFixture):
         """
         Test if the component correctly handles errors.
         """
@@ -323,7 +324,7 @@ class TestDOCXToDocument:
             docx_converter.run(sources=paths)
             assert "Could not read non_existing_file.docx" in caplog.text
 
-    def test_run_page_breaks(self, test_files_path, docx_converter):
+    def test_run_page_breaks(self, test_files_path: Path, docx_converter: DOCXToDocument):
         """
         Test if the component correctly parses page breaks.
         """
@@ -333,7 +334,7 @@ class TestDOCXToDocument:
         assert len(docs) == 1
         assert docs[0].content.count("\f") == 4
 
-    def test_mixed_sources_run(self, test_files_path, docx_converter):
+    def test_mixed_sources_run(self, test_files_path: Path, docx_converter: DOCXToDocument):
         """
         Test if the component runs correctly when mixed sources are provided.
         """
@@ -411,7 +412,7 @@ class TestDOCXToDocument:
             DOCXToDocument(link_format="invalid_format")
 
     @pytest.mark.parametrize("link_format", ["markdown", "plain"])
-    def test_link_extraction(self, test_files_path, link_format):
+    def test_link_extraction(self, test_files_path: Path, link_format: str):
         docx_converter = DOCXToDocument(link_format=link_format)
         paths = [test_files_path / "docx" / "sample_docx_with_single_link.docx"]
         output = docx_converter.run(sources=paths)
@@ -423,7 +424,7 @@ class TestDOCXToDocument:
             assert "PDF (https://en.wikipedia.org/wiki/PDF)" in content
 
     @pytest.mark.parametrize("link_format", ["markdown", "plain"])
-    def test_link_extraction_page_break(self, test_files_path, link_format):
+    def test_link_extraction_page_break(self, test_files_path: Path, link_format: str):
         docx_converter = DOCXToDocument(link_format=link_format)
         paths = [test_files_path / "docx" / "sample_docx_with_links.docx"]
         output = docx_converter.run(sources=paths)
@@ -440,7 +441,7 @@ class TestDOCXToDocument:
             assert "charge (https://en.wikipedia.org/wiki/Charge)" in content
             assert "disambiguation link (https://en.wikipedia.org/wiki/PDF_(disambiguation))" in content
 
-    def test_no_link_extraction(self, test_files_path):
+    def test_no_link_extraction(self, test_files_path: Path):
         docx_converter = DOCXToDocument()
         paths = [test_files_path / "docx" / "sample_docx_with_single_link.docx"]
         output = docx_converter.run(sources=paths)

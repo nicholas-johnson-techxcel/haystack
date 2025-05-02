@@ -4,7 +4,7 @@
 
 import re
 import string
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from haystack import component
 
@@ -34,7 +34,7 @@ class TextCleaner:
 
     def __init__(
         self,
-        remove_regexps: Optional[List[str]] = None,
+        remove_regexps: list[str] | None = None,
         convert_to_lowercase: bool = False,
         remove_punctuation: bool = False,
         remove_numbers: bool = False,
@@ -63,8 +63,8 @@ class TextCleaner:
 
         self._translator = str.maketrans("", "", to_remove) if to_remove else None
 
-    @_component_instance.output_types(texts=List[str])
-    def run(self, texts: List[str]) -> Dict[str, Any]:
+    @_component_instance.output_types(texts=list[str])
+    def run(self, texts: list[str]) -> dict[str, Any]:
         """
         Cleans up the given list of strings.
 

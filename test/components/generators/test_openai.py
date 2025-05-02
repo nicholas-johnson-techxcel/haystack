@@ -8,7 +8,7 @@ import pytest
 from openai import OpenAIError
 from openai.types.chat import ChatCompletionChunk, chat_completion_chunk
 from unittest.mock import MagicMock, patch
-from pytest import LogCaptureFixture, MonkeyPatch
+from pytest import LogCaptureFixture
 
 from haystack.components.generators import OpenAIGenerator
 from haystack.components.generators.utils import print_streaming_chunk
@@ -17,7 +17,7 @@ from haystack.utils.auth import Secret
 
 
 class TestOpenAIGenerator:
-    def test_init_default(self, monkeypatch: MonkeyPatch):
+    def test_init_default(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = OpenAIGenerator()
         assert component.client.api_key == "test-api-key"
@@ -27,12 +27,12 @@ class TestOpenAIGenerator:
         assert component.client.timeout == 30
         assert component.client.max_retries == 5
 
-    def test_init_fail_wo_api_key(self, monkeypatch: MonkeyPatch):
+    def test_init_fail_wo_api_key(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         with pytest.raises(ValueError, match="None of the .* environment variables are set"):
             OpenAIGenerator()
 
-    def test_init_with_parameters(self, monkeypatch: MonkeyPatch):
+    def test_init_with_parameters(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_TIMEOUT", "100")
         monkeypatch.setenv("OPENAI_MAX_RETRIES", "10")
         component = OpenAIGenerator(
@@ -51,7 +51,7 @@ class TestOpenAIGenerator:
         assert component.client.timeout == 40.0
         assert component.client.max_retries == 1
 
-    def test_to_dict_default(self, monkeypatch: MonkeyPatch):
+    def test_to_dict_default(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = OpenAIGenerator()
         data = component.to_dict()
@@ -69,7 +69,7 @@ class TestOpenAIGenerator:
             },
         }
 
-    def test_to_dict_with_parameters(self, monkeypatch: MonkeyPatch):
+    def test_to_dict_with_parameters(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("ENV_VAR", "test-api-key")
         component = OpenAIGenerator(
             api_key=Secret.from_env_var("ENV_VAR"),
@@ -95,7 +95,7 @@ class TestOpenAIGenerator:
             },
         }
 
-    def test_from_dict(self, monkeypatch: MonkeyPatch):
+    def test_from_dict(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-api-key")
         data = {
             "type": "haystack.components.generators.openai.OpenAIGenerator",
@@ -118,7 +118,7 @@ class TestOpenAIGenerator:
         assert component.api_key == Secret.from_env_var("OPENAI_API_KEY")
         assert component.http_client_kwargs is None
 
-    def test_from_dict_fail_wo_env_var(self, monkeypatch: MonkeyPatch):
+    def test_from_dict_fail_wo_env_var(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         data = {
             "type": "haystack.components.generators.openai.OpenAIGenerator",

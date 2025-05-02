@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import os
 import pytest
+from pathlib import Path
 
 from haystack import Pipeline
 from haystack.components.audio.whisper_remote import RemoteWhisperTranscriber
@@ -12,29 +13,29 @@ from haystack.utils import Secret
 
 
 class TestRemoteWhisperTranscriber:
-    def test_init_no_key(self, monkeypatch):
+    def test_init_no_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         with pytest.raises(ValueError, match="None of the .* environment variables are set"):
             RemoteWhisperTranscriber()
 
-    def test_init_key_env_var(self, monkeypatch):
+    def test_init_key_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "test_api_key")
         t = RemoteWhisperTranscriber()
         assert t.client.api_key == "test_api_key"
 
-    def test_init_key_module_env_and_global_var(self, monkeypatch):
+    def test_init_key_module_env_and_global_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "test_api_key_2")
         t = RemoteWhisperTranscriber()
         assert t.client.api_key == "test_api_key_2"
 
-    def test_init_default(self):
+    def test_init_default(self) -> None:
         transcriber = RemoteWhisperTranscriber(api_key=Secret.from_token("test_api_key"))
         assert transcriber.client.api_key == "test_api_key"
         assert transcriber.model == "whisper-1"
         assert transcriber.organization is None
         assert transcriber.whisper_params == {"response_format": "json"}
 
-    def test_init_custom_parameters(self):
+    def test_init_custom_parameters(self) -> None:
         transcriber = RemoteWhisperTranscriber(
             api_key=Secret.from_token("test_api_key"),
             model="whisper-1",
@@ -57,7 +58,7 @@ class TestRemoteWhisperTranscriber:
             "temperature": "0.5",
         }
 
-    def test_to_dict_default_parameters(self, monkeypatch):
+    def test_to_dict_default_parameters(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "test_api_key")
         transcriber = RemoteWhisperTranscriber()
         data = transcriber.to_dict()
@@ -73,7 +74,7 @@ class TestRemoteWhisperTranscriber:
             },
         }
 
-    def test_to_dict_with_custom_init_parameters(self, monkeypatch):
+    def test_to_dict_with_custom_init_parameters(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "test_api_key")
         transcriber = RemoteWhisperTranscriber(
             api_key=Secret.from_env_var("ENV_VAR", strict=False),
@@ -102,7 +103,7 @@ class TestRemoteWhisperTranscriber:
             },
         }
 
-    def test_from_dict_with_default_parameters(self, monkeypatch):
+    def test_from_dict_with_default_parameters(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "test_api_key")
 
         data = {
@@ -124,7 +125,7 @@ class TestRemoteWhisperTranscriber:
         assert transcriber.whisper_params == {"response_format": "json"}
         assert transcriber.http_client_kwargs is None
 
-    def test_from_dict_with_custom_init_parameters(self, monkeypatch):
+    def test_from_dict_with_custom_init_parameters(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "test_api_key")
 
         data = {
@@ -151,7 +152,7 @@ class TestRemoteWhisperTranscriber:
             "temperature": "0.5",
         }
 
-    def test_from_dict_with_default_parameters_no_env_var(self, monkeypatch):
+    def test_from_dict_with_default_parameters_no_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
         data = {
@@ -173,7 +174,7 @@ class TestRemoteWhisperTranscriber:
         reason="Export an env var called OPENAI_API_KEY containing the OpenAI API key to run this test.",
     )
     @pytest.mark.integration
-    def test_whisper_remote_transcriber(self, test_files_path):
+    def test_whisper_remote_transcriber(self, test_files_path: Path) -> None:
         transcriber = RemoteWhisperTranscriber()
 
         paths = [
@@ -199,7 +200,7 @@ class TestRemoteWhisperTranscriber:
         reason="Export an env var called OPENAI_API_KEY containing the OpenAI API key to run this test.",
     )
     @pytest.mark.integration
-    def test_whisper_remote_transcriber_pipeline_and_url_source(self):
+    def test_whisper_remote_transcriber_pipeline_and_url_source(self) -> None:
         pipe = Pipeline()
         pipe.add_component("fetcher", LinkContentFetcher())
         pipe.add_component("transcriber", RemoteWhisperTranscriber())

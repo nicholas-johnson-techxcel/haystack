@@ -6,7 +6,6 @@ from pathlib import Path
 from test.tracing.utils import SpyingTracer
 from typing import Generator, Any
 from unittest.mock import Mock
-from pytest import MonkeyPatch
 import pytest
 import time
 import asyncio
@@ -24,7 +23,6 @@ tracing.disable_tracing()
 @pytest.fixture()
 def waiting_component():
     _component_instance = component()
-
 
     @_component_instance
     class Waiter:
@@ -58,7 +56,7 @@ def test_files_path():
 
 
 @pytest.fixture(autouse=True)
-def request_blocker(request: pytest.FixtureRequest, monkeypatch: MonkeyPatch):
+def request_blocker(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch):
     """
     This fixture is applied automatically to all tests.
     Those that are not marked as integration will have the requests module

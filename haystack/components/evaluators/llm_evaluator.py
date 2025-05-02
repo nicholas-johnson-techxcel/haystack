@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import json
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any
 
 from tqdm import tqdm
 
@@ -57,13 +57,13 @@ class LLMEvaluator:
     def __init__(  # pylint: disable=too-many-positional-arguments
         self,
         instructions: str,
-        inputs: List[Tuple[str, Type[List]]],
-        outputs: List[str],
-        examples: List[Dict[str, Any]],
+        inputs: list[tuple[str, type[list[Any]]]],
+        outputs: list[str],
+        examples: list[dict[str, Any]],
         progress_bar: bool = True,
         *,
         raise_on_failure: bool = True,
-        chat_generator: Optional[ChatGenerator] = None,
+        chat_generator: ChatGenerator | None = None,
     ):
         """
         Creates an instance of LLMEvaluator.
@@ -94,7 +94,7 @@ class LLMEvaluator:
             `generation_kwargs`.
         """
         self.validate_init_parameters(inputs, outputs, examples)
-        component.set_input_types(self, **dict(inputs))
+        _component_instance.set_input_types(self, **dict(inputs))
 
         self.raise_on_failure = raise_on_failure
         self.instructions = instructions
@@ -114,7 +114,7 @@ class LLMEvaluator:
 
     @staticmethod
     def validate_init_parameters(
-        inputs: List[Tuple[str, Type[List]]], outputs: List[str], examples: List[Dict[str, Any]]
+        inputs: list[tuple[str, type[list[Any]]]], outputs: list[str], examples: list[dict[str, Any]]
     ):
         """
         Validate the init parameters.
@@ -167,8 +167,8 @@ class LLMEvaluator:
                 )
                 raise ValueError(msg)
 
-    @_component_instance.output_types(results=List[Dict[str, Any]])
-    def run(self, **inputs) -> Dict[str, Any]:
+    @_component_instance.output_types(results=list[dict[str, Any]])
+    def run(self, **inputs: dict[str, Any]) -> dict[str, Any]:
         """
         Run the LLM evaluator.
 
@@ -192,7 +192,7 @@ class LLMEvaluator:
         input_names, values = inputs.keys(), list(zip(*inputs.values()))
         list_of_input_names_to_values = [dict(zip(input_names, v)) for v in values]
 
-        results: List[Optional[Dict[str, Any]]] = []
+        results: list[dict[str, Any] | None] = []
         metadata = []
         errors = 0
         for input_names_to_values in tqdm(list_of_input_names_to_values, disable=not self.progress_bar):
@@ -272,7 +272,7 @@ class LLMEvaluator:
             f"Outputs:\n"
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize this component to a dictionary.
 
@@ -292,7 +292,7 @@ class LLMEvaluator:
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "LLMEvaluator":
+    def from_dict(cls, data: dict[str, Any]) -> "LLMEvaluator":
         """
         Deserialize this component from a dictionary.
 
@@ -311,7 +311,7 @@ class LLMEvaluator:
         return default_from_dict(cls, data)
 
     @staticmethod
-    def validate_input_parameters(expected: Dict[str, Any], received: Dict[str, Any]) -> None:
+    def validate_input_parameters(expected: dict[str, Any], received: dict[str, Any]) -> None:
         """
         Validate the input parameters.
 
@@ -348,7 +348,7 @@ class LLMEvaluator:
             )
             raise ValueError(msg)
 
-    def is_valid_json_and_has_expected_keys(self, expected: List[str], received: str) -> bool:
+    def is_valid_json_and_has_expected_keys(self, expected: list[str], received: str) -> bool:
         """
         Output must be a valid JSON with the expected keys.
 

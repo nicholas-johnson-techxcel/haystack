@@ -9,8 +9,6 @@ import pytest
 from haystack import Pipeline
 from haystack.utils.auth import Secret
 
-from pytest import MonkeyPatch
-
 from openai import OpenAIError
 
 from haystack.components.generators import AzureOpenAIGenerator
@@ -19,7 +17,7 @@ from haystack.utils.azure import default_azure_ad_token_provider
 
 
 class TestAzureOpenAIGenerator:
-    def test_init_default(self, monkeypatch: MonkeyPatch):
+    def test_init_default(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "test-api-key")
         component = AzureOpenAIGenerator(azure_endpoint="some-non-existing-endpoint")
         assert component.client.api_key == "test-api-key"
@@ -27,7 +25,7 @@ class TestAzureOpenAIGenerator:
         assert component.streaming_callback is None
         assert not component.generation_kwargs
 
-    def test_init_fail_wo_api_key(self, monkeypatch: MonkeyPatch):
+    def test_init_fail_wo_api_key(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv("AZURE_OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("AZURE_OPENAI_AD_TOKEN", raising=False)
         with pytest.raises(OpenAIError):
@@ -69,7 +67,7 @@ class TestAzureOpenAIGenerator:
         assert component.azure_ad_token_provider is not None
         assert component.max_retries == 0
 
-    def test_to_dict_default(self, monkeypatch: MonkeyPatch):
+    def test_to_dict_default(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "test-api-key")
         component = AzureOpenAIGenerator(azure_endpoint="some-non-existing-endpoint")
         data = component.to_dict()
@@ -93,7 +91,7 @@ class TestAzureOpenAIGenerator:
             },
         }
 
-    def test_to_dict_with_parameters(self, monkeypatch: MonkeyPatch):
+    def test_to_dict_with_parameters(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("ENV_VAR", "test-api-key")
         component = AzureOpenAIGenerator(
             api_key=Secret.from_env_var("ENV_VAR", strict=False),
@@ -128,7 +126,7 @@ class TestAzureOpenAIGenerator:
             },
         }
 
-    def test_from_dict_defaults(self, monkeypatch: MonkeyPatch):
+    def test_from_dict_defaults(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "test-api-key")
         data = {
             "type": "haystack.components.generators.azure.AzureOpenAIGenerator",
@@ -164,7 +162,7 @@ class TestAzureOpenAIGenerator:
         assert component.default_headers == {}
         assert component.azure_ad_token_provider is None
 
-    def test_pipeline_serialization_deserialization(self, tmp_path: Path, monkeypatch: MonkeyPatch):
+    def test_pipeline_serialization_deserialization(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "test-api-key")
         generator = AzureOpenAIGenerator(azure_endpoint="some-non-existing-endpoint")
         p = Pipeline()
@@ -182,7 +180,7 @@ class TestAzureOpenAIGenerator:
             "the Azure OpenAI endpoint URL to run this test."
         ),
     )
-    def test_live_run(self):
+    def test_live_run(self) -> None:
         component = AzureOpenAIGenerator(organization="HaystackCI")
         results = component.run("What's the capital of France?")
         assert len(results["replies"]) == 1

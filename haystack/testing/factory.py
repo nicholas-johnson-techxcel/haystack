@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any
 
 from haystack.core.component import Component, component
 from haystack.core.serialization import default_from_dict, default_to_dict
@@ -12,11 +12,11 @@ from haystack.document_stores.types import DocumentStore, DuplicatePolicy
 
 def document_store_class(
     name: str,
-    documents: Optional[List[Document]] = None,
-    documents_count: Optional[int] = None,
-    bases: Optional[Tuple[type, ...]] = None,
-    extra_fields: Optional[Dict[str, Any]] = None,
-) -> Type[DocumentStore]:
+    documents: list[Document] | None = None,
+    documents_count: int | None = None,
+    bases: tuple[type, ...] | None = None,
+    extra_fields: dict[str, Any] | None = None,
+) -> type[DocumentStore]:
     """
     Utility function to create a DocumentStore class with the given name and list of documents.
 
@@ -88,21 +88,21 @@ def document_store_class(
     elif documents_count is None:
         documents_count = 0
 
-    def count_documents(self) -> Union[int, None]:
+    def count_documents(self) -> int | None:
         return documents_count
 
-    def filter_documents(self, filters: Optional[Dict[str, Any]] = None) -> List[Document]:
+    def filter_documents(self, filters: dict[str, Any] | None = None) -> list[Document]:
         if documents is not None:
             return documents
         return []
 
-    def write_documents(self, documents: List[Document], policy: DuplicatePolicy = DuplicatePolicy.FAIL) -> None:
+    def write_documents(self, documents: list[Document], policy: DuplicatePolicy = DuplicatePolicy.FAIL) -> None:
         return
 
-    def delete_documents(self, document_ids: List[str]) -> None:
+    def delete_documents(self, document_ids: list[str]) -> None:
         return
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return default_to_dict(self)
 
     fields = {
@@ -126,12 +126,12 @@ def document_store_class(
 
 def component_class(  # pylint: disable=too-many-positional-arguments
     name: str,
-    input_types: Optional[Dict[str, Any]] = None,
-    output_types: Optional[Dict[str, Any]] = None,
-    output: Optional[Dict[str, Any]] = None,
-    bases: Optional[Tuple[type, ...]] = None,
-    extra_fields: Optional[Dict[str, Any]] = None,
-) -> Type[Component]:
+    input_types: dict[str, Any] | None = None,
+    output_types: dict[str, Any] | None = None,
+    output: dict[str, Any] | None = None,
+    bases: tuple[type, ...] | None = None,
+    extra_fields: dict[str, Any] | None = None,
+) -> type[Component]:
     """
     Utility class to create a Component class with the given name and input and output types.
 
@@ -204,22 +204,24 @@ def component_class(  # pylint: disable=too-many-positional-arguments
     elif output_types is None:
         output_types = {"value": type(None)}
 
-    def init(self):
-        component.set_input_types(self, **input_types)
-        component.set_output_types(self, **output_types)
+    _component_instance = component()
+
+    def init(self: Component):
+        _component_instance.set_input_types(self, **input_types)
+        _component_instance.set_output_types(self, **output_types)
 
     # Both arguments are necessary to correctly define
     # run but pylint doesn't like that we don't use them.
     # It's fine ignoring the warning here.
-    def run(self, **kwargs):  # pylint: disable=unused-argument
+    def run(self: Component, **kwargs: Any) -> Any:
         if output is not None:
             return output
         return dict.fromkeys(output_types.keys())
 
-    def to_dict(self):
+    def to_dict(self: Component) -> dict[str, Any]:
         return default_to_dict(self)
 
-    def from_dict(cls, data: Dict[str, Any]):
+    def from_dict(cls: type[Component], data: dict[str, Any]) -> Any:
         return default_from_dict(cls, data)
 
     fields = {"__init__": init, "run": run, "to_dict": to_dict, "from_dict": classmethod(from_dict)}
@@ -230,4 +232,4 @@ def component_class(  # pylint: disable=too-many-positional-arguments
         bases = (object,)
 
     cls = type(name, bases, fields)
-    return component(cls)
+    return cls

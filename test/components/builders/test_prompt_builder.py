@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: 2022-present deepset GmbH <info@deepset.ai>
 #
 # SPDX-License-Identifier: Apache-2.0
-from typing import Any, Dict, List, Optional
-from unittest.mock import patch
+from typing import Any
+from unittest.mock import patch, Mock
 
 import arrow
 import logging
@@ -27,8 +27,8 @@ class TestPromptBuilder:
         # we have inputs that contain: template, template_variables + inferred variables
         inputs = builder.__haystack_input__._sockets_dict
         assert set(inputs.keys()) == {"template", "template_variables", "variable"}
-        assert inputs["template"].type == Optional[str]
-        assert inputs["template_variables"].type == Optional[Dict[str, Any]]
+        assert inputs["template"].type == str | None
+        assert inputs["template_variables"].type == dict[str, Any] | None
         assert inputs["variable"].type == Any
 
         # response is always prompt
@@ -47,8 +47,8 @@ class TestPromptBuilder:
         # we have inputs that contain: template, template_variables + inferred variables
         inputs = builder.__haystack_input__._sockets_dict
         assert set(inputs.keys()) == {"template", "template_variables", "variable"}
-        assert inputs["template"].type == Optional[str]
-        assert inputs["template_variables"].type == Optional[Dict[str, Any]]
+        assert inputs["template"].type == str | None
+        assert inputs["template_variables"].type == dict[str, Any] | None
         assert inputs["variable"].type == Any
 
         # response is always prompt
@@ -69,8 +69,8 @@ class TestPromptBuilder:
         # we have inputs that contain: template, template_variables + variables
         inputs = builder.__haystack_input__._sockets_dict
         assert set(inputs.keys()) == {"template", "template_variables", "var1", "var2", "var3"}
-        assert inputs["template"].type == Optional[str]
-        assert inputs["template_variables"].type == Optional[Dict[str, Any]]
+        assert inputs["template"].type == str | None
+        assert inputs["template_variables"].type == dict[str, Any] | None
         assert inputs["var1"].type == Any
         assert inputs["var2"].type == Any
         assert inputs["var3"].type == Any
@@ -81,7 +81,7 @@ class TestPromptBuilder:
         assert outputs["prompt"].type == str
 
     @patch("haystack.components.builders.prompt_builder.Jinja2TimeExtension")
-    def test_init_with_missing_extension_dependency(self, extension_mock):
+    def test_init_with_missing_extension_dependency(self, extension_mock: Mock):
         extension_mock.side_effect = ImportError
         builder = PromptBuilder(template="This is a {{ variable }}")
         assert builder._env.extensions == {}
@@ -227,11 +227,10 @@ class TestPromptBuilder:
 
         _component_instance = component()
 
-
         @_component_instance
         class DocumentProducer:
-            @_component_instance.output_types(documents=List[Document])
-            def run(self, doc_input: str):
+            @_component_instance.output_types(documents=list[Document])
+            def run(self, doc_input: str) -> dict[str, list[Document]]:
                 return {"documents": [Document(content=doc_input)]}
 
         pipe = Pipeline()
@@ -335,7 +334,7 @@ class TestPromptBuilder:
         with pytest.raises(ValueError, match="Invalid offset or operator"):
             builder.run()
 
-    def test_warning_no_required_variables(self, caplog):
+    def test_warning_no_required_variables(self, caplog: pytest.LogCaptureFixture):
         with caplog.at_level(logging.WARNING):
             _ = PromptBuilder(template="This is a {{ variable }}")
             assert "but `required_variables` is not set." in caplog.text

@@ -34,7 +34,7 @@ def chat_messages():
 
 
 @pytest.fixture
-def mock_chat_completion_chunk_with_tools(openai_mock_stream):
+def mock_chat_completion_chunk_with_tools(openai_mock_stream: MagicMock):
     """
     Mock the OpenAI API completion chunk response and reuse it for tests
     """
@@ -90,7 +90,7 @@ def tools():
 
 
 class TestOpenAIChatGenerator:
-    def test_init_default(self, monkeypatch):
+    def test_init_default(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = OpenAIChatGenerator()
         assert component.client.api_key == "test-api-key"
@@ -103,19 +103,19 @@ class TestOpenAIChatGenerator:
         assert not component.tools_strict
         assert component.http_client_kwargs is None
 
-    def test_init_fail_wo_api_key(self, monkeypatch):
+    def test_init_fail_wo_api_key(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         with pytest.raises(ValueError):
             OpenAIChatGenerator()
 
-    def test_init_fail_with_duplicate_tool_names(self, monkeypatch, tools):
+    def test_init_fail_with_duplicate_tool_names(self, monkeypatch: pytest.MonkeyPatch, tools: list[Tool]):
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
 
         duplicate_tools = [tools[0], tools[0]]
         with pytest.raises(ValueError):
             OpenAIChatGenerator(tools=duplicate_tools)
 
-    def test_init_with_parameters(self, monkeypatch):
+    def test_init_with_parameters(self, monkeypatch: pytest.MonkeyPatch):
         tool = Tool(name="name", description="description", parameters={"x": {"type": "string"}}, function=lambda x: x)
 
         monkeypatch.setenv("OPENAI_TIMEOUT", "100")
@@ -142,7 +142,7 @@ class TestOpenAIChatGenerator:
         assert component.tools_strict
         assert component.http_client_kwargs == {"proxy": "http://example.com:8080", "verify": False}
 
-    def test_init_with_parameters_and_env_vars(self, monkeypatch):
+    def test_init_with_parameters_and_env_vars(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_TIMEOUT", "100")
         monkeypatch.setenv("OPENAI_MAX_RETRIES", "10")
         component = OpenAIChatGenerator(
@@ -159,7 +159,7 @@ class TestOpenAIChatGenerator:
         assert component.client.timeout == 100.0
         assert component.client.max_retries == 10
 
-    def test_to_dict_default(self, monkeypatch):
+    def test_to_dict_default(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = OpenAIChatGenerator()
         data = component.to_dict()
@@ -180,7 +180,7 @@ class TestOpenAIChatGenerator:
             },
         }
 
-    def test_to_dict_with_parameters(self, monkeypatch):
+    def test_to_dict_with_parameters(self, monkeypatch: pytest.MonkeyPatch):
         tool = Tool(name="name", description="description", parameters={"x": {"type": "string"}}, function=print)
 
         monkeypatch.setenv("ENV_VAR", "test-api-key")
@@ -228,7 +228,7 @@ class TestOpenAIChatGenerator:
             },
         }
 
-    def test_from_dict(self, monkeypatch):
+    def test_from_dict(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-api-key")
         data = {
             "type": "haystack.components.generators.chat.openai.OpenAIChatGenerator",
@@ -271,7 +271,7 @@ class TestOpenAIChatGenerator:
         assert component.client.max_retries == 10
         assert component.http_client_kwargs == {"proxy": "http://example.com:8080", "verify": False}
 
-    def test_from_dict_fail_wo_env_var(self, monkeypatch):
+    def test_from_dict_fail_wo_env_var(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         data = {
             "type": "haystack.components.generators.chat.openai.OpenAIChatGenerator",
@@ -288,7 +288,7 @@ class TestOpenAIChatGenerator:
         with pytest.raises(ValueError):
             OpenAIChatGenerator.from_dict(data)
 
-    def test_run(self, chat_messages, openai_mock_chat_completion):
+    def test_run(self, chat_messages: list[ChatMessage], openai_mock_chat_completion: MagicMock):
         component = OpenAIChatGenerator(api_key=Secret.from_token("test-api-key"))
         response = component.run(chat_messages)
 
@@ -299,7 +299,7 @@ class TestOpenAIChatGenerator:
         assert len(response["replies"]) == 1
         assert [isinstance(reply, ChatMessage) for reply in response["replies"]]
 
-    def test_run_with_params(self, chat_messages, openai_mock_chat_completion):
+    def test_run_with_params(self, chat_messages: list[ChatMessage], openai_mock_chat_completion: MagicMock):
         component = OpenAIChatGenerator(
             api_key=Secret.from_token("test-api-key"), generation_kwargs={"max_tokens": 10, "temperature": 0.5}
         )
@@ -320,7 +320,9 @@ class TestOpenAIChatGenerator:
         assert len(response["replies"]) == 1
         assert [isinstance(reply, ChatMessage) for reply in response["replies"]]
 
-    def test_run_with_params_streaming(self, chat_messages, openai_mock_chat_completion_chunk):
+    def test_run_with_params_streaming(
+        self, chat_messages: list[ChatMessage], openai_mock_chat_completion_chunk: MagicMock
+    ):
         streaming_callback_called = False
 
         def streaming_callback(chunk: StreamingChunk) -> None:
@@ -343,7 +345,9 @@ class TestOpenAIChatGenerator:
         assert [isinstance(reply, ChatMessage) for reply in response["replies"]]
         assert "Hello" in response["replies"][0].text  # see openai_mock_chat_completion_chunk
 
-    def test_run_with_streaming_callback_in_run_method(self, chat_messages, openai_mock_chat_completion_chunk):
+    def test_run_with_streaming_callback_in_run_method(
+        self, chat_messages: list[ChatMessage], openai_mock_chat_completion_chunk: MagicMock
+    ):
         streaming_callback_called = False
 
         def streaming_callback(chunk: StreamingChunk) -> None:
@@ -364,7 +368,7 @@ class TestOpenAIChatGenerator:
         assert [isinstance(reply, ChatMessage) for reply in response["replies"]]
         assert "Hello" in response["replies"][0].text  # see openai_mock_chat_completion_chunk
 
-    def test_run_with_wrapped_stream_simulation(self, chat_messages, openai_mock_stream):
+    def test_run_with_wrapped_stream_simulation(self, chat_messages: list[ChatMessage], openai_mock_stream: MagicMock):
         streaming_callback_called = False
 
         def streaming_callback(chunk: StreamingChunk) -> None:
@@ -398,7 +402,7 @@ class TestOpenAIChatGenerator:
             assert "replies" in response
             assert "Hello" in response["replies"][0].text
 
-    def test_check_abnormal_completions(self, caplog):
+    def test_check_abnormal_completions(self, caplog: pytest.LogCaptureFixture):
         caplog.set_level(logging.INFO)
         component = OpenAIChatGenerator(api_key=Secret.from_token("test-api-key"))
         messages = [
@@ -425,7 +429,7 @@ class TestOpenAIChatGenerator:
         for index in [0, 2]:
             assert caplog.records[index].message == message_template.format(index=index)
 
-    def test_run_with_tools(self, tools):
+    def test_run_with_tools(self, tools: list[Tool]):
         with patch("openai.resources.chat.completions.Completions.create") as mock_chat_completion_create:
             completion = ChatCompletion(
                 id="foo",
@@ -485,7 +489,7 @@ class TestOpenAIChatGenerator:
         assert message.meta["finish_reason"] == "tool_calls"
         assert message.meta["usage"]["completion_tokens"] == 40
 
-    def test_run_with_tools_streaming(self, mock_chat_completion_chunk_with_tools, tools):
+    def test_run_with_tools_streaming(self, mock_chat_completion_chunk_with_tools: MagicMock, tools: list[Tool]):
         streaming_callback_called = False
 
         def streaming_callback(chunk: StreamingChunk) -> None:
@@ -517,7 +521,7 @@ class TestOpenAIChatGenerator:
         assert tool_call.arguments == {"city": "Paris"}
         assert message.meta["finish_reason"] == "tool_calls"
 
-    def test_invalid_tool_call_json(self, tools, caplog):
+    def test_invalid_tool_call_json(self, tools: list[Tool], caplog: pytest.LogCaptureFixture):
         caplog.set_level(logging.WARNING)
 
         with patch("openai.resources.chat.completions.Completions.create") as mock_create:
@@ -957,7 +961,7 @@ class TestOpenAIChatGenerator:
         reason="Export an env var called OPENAI_API_KEY containing the OpenAI API key to run this test.",
     )
     @pytest.mark.integration
-    def test_live_run_with_tools_streaming(self, tools):
+    def test_live_run_with_tools_streaming(self, tools: list[Tool]):
         chat_messages = [ChatMessage.from_user("What's the weather like in Paris?")]
         component = OpenAIChatGenerator(tools=tools, streaming_callback=print_streaming_chunk)
         results = component.run(chat_messages)
@@ -973,14 +977,16 @@ class TestOpenAIChatGenerator:
         assert tool_call.arguments == {"city": "Paris"}
         assert message.meta["finish_reason"] == "tool_calls"
 
-    def test_openai_chat_generator_with_toolset_initialization(self, tools, monkeypatch):
+    def test_openai_chat_generator_with_toolset_initialization(
+        self, tools: list[Tool], monkeypatch: pytest.MonkeyPatch
+    ):
         """Test that the OpenAIChatGenerator can be initialized with a Toolset."""
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         toolset = Toolset(tools)
         generator = OpenAIChatGenerator(tools=toolset)
         assert generator.tools == toolset
 
-    def test_from_dict_with_toolset(self, tools, monkeypatch):
+    def test_from_dict_with_toolset(self, tools: list[Tool], monkeypatch: pytest.MonkeyPatch):
         """Test that the OpenAIChatGenerator can be deserialized from a dictionary with a Toolset."""
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         toolset = Toolset(tools)
@@ -998,7 +1004,7 @@ class TestOpenAIChatGenerator:
         reason="Export an env var called OPENAI_API_KEY containing the OpenAI API key to run this test.",
     )
     @pytest.mark.integration
-    def test_live_run_with_toolset(self, tools):
+    def test_live_run_with_toolset(self, tools: list[Tool]):
         chat_messages = [ChatMessage.from_user("What's the weather like in Paris?")]
         toolset = Toolset(tools)
         component = OpenAIChatGenerator(tools=toolset)

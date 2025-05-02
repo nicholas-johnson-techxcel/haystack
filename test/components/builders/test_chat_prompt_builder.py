@@ -277,7 +277,6 @@ class TestChatPromptBuilder:
 
         _component_instance = component()
 
-
         @_component_instance
         class DocumentProducer:
             @_component_instance.output_types(documents=List[Document])
@@ -588,7 +587,6 @@ class TestChatPromptBuilderDynamic:
 
     def test_pipeline_complex(self):
         _component_instance = component()
-
 
         @_component_instance
         class ValueProducer:

@@ -4,7 +4,7 @@
 
 import inspect
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from haystack import component, default_from_dict, default_to_dict, logging, tracing
 from haystack.components.generators.chat.types import ChatGenerator
@@ -23,6 +23,8 @@ from haystack.utils.deserialization import deserialize_chatgenerator_inplace
 logger = logging.getLogger(__name__)
 
 _component_instance = component()
+
+
 @_component_instance
 class Agent:
     """
@@ -61,13 +63,13 @@ class Agent:
         self,
         *,
         chat_generator: ChatGenerator,
-        tools: Optional[Union[List[Tool], Toolset]] = None,
-        system_prompt: Optional[str] = None,
-        exit_conditions: Optional[List[str]] = None,
-        state_schema: Optional[Dict[str, Any]] = None,
+        tools: list[Tool] | Toolset | None = None,
+        system_prompt: str | None = None,
+        exit_conditions: list[str] | None = None,
+        state_schema: dict[str, Any] | None = None,
         max_agent_steps: int = 100,
         raise_on_tool_invocation_failure: bool = False,
-        streaming_callback: Optional[StreamingCallbackT] = None,
+        streaming_callback: StreamingCallbackT | None = None,
     ):
         """
         Initialize the agent component.
@@ -112,18 +114,18 @@ class Agent:
         # Initialize state schema
         resolved_state_schema = deepcopy(self._state_schema)
         if resolved_state_schema.get("messages") is None:
-            resolved_state_schema["messages"] = {"type": List[ChatMessage], "handler": merge_lists}
+            resolved_state_schema["messages"] = {"type": list[ChatMessage], "handler": merge_lists}
         self.state_schema = resolved_state_schema
 
-        self.chat_generator = chat_generator
-        self.tools = tools or []
-        self.system_prompt = system_prompt
-        self.exit_conditions = exit_conditions
-        self.max_agent_steps = max_agent_steps
-        self.raise_on_tool_invocation_failure = raise_on_tool_invocation_failure
-        self.streaming_callback = streaming_callback
+        self.chat_generator: ChatGenerator = chat_generator
+        self.tools: list[Tool] | Toolset = tools or []
+        self.system_prompt: str | None = system_prompt
+        self.exit_conditions: list[str] = exit_conditions
+        self.max_agent_steps: int = max_agent_steps
+        self.raise_on_tool_invocation_failure: bool = raise_on_tool_invocation_failure
+        self.streaming_callback: StreamingCallbackT | None = streaming_callback
 
-        output_types = {}
+        output_types: dict[str, Any] = {}
         for param, config in self.state_schema.items():
             output_types[param] = config["type"]
             # Skip setting input types for parameters that are already in the run method
@@ -152,7 +154,7 @@ class Agent:
                 self.chat_generator.warm_up()
             self._is_warmed_up = True
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize the component to a dictionary.
 
@@ -177,7 +179,7 @@ class Agent:
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Agent":
+    def from_dict(cls, data: dict[str, Any]) -> "Agent":
         """
         Deserialize the agent from a dictionary.
 
@@ -198,9 +200,9 @@ class Agent:
 
         return default_from_dict(cls, data)
 
-    def _prepare_generator_inputs(self, streaming_callback: Optional[StreamingCallbackT] = None) -> Dict[str, Any]:
+    def _prepare_generator_inputs(self, streaming_callback: StreamingCallbackT | None = None) -> dict[str, Any]:
         """Prepare inputs for the chat generator."""
-        generator_inputs: Dict[str, Any] = {"tools": self.tools}
+        generator_inputs: dict[str, Any] = {"tools": self.tools}
         selected_callback = streaming_callback or self.streaming_callback
         if selected_callback is not None:
             generator_inputs["streaming_callback"] = selected_callback
@@ -220,10 +222,10 @@ class Agent:
 
     def run(
         self,
-        messages: List[ChatMessage],
-        streaming_callback: Optional[StreamingCallbackT] = None,
-        **kwargs: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        messages: list[ChatMessage],
+        streaming_callback: StreamingCallbackT | None = None,
+        **kwargs: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Process messages and execute tools until the exit condition is met.
 
@@ -299,10 +301,10 @@ class Agent:
 
     async def run_async(
         self,
-        messages: List[ChatMessage],
-        streaming_callback: Optional[StreamingCallbackT] = None,
-        **kwargs: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        messages: list[ChatMessage],
+        streaming_callback: StreamingCallbackT | None = None,
+        **kwargs: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Asynchronously process messages and execute tools until the exit condition is met.
 
@@ -384,7 +386,7 @@ class Agent:
             span.set_tag("haystack.agent.steps_taken", counter)
         return state.data
 
-    def _check_exit_conditions(self, llm_messages: List[ChatMessage], tool_messages: List[ChatMessage]) -> bool:
+    def _check_exit_conditions(self, llm_messages: list[ChatMessage], tool_messages: list[ChatMessage]) -> bool:
         """
         Check if any of the LLM messages' tool calls match an exit condition and if there are no errors.
 
@@ -392,8 +394,8 @@ class Agent:
         :param tool_messages: List of messages from the tool invoker
         :return: True if an exit condition is met and there are no errors, False otherwise
         """
-        matched_exit_conditions = set()
-        has_errors = False
+        matched_exit_conditions: set[str] = set()
+        has_errors: bool = False
 
         for msg in llm_messages:
             if msg.tool_call and msg.tool_call.tool_name in self.exit_conditions:

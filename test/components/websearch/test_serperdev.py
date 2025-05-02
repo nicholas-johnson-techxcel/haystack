@@ -2,9 +2,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import json
 import os
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 from haystack.utils.auth import Secret
 
 import pytest
@@ -123,12 +122,12 @@ def mock_serper_dev_search_result_no_snippet():
 
 
 class TestSerperDevSearchAPI:
-    def test_init_fail_wo_api_key(self, monkeypatch):
+    def test_init_fail_wo_api_key(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv("SERPERDEV_API_KEY", raising=False)
         with pytest.raises(ValueError, match="None of the .* environment variables are set"):
             SerperDevWebSearch()
 
-    def test_to_dict(self, monkeypatch):
+    def test_to_dict(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("SERPERDEV_API_KEY", "test-api-key")
         component = SerperDevWebSearch(top_k=10, allowed_domains=["test.com"], search_params={"param": "test"})
         data = component.to_dict()
@@ -143,7 +142,7 @@ class TestSerperDevSearchAPI:
         }
 
     @pytest.mark.parametrize("top_k", [1, 5, 7])
-    def test_web_search_top_k(self, mock_serper_dev_search_result, top_k: int):
+    def test_web_search_top_k(self, mock_serper_dev_search_result: MagicMock, top_k: int):
         ws = SerperDevWebSearch(api_key=Secret.from_token("test-api-key"), top_k=top_k)
         results = ws.run(query="Who is the boyfriend of Olivia Wilde?")
         documents = results["documents"]
@@ -158,7 +157,7 @@ class TestSerperDevSearchAPI:
         ws.run(query="Who is the boyfriend of Olivia Wilde?")
 
     @patch("requests.post")
-    def test_timeout_error(self, mock_post):
+    def test_timeout_error(self, mock_post: MagicMock):
         mock_post.side_effect = Timeout
         ws = SerperDevWebSearch(api_key=Secret.from_token("test-api-key"))
 
@@ -166,7 +165,7 @@ class TestSerperDevSearchAPI:
             ws.run(query="Who is the boyfriend of Olivia Wilde?")
 
     @patch("requests.post")
-    def test_request_exception(self, mock_post):
+    def test_request_exception(self, mock_post: MagicMock):
         mock_post.side_effect = RequestException
         ws = SerperDevWebSearch(api_key=Secret.from_token("test-api-key"))
 
@@ -174,7 +173,7 @@ class TestSerperDevSearchAPI:
             ws.run(query="Who is the boyfriend of Olivia Wilde?")
 
     @patch("requests.post")
-    def test_bad_response_code(self, mock_post):
+    def test_bad_response_code(self, mock_post: MagicMock):
         mock_response = mock_post.return_value
         mock_response.status_code = 404
         mock_response.raise_for_status.side_effect = HTTPError
@@ -194,6 +193,6 @@ class TestSerperDevSearchAPI:
         documents = results["documents"]
         links = results["links"]
         assert len(documents) == len(links) == 10
-        assert all(isinstance(doc, Document) for doc in results)
+        assert all(isinstance(doc, Document) for doc in documents)
         assert all(isinstance(link, str) for link in links)
         assert all(link.startswith("http") for link in links)

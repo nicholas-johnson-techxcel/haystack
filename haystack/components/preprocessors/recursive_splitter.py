@@ -4,7 +4,7 @@
 
 import re
 from copy import deepcopy
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Literal
 
 from haystack import Document, component, logging
 from haystack.lazy_imports import LazyImport
@@ -65,8 +65,8 @@ class RecursiveDocumentSplitter:
         split_length: int = 200,
         split_overlap: int = 0,
         split_unit: Literal["word", "char", "token"] = "word",
-        separators: Optional[List[str]] = None,
-        sentence_splitter_params: Optional[Dict[str, Any]] = None,
+        separators: list[str] | None = None,
+        sentence_splitter_params: dict[str, Any] | None = None,
     ):
         """
         Initializes a RecursiveDocumentSplitter.
@@ -96,7 +96,7 @@ class RecursiveDocumentSplitter:
         self.sentence_splitter_params = (
             {"keep_white_spaces": True} if sentence_splitter_params is None else sentence_splitter_params
         )
-        self.tiktoken_tokenizer: Optional["tiktoken.Encoding"] = None
+        self.tiktoken_tokenizer: tiktoken.Encoding | None = None
         self._is_warmed_up = False
 
     def warm_up(self) -> None:
@@ -121,12 +121,12 @@ class RecursiveDocumentSplitter:
             raise ValueError("All separators must be strings.")
 
     @staticmethod
-    def _get_custom_sentence_tokenizer(sentence_splitter_params: Dict[str, Any]):
+    def _get_custom_sentence_tokenizer(sentence_splitter_params: dict[str, Any]):
         from haystack.components.preprocessors.sentence_tokenizer import SentenceSplitter
 
         return SentenceSplitter(**sentence_splitter_params)
 
-    def _split_chunk(self, current_chunk: str) -> Tuple[str, str]:
+    def _split_chunk(self, current_chunk: str) -> tuple[str, str]:
         """
         Splits a chunk based on the split_length and split_units attribute.
 
@@ -151,7 +151,7 @@ class RecursiveDocumentSplitter:
             remaining_tokens = tokens[self.split_length :]
             return self.tiktoken_tokenizer.decode(current_tokens), self.tiktoken_tokenizer.decode(remaining_tokens)  # type: ignore
 
-    def _apply_overlap(self, chunks: List[str]) -> List[str]:
+    def _apply_overlap(self, chunks: list[str]) -> list[str]:
         """
         Applies an overlap between consecutive chunks if the chunk_overlap attribute is greater than zero.
 
@@ -163,7 +163,7 @@ class RecursiveDocumentSplitter:
         :returns:
             A list of text chunks with the overlap applied.
         """
-        overlapped_chunks: List[str] = []
+        overlapped_chunks: list[str] = []
 
         for idx, chunk in enumerate(chunks):
             if idx == 0:
@@ -228,7 +228,7 @@ class RecursiveDocumentSplitter:
 
         return overlapped_chunks
 
-    def _create_chunk_starting_with_overlap(self, chunk, overlap):
+    def _create_chunk_starting_with_overlap(self, chunk: str, overlap: str) -> str:
         if self.split_units == "word":
             current_chunk = overlap + " " + chunk
         elif self.split_units == "token":
@@ -241,7 +241,7 @@ class RecursiveDocumentSplitter:
             current_chunk = overlap + chunk
         return current_chunk
 
-    def _get_overlap(self, overlapped_chunks: List[str]) -> Tuple[str, str]:
+    def _get_overlap(self, overlapped_chunks: list[str]) -> tuple[str, str]:
         """Get the previous overlapped chunk instead of the original chunk."""
         prev_chunk = overlapped_chunks[-1]
         overlap_start = max(0, self._chunk_length(prev_chunk) - self.split_overlap)
@@ -276,7 +276,7 @@ class RecursiveDocumentSplitter:
             # at this point we know that the tokenizer is already initialized
             return len(self.tiktoken_tokenizer.encode(text))  # type: ignore
 
-    def _chunk_text(self, text: str) -> List[str]:
+    def _chunk_text(self, text: str) -> list[str]:
         """
         Recursive chunking algorithm that divides text into smaller chunks based on a list of separator characters.
 
@@ -316,7 +316,7 @@ class RecursiveDocumentSplitter:
                 continue
 
             chunks = []
-            current_chunk: List[str] = []
+            current_chunk: list[str] = []
             current_length = 0
 
             # check splits, if any is too long, recursively chunk it, otherwise add to current chunk
@@ -359,7 +359,7 @@ class RecursiveDocumentSplitter:
         # if no separator worked, fall back to word- or character-level chunking
         return self._fall_back_to_fixed_chunking(text, self.split_units)
 
-    def _fall_back_to_fixed_chunking(self, text: str, split_units: Literal["word", "char", "token"]) -> List[str]:
+    def _fall_back_to_fixed_chunking(self, text: str, split_units: Literal["word", "char", "token"]) -> list[str]:
         """
         Fall back to a fixed chunking approach if no separator works for the text.
 
@@ -402,7 +402,7 @@ class RecursiveDocumentSplitter:
                 chunks.append(self.tiktoken_tokenizer.decode(chunk_tokens))  # type: ignore
         return chunks
 
-    def _add_overlap_info(self, curr_pos: int, new_doc: Document, new_docs: List[Document]) -> None:
+    def _add_overlap_info(self, curr_pos: int, new_doc: Document, new_docs: list[Document]) -> None:
         prev_doc = new_docs[-1]
         overlap_length = self._chunk_length(prev_doc.content) - (curr_pos - prev_doc.meta["split_idx_start"])  # type: ignore
         if overlap_length > 0:
@@ -417,13 +417,13 @@ class RecursiveDocumentSplitter:
                 }
             )
 
-    def _run_one(self, doc: Document) -> List[Document]:
+    def _run_one(self, doc: Document) -> list[Document]:
         chunks = self._chunk_text(doc.content)  # type: ignore # the caller already check for a non-empty doc.content
         chunks = chunks[:-1] if len(chunks[-1]) == 0 else chunks  # remove last empty chunk if it exists
         current_position = 0
         current_page = 1
 
-        new_docs: List[Document] = []
+        new_docs: list[Document] = []
 
         for split_nr, chunk in enumerate(chunks):
             new_doc = Document(content=chunk, meta=deepcopy(doc.meta))
@@ -453,8 +453,8 @@ class RecursiveDocumentSplitter:
 
         return new_docs
 
-    @_component_instance.output_types(documents=List[Document])
-    def run(self, documents: List[Document]) -> Dict[str, List[Document]]:
+    @_component_instance.output_types(documents=list[Document])
+    def run(self, documents: list[Document]) -> dict[str, list[Document]]:
         """
         Split a list of documents into documents with smaller chunks of text.
 

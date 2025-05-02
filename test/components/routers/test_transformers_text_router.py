@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from unittest.mock import patch, MagicMock
+from typing import Any
 
 import pytest
 
@@ -11,7 +12,7 @@ from haystack.utils import ComponentDevice, Secret
 
 class TestTransformersTextRouter:
     @patch("haystack.components.routers.transformers_text_router.AutoConfig.from_pretrained")
-    def test_to_dict(self, mock_auto_config_from_pretrained):
+    def test_to_dict(self, mock_auto_config_from_pretrained: Any) -> None:
         mock_auto_config_from_pretrained.return_value = MagicMock(label2id={"en": 0, "de": 1})
         router = TransformersTextRouter(model="papluca/xlm-roberta-base-language-detection")
         router_dict = router.to_dict()
@@ -30,7 +31,7 @@ class TestTransformersTextRouter:
         }
 
     @patch("haystack.components.routers.transformers_text_router.AutoConfig.from_pretrained")
-    def test_to_dict_with_cpu_device(self, mock_auto_config_from_pretrained):
+    def test_to_dict_with_cpu_device(self, mock_auto_config_from_pretrained: Any) -> None:
         mock_auto_config_from_pretrained.return_value = MagicMock(label2id={"en": 0, "de": 1})
         router = TransformersTextRouter(
             model="papluca/xlm-roberta-base-language-detection", device=ComponentDevice.from_str("cpu")
@@ -51,7 +52,7 @@ class TestTransformersTextRouter:
         }
 
     @patch("haystack.components.routers.transformers_text_router.AutoConfig.from_pretrained")
-    def test_from_dict(self, mock_auto_config_from_pretrained, monkeypatch):
+    def test_from_dict(self, mock_auto_config_from_pretrained: Any, monkeypatch: pytest.MonkeyPatch) -> None:
         mock_auto_config_from_pretrained.return_value = MagicMock(label2id={"en": 0, "de": 1})
         monkeypatch.delenv("HF_API_TOKEN", raising=False)
         monkeypatch.delenv("HF_TOKEN", raising=False)
@@ -82,7 +83,9 @@ class TestTransformersTextRouter:
         }
 
     @patch("haystack.components.routers.transformers_text_router.AutoConfig.from_pretrained")
-    def test_from_dict_no_default_parameters(self, mock_auto_config_from_pretrained, monkeypatch):
+    def test_from_dict_no_default_parameters(
+        self, mock_auto_config_from_pretrained: Any, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         mock_auto_config_from_pretrained.return_value = MagicMock(label2id={"en": 0, "de": 1})
         monkeypatch.delenv("HF_API_TOKEN", raising=False)
         monkeypatch.delenv("HF_TOKEN", raising=False)
@@ -104,7 +107,9 @@ class TestTransformersTextRouter:
         }
 
     @patch("haystack.components.routers.transformers_text_router.AutoConfig.from_pretrained")
-    def test_from_dict_with_cpu_device(self, mock_auto_config_from_pretrained, monkeypatch):
+    def test_from_dict_with_cpu_device(
+        self, mock_auto_config_from_pretrained: Any, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         mock_auto_config_from_pretrained.return_value = MagicMock(label2id={"en": 0, "de": 1})
         monkeypatch.delenv("HF_API_TOKEN", raising=False)
         monkeypatch.delenv("HF_TOKEN", raising=False)
@@ -136,7 +141,7 @@ class TestTransformersTextRouter:
 
     @patch("haystack.components.routers.transformers_text_router.AutoConfig.from_pretrained")
     @patch("haystack.components.routers.transformers_text_router.pipeline")
-    def test_warm_up(self, hf_pipeline_mock, mock_auto_config_from_pretrained):
+    def test_warm_up(self, hf_pipeline_mock: Any, mock_auto_config_from_pretrained: Any) -> None:
         hf_pipeline_mock.return_value = MagicMock(model=MagicMock(config=MagicMock(label2id={"en": 0, "de": 1})))
         mock_auto_config_from_pretrained.return_value = MagicMock(label2id={"en": 0, "de": 1})
         router = TransformersTextRouter(model="papluca/xlm-roberta-base-language-detection")
@@ -144,7 +149,7 @@ class TestTransformersTextRouter:
         assert router.pipeline is not None
 
     @patch("haystack.components.routers.transformers_text_router.AutoConfig.from_pretrained")
-    def test_run_fails_without_warm_up(self, mock_auto_config_from_pretrained):
+    def test_run_fails_without_warm_up(self, mock_auto_config_from_pretrained: Any) -> None:
         mock_auto_config_from_pretrained.return_value = MagicMock(label2id={"en": 0, "de": 1})
         router = TransformersTextRouter(model="papluca/xlm-roberta-base-language-detection")
         with pytest.raises(RuntimeError):
@@ -152,7 +157,9 @@ class TestTransformersTextRouter:
 
     @patch("haystack.components.routers.transformers_text_router.AutoConfig.from_pretrained")
     @patch("haystack.components.routers.transformers_text_router.pipeline")
-    def test_run_fails_with_non_string_input(self, hf_pipeline_mock, mock_auto_config_from_pretrained):
+    def test_run_fails_with_non_string_input(
+        self, hf_pipeline_mock: Any, mock_auto_config_from_pretrained: Any
+    ) -> None:
         mock_auto_config_from_pretrained.return_value = MagicMock(label2id={"en": 0, "de": 1})
         hf_pipeline_mock.return_value = MagicMock(model=MagicMock(config=MagicMock(label2id={"en": 0, "de": 1})))
         router = TransformersTextRouter(model="papluca/xlm-roberta-base-language-detection")
@@ -162,7 +169,7 @@ class TestTransformersTextRouter:
 
     @patch("haystack.components.routers.transformers_text_router.AutoConfig.from_pretrained")
     @patch("haystack.components.routers.transformers_text_router.pipeline")
-    def test_run_unit(self, hf_pipeline_mock, mock_auto_config_from_pretrained):
+    def test_run_unit(self, hf_pipeline_mock: Any, mock_auto_config_from_pretrained: Any) -> None:
         mock_auto_config_from_pretrained.return_value = MagicMock(label2id={"en": 0, "de": 1})
         hf_pipeline_mock.return_value = [{"label": "en", "score": 0.9}]
         router = TransformersTextRouter(model="papluca/xlm-roberta-base-language-detection")
@@ -173,7 +180,7 @@ class TestTransformersTextRouter:
 
     @pytest.mark.integration
     @pytest.mark.slow
-    def test_run(self, monkeypatch):
+    def test_run(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("HF_API_TOKEN", raising=False)  # https://github.com/deepset-ai/haystack/issues/8811
         router = TransformersTextRouter(model="papluca/xlm-roberta-base-language-detection")
         router.warm_up()
@@ -205,7 +212,7 @@ class TestTransformersTextRouter:
 
     @pytest.mark.integration
     @pytest.mark.slow
-    def test_wrong_labels(self, monkeypatch):
+    def test_wrong_labels(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("HF_API_TOKEN", raising=False)  # https://github.com/deepset-ai/haystack/issues/8811
         router = TransformersTextRouter(model="papluca/xlm-roberta-base-language-detection", labels=["en", "de"])
         with pytest.raises(ValueError):

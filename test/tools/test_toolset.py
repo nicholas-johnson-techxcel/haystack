@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import pytest
-import os
+from typing import Any
+
 from haystack import Pipeline
 from haystack.core.serialization import generate_qualified_class_name
 from haystack.dataclasses import ChatMessage
@@ -30,17 +31,17 @@ def subtract_numbers(a: int, b: int) -> int:
 
 
 class CustomToolset(Toolset):
-    def __init__(self, tools, custom_attr):
+    def __init__(self, tools: list[Tool], custom_attr: str):
         super().__init__(tools)
         self.custom_attr = custom_attr
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         data = super().to_dict()
         data["custom_attr"] = self.custom_attr
         return data
 
     @classmethod
-    def from_dict(cls, data):
+    def from_dict(cls, data: dict[str, Any]) -> "CustomToolset":
         tools = [Tool.from_dict(tool_data) for tool_data in data["data"]["tools"]]
         custom_attr = data["custom_attr"]
         return cls(tools=tools, custom_attr=custom_attr)
@@ -79,18 +80,18 @@ class CalculatorToolset(Toolset):
         self.add(add_tool)
         self.add(multiply_tool)
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
         return {
             "type": generate_qualified_class_name(type(self)),
             "data": {},  # no data to serialize as we define the tools dynamically
         }
 
     @classmethod
-    def from_dict(cls, data):
+    def from_dict(cls, data: dict[str, Any]) -> "CalculatorToolset":
         return cls()
 
 
-def weather_function(location):
+def weather_function(location: str) -> dict[str, str | int]:
     weather_info = {
         "Berlin": {"weather": "mostly sunny", "temperature": 7, "unit": "celsius"},
         "Paris": {"weather": "mostly cloudy", "temperature": 8, "unit": "celsius"},
@@ -114,7 +115,7 @@ def weather_tool():
 
 @pytest.fixture
 def faulty_tool():
-    def faulty_tool_func(location):
+    def faulty_tool_func(location: str) -> dict[str, str]:
         raise Exception("This tool always fails.")
 
     faulty_tool_parameters = {

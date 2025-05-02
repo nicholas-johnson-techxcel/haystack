@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Dict, List, Optional
-
 from haystack import Document, component
 
 _component_instance = component()
@@ -39,7 +37,7 @@ class LostInTheMiddleRanker:
     ```
     """
 
-    def __init__(self, word_count_threshold: Optional[int] = None, top_k: Optional[int] = None):
+    def __init__(self, word_count_threshold: int | None = None, top_k: int | None = None):
         """
         Initialize the LostInTheMiddleRanker.
 
@@ -61,10 +59,10 @@ class LostInTheMiddleRanker:
         self.word_count_threshold = word_count_threshold
         self.top_k = top_k
 
-    @_component_instance.output_types(documents=List[Document])
+    @_component_instance.output_types(documents=list[Document])
     def run(
-        self, documents: List[Document], top_k: Optional[int] = None, word_count_threshold: Optional[int] = None
-    ) -> Dict[str, List[Document]]:
+        self, documents: list[Document], top_k: int | None = None, word_count_threshold: int | None = None
+    ) -> dict[str, list[Document]]:
         """
         Reranks documents based on the "lost in the middle" order.
 

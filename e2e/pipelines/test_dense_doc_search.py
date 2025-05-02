@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import json
+from pathlib import Path
 
 from haystack import Pipeline
 from haystack.components.converters import PyPDFToDocument, TextFileToDocument
@@ -15,7 +16,7 @@ from haystack.components.writers import DocumentWriter
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 
 
-def test_dense_doc_search_pipeline(tmp_path, samples_path):
+def test_dense_doc_search_pipeline(tmp_path: Path, samples_path: Path):
     # Create the indexing pipeline
     indexing_pipeline = Pipeline()
     indexing_pipeline.add_component(

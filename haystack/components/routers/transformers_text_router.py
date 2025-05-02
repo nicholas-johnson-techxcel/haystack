@@ -2,14 +2,16 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from haystack import component, default_from_dict, default_to_dict
+from haystack.core.pipeline.pipeline import Pipeline
 from haystack.lazy_imports import LazyImport
 from haystack.utils import ComponentDevice, Secret, deserialize_secrets_inplace
 
 with LazyImport(message="Run 'pip install transformers[torch,sentencepiece]'") as torch_and_transformers_import:
-    from transformers import AutoConfig, pipeline
+    from transformers.models.auto.configuration_auto import AutoConfig
+    from transformers.pipelines import pipeline
 
     from haystack.utils.hf import (  # pylint: disable=ungrouped-imports
         deserialize_hf_model_kwargs,
@@ -75,10 +77,10 @@ class TransformersTextRouter:
     def __init__(  # pylint: disable=too-many-positional-arguments
         self,
         model: str,
-        labels: Optional[List[str]] = None,
-        device: Optional[ComponentDevice] = None,
-        token: Optional[Secret] = Secret.from_env_var(["HF_API_TOKEN", "HF_TOKEN"], strict=False),
-        huggingface_pipeline_kwargs: Optional[Dict[str, Any]] = None,
+        labels: list[str] | None = None,
+        device: ComponentDevice | None = None,
+        token: Secret | None = Secret.from_env_var(["HF_API_TOKEN", "HF_TOKEN"], strict=False),
+        huggingface_pipeline_kwargs: dict[str, Any] | None = None,
     ):
         """
         Initializes the TransformersTextRouter component.
@@ -116,11 +118,11 @@ class TransformersTextRouter:
             self.labels = list(config.label2id.keys())
         else:
             self.labels = labels
-        component.set_output_types(self, **dict.fromkeys(self.labels, str))
+        _component_instance.set_output_types(self, **dict.fromkeys(self.labels, str))
 
-        self.pipeline = None
+        self.pipeline: Pipeline | None = None
 
-    def _get_telemetry_data(self) -> Dict[str, Any]:
+    def _get_telemetry_data(self) -> dict[str, Any]:
         """
         Data that is sent to Posthog for usage analytics.
         """
@@ -143,7 +145,7 @@ class TransformersTextRouter:
                 f"Provided labels: {self.labels}. Model labels: {labels}"
             )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serializes the component to a dictionary.
 
@@ -165,7 +167,7 @@ class TransformersTextRouter:
         return serialization_dict
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TransformersTextRouter":
+    def from_dict(cls, data: dict[str, Any]) -> "TransformersTextRouter":
         """
         Deserializes the component from a dictionary.
 
@@ -179,7 +181,7 @@ class TransformersTextRouter:
             deserialize_hf_model_kwargs(data["init_parameters"]["huggingface_pipeline_kwargs"])
         return default_from_dict(cls, data)
 
-    def run(self, text: str) -> Dict[str, str]:
+    def run(self, text: str) -> dict[str, str]:
         """
         Routes the text strings to different connections based on a category label.
 

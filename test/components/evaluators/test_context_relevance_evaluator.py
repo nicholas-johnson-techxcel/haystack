@@ -2,9 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 import os
-from typing import List
 
 import math
+from typing import Any
 
 import pytest
 
@@ -16,7 +16,7 @@ from haystack.components.generators.chat.openai import OpenAIChatGenerator
 
 
 class TestContextRelevanceEvaluator:
-    def test_init_default(self, monkeypatch):
+    def test_init_default(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = ContextRelevanceEvaluator()
 
@@ -25,7 +25,7 @@ class TestContextRelevanceEvaluator:
             "required to answer the following question. If no relevant sentences are found, or if you "
             "believe the question cannot be answered from the given context, return an empty list, example: []"
         )
-        assert component.inputs == [("questions", List[str]), ("contexts", List[List[str]])]
+        assert component.inputs == [("questions", list[str]), ("contexts", list[list[str]])]
         assert component.outputs == ["relevant_statements"]
         assert component.examples == [
             {
@@ -56,12 +56,12 @@ class TestContextRelevanceEvaluator:
         assert component._chat_generator.client.api_key == "test-api-key"
         assert component._chat_generator.generation_kwargs == {"response_format": {"type": "json_object"}, "seed": 42}
 
-    def test_init_fail_wo_openai_api_key(self, monkeypatch):
+    def test_init_fail_wo_openai_api_key(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         with pytest.raises(ValueError, match="None of the .* environment variables are set"):
             ContextRelevanceEvaluator()
 
-    def test_init_with_parameters(self, monkeypatch):
+    def test_init_with_parameters(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = ContextRelevanceEvaluator(
             examples=[
@@ -79,14 +79,14 @@ class TestContextRelevanceEvaluator:
         assert component._chat_generator.client.api_key == "test-api-key"
         assert component._chat_generator.generation_kwargs == {"response_format": {"type": "json_object"}, "seed": 42}
 
-    def test_init_with_chat_generator(self, monkeypatch):
+    def test_init_with_chat_generator(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         chat_generator = OpenAIChatGenerator(generation_kwargs={"response_format": {"type": "json_object"}, "seed": 42})
         component = ContextRelevanceEvaluator(chat_generator=chat_generator)
 
         assert component._chat_generator is chat_generator
 
-    def test_to_dict_with_parameters(self, monkeypatch):
+    def test_to_dict_with_parameters(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("ENV_VAR", "test-api-key")
         chat_generator = OpenAIChatGenerator(
             generation_kwargs={"response_format": {"type": "json_object"}, "seed": 42},
@@ -110,7 +110,7 @@ class TestContextRelevanceEvaluator:
             },
         }
 
-    def test_from_dict(self, monkeypatch):
+    def test_from_dict(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         chat_generator = OpenAIChatGenerator(generation_kwargs={"response_format": {"type": "json_object"}, "seed": 42})
 
@@ -128,7 +128,7 @@ class TestContextRelevanceEvaluator:
         assert component._chat_generator.generation_kwargs == {"response_format": {"type": "json_object"}, "seed": 42}
         assert component.examples == [{"inputs": {"questions": "What is football?"}, "outputs": {"score": 0}}]
 
-    def test_pipeline_serde(self, monkeypatch):
+    def test_pipeline_serde(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
 
         component = ContextRelevanceEvaluator()
@@ -139,11 +139,11 @@ class TestContextRelevanceEvaluator:
         deserialized_pipeline = Pipeline.loads(serialized_pipeline)
         assert deserialized_pipeline == pipeline
 
-    def test_run_calculates_mean_score(self, monkeypatch):
+    def test_run_calculates_mean_score(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = ContextRelevanceEvaluator()
 
-        def chat_generator_run(self, *args, **kwargs):
+        def chat_generator_run(self, *args: Any, **kwargs: dict[str, Any]):
             if "Football" in kwargs["messages"][0].text:
                 return {"replies": [ChatMessage.from_assistant('{"relevant_statements": ["a", "b"], "score": 1}')]}
             else:
@@ -173,11 +173,11 @@ class TestContextRelevanceEvaluator:
             "individual_scores": [1, 0],
         }
 
-    def test_run_no_statements_extracted(self, monkeypatch):
+    def test_run_no_statements_extracted(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = ContextRelevanceEvaluator()
 
-        def chat_generator_run(self, *args, **kwargs):
+        def chat_generator_run(self, *args: Any, **kwargs: dict[str, Any]):
             if "Football" in kwargs["messages"][0].text:
                 return {"replies": [ChatMessage.from_assistant('{"relevant_statements": ["a", "b"], "score": 1}')]}
             else:
@@ -203,17 +203,17 @@ class TestContextRelevanceEvaluator:
             "individual_scores": [1, 0],
         }
 
-    def test_run_missing_parameters(self, monkeypatch):
+    def test_run_missing_parameters(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = ContextRelevanceEvaluator()
         with pytest.raises(ValueError, match="LLM evaluator expected input parameter"):
             component.run()
 
-    def test_run_returns_nan_raise_on_failure_false(self, monkeypatch):
+    def test_run_returns_nan_raise_on_failure_false(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = ContextRelevanceEvaluator(raise_on_failure=False)
 
-        def chat_generator_run(self, *args, **kwargs):
+        def chat_generator_run(self, *args: Any, **kwargs: dict[str, Any]):
             if "Python" in kwargs["messages"][0].text:
                 raise Exception("OpenAI API request failed.")
             else:

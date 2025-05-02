@@ -100,7 +100,7 @@ class ComponentMeta(type):
     def _parse_and_set_output_sockets(instance: Component) -> None:
         has_async_run = hasattr(instance, "run_async")
 
-        # If `component.set_output_types()` was called in the component constructor,
+        # If `_component_instance.set_output_types()` was called in the component constructor,
         # `__haystack_output__` is already populated, no need to do anything.
         if "__haystack_output__" not in instance.__dict__:
             # If that's not the case, we need to populate `__haystack_output__`
@@ -313,7 +313,7 @@ class _Component:
             instance.__haystack_input__ = Sockets(instance, {}, InputSocket)
         instance.__haystack_input__[name] = InputSocket(name=name, type=type, default_value=default)
 
-    def set_input_types(self, instance: Component, **types: Any) -> None:
+    def set_input_types(self, instance: Component, **types: dict[str, Any]) -> None:
         """
         Method that specifies the input types when 'kwargs' is passed to the run method.
 
@@ -327,7 +327,7 @@ class _Component:
         class MyComponent:
 
             def __init__(self, value: int):
-                component.set_input_types(self, value_1=str, value_2=str)
+                _component_instance.set_input_types(self, value_1=str, value_2=str)
                 ...
 
             @_component_instance.output_types(output_1=int, output_2=str)
@@ -347,11 +347,11 @@ class _Component:
         class MyComponent:
 
             def __init__(self, value: int):
-                component.set_input_types(self, value_1=str, value_2=str)
+                _component_instance.set_input_types(self, value_1=str, value_2=str)
                 ...
 
             @_component_instance.output_types(output_1=int, output_2=str)
-            def run(self, value_0: str, value_1: Optional[str] = None, **kwargs):
+            def run(self, value_0: str, value_1: str | None = None, **kwargs):
                 return {"output_1": kwargs["value_1"], "output_2": ""}
         ```
 
@@ -369,7 +369,7 @@ class _Component:
             instance, {name: InputSocket(name=name, type=type_) for name, type_ in types.items()}, InputSocket
         )
 
-    def set_output_types(self, instance: Component, **types: Any) -> None:
+    def set_output_types(self, instance: Component, **types: dict[str, Any]) -> None:
         """
         Method that specifies the output types when the 'run' method is not decorated with 'component.output_types'.
 
@@ -382,7 +382,7 @@ class _Component:
         class MyComponent:
 
             def __init__(self, value: int):
-                component.set_output_types(self, output_1=int, output_2=str)
+                _component_instance.set_output_types(self, output_1=int, output_2=str)
                 ...
 
             # no decorators here

@@ -1,5 +1,5 @@
 import pytest
-from typing import List, Dict
+from typing import Any
 
 from haystack.dataclasses import ChatMessage
 from haystack.dataclasses.state import State, _validate_schema, _schema_to_dict, _schema_from_dict
@@ -11,7 +11,7 @@ def basic_schema():
     return {"numbers": {"type": list}, "metadata": {"type": dict}, "name": {"type": str}}
 
 
-def numbers_handler(current, new):
+def numbers_handler(current: list[int] | None, new: list[int]) -> list[int]:
     if current is None:
         return sorted(set(new))
     return sorted(set(current + new))
@@ -22,7 +22,7 @@ def complex_schema():
     return {"numbers": {"type": list, "handler": numbers_handler}, "metadata": {"type": dict}, "name": {"type": str}}
 
 
-def test_validate_schema_valid(basic_schema):
+def test_validate_schema_valid(basic_schema: dict[str, Any]):
     # Should not raise any exceptions
     _validate_schema(basic_schema)
 
@@ -45,7 +45,7 @@ def test_validate_schema_invalid_handler():
         _validate_schema(invalid_schema)
 
 
-def test_state_initialization(basic_schema):
+def test_state_initialization(basic_schema: dict[str, Any]):
     # Test empty initialization
     state = State(basic_schema)
     assert state.data == {}
@@ -57,14 +57,14 @@ def test_state_initialization(basic_schema):
     assert state.data["name"] == "test"
 
 
-def test_state_get(basic_schema):
+def test_state_get(basic_schema: dict[str, Any]):
     state = State(basic_schema, {"name": "test"})
     assert state.get("name") == "test"
     assert state.get("non_existent") is None
     assert state.get("non_existent", "default") == "default"
 
 
-def test_state_set_basic(basic_schema):
+def test_state_set_basic(basic_schema: dict[str, Any]):
     state = State(basic_schema)
 
     # Test setting new values
@@ -76,7 +76,7 @@ def test_state_set_basic(basic_schema):
     assert state.get("numbers") == [1, 2, 3, 4]
 
 
-def test_state_set_with_handler(complex_schema):
+def test_state_set_with_handler(complex_schema: dict[str, Any]):
     state = State(complex_schema)
 
     # Test custom handler for numbers
@@ -87,7 +87,7 @@ def test_state_set_with_handler(complex_schema):
     assert state.get("numbers") == [1, 2, 3, 4, 5, 6]
 
 
-def test_state_set_with_handler_override(basic_schema):
+def test_state_set_with_handler_override(basic_schema: dict[str, Any]):
     state = State(basic_schema)
 
     # Custom handler that concatenates strings
@@ -98,7 +98,7 @@ def test_state_set_with_handler_override(basic_schema):
     assert state.get("name") == "first-second"
 
 
-def test_state_has(basic_schema):
+def test_state_has(basic_schema: dict[str, Any]):
     state = State(basic_schema, {"name": "test"})
     assert state.has("name") is True
     assert state.has("non_existent") is False
@@ -107,12 +107,12 @@ def test_state_has(basic_schema):
 def test_state_empty_schema():
     state = State({})
     assert state.data == {}
-    assert state.schema == {"messages": {"type": List[ChatMessage], "handler": merge_lists}}
+    assert state.schema == {"messages": {"type": list[ChatMessage], "handler": merge_lists}}
     with pytest.raises(ValueError, match="Key 'any_key' not found in schema"):
         state.set("any_key", "value")
 
 
-def test_state_none_values(basic_schema):
+def test_state_none_values(basic_schema: dict[str, Any]):
     state = State(basic_schema)
     state.set("name", None)
     assert state.get("name") is None
@@ -120,7 +120,7 @@ def test_state_none_values(basic_schema):
     assert state.get("name") == "value"
 
 
-def test_state_merge_lists(basic_schema):
+def test_state_merge_lists(basic_schema: dict[str, Any]):
     state = State(basic_schema)
     state.set("numbers", "not_a_list")
     assert state.get("numbers") == ["not_a_list"]
@@ -131,7 +131,7 @@ def test_state_merge_lists(basic_schema):
 def test_state_nested_structures():
     schema = {
         "complex": {
-            "type": Dict[str, List[int]],
+            "type": dict[str, list[int]],
             "handler": lambda current, new: {
                 k: current.get(k, []) + new.get(k, []) for k in set(current.keys()) | set(new.keys())
             }
@@ -148,13 +148,13 @@ def test_state_nested_structures():
     assert state.get("complex") == expected
 
 
-def test_schema_to_dict(basic_schema):
+def test_schema_to_dict(basic_schema: dict[str, Any]):
     expected_dict = {"numbers": {"type": "list"}, "metadata": {"type": "dict"}, "name": {"type": "str"}}
     result = _schema_to_dict(basic_schema)
     assert result == expected_dict
 
 
-def test_schema_to_dict_with_handlers(complex_schema):
+def test_schema_to_dict_with_handlers(complex_schema: dict[str, Any]):
     expected_dict = {
         "numbers": {"type": "list", "handler": "test_state.numbers_handler"},
         "metadata": {"type": "dict"},
@@ -164,13 +164,13 @@ def test_schema_to_dict_with_handlers(complex_schema):
     assert result == expected_dict
 
 
-def test_schema_from_dict(basic_schema):
+def test_schema_from_dict(basic_schema: dict[str, Any]):
     schema_dict = {"numbers": {"type": "list"}, "metadata": {"type": "dict"}, "name": {"type": "str"}}
     result = _schema_from_dict(schema_dict)
     assert result == basic_schema
 
 
-def test_schema_from_dict_with_handlers(complex_schema):
+def test_schema_from_dict_with_handlers(complex_schema: dict[str, Any]):
     schema_dict = {
         "numbers": {"type": "list", "handler": "test_state.numbers_handler"},
         "metadata": {"type": "dict"},

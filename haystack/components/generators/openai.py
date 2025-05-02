@@ -3,8 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
 from openai import OpenAI, Stream
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
@@ -56,14 +57,14 @@ class OpenAIGenerator:
         self,
         api_key: Secret = Secret.from_env_var("OPENAI_API_KEY"),
         model: str = "gpt-4o-mini",
-        streaming_callback: Optional[Callable[[StreamingChunk], None]] = None,
-        api_base_url: Optional[str] = None,
-        organization: Optional[str] = None,
-        system_prompt: Optional[str] = None,
-        generation_kwargs: Optional[Dict[str, Any]] = None,
-        timeout: Optional[float] = None,
-        max_retries: Optional[int] = None,
-        http_client_kwargs: Optional[Dict[str, Any]] = None,
+        streaming_callback: Callable[[StreamingChunk], None] | None = None,
+        api_base_url: str | None = None,
+        organization: str | None = None,
+        system_prompt: str | None = None,
+        generation_kwargs: dict[str, Any] | None = None,
+        timeout: float | None = None,
+        max_retries: int | None = None,
+        http_client_kwargs: dict[str, Any] | None = None,
     ):
         """
         Creates an instance of OpenAIGenerator. Unless specified otherwise in `model`, uses OpenAI's gpt-4o-mini
@@ -132,13 +133,13 @@ class OpenAIGenerator:
             http_client=init_http_client(self.http_client_kwargs, async_client=False),
         )
 
-    def _get_telemetry_data(self) -> Dict[str, Any]:
+    def _get_telemetry_data(self) -> dict[str, Any]:
         """
         Data that is sent to Posthog for usage analytics.
         """
         return {"model": self.model}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize this component to a dictionary.
 
@@ -159,7 +160,7 @@ class OpenAIGenerator:
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "OpenAIGenerator":
+    def from_dict(cls, data: dict[str, Any]) -> "OpenAIGenerator":
         """
         Deserialize this component from a dictionary.
 
@@ -175,14 +176,14 @@ class OpenAIGenerator:
             data["init_parameters"]["streaming_callback"] = deserialize_callable(serialized_callback_handler)
         return default_from_dict(cls, data)
 
-    @_component_instance.output_types(replies=List[str], meta=List[Dict[str, Any]])
+    @_component_instance.output_types(replies=list[str], meta=list[dict[str, Any]])
     def run(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
-        streaming_callback: Optional[Callable[[StreamingChunk], None]] = None,
-        generation_kwargs: Optional[Dict[str, Any]] = None,
-    ):
+        system_prompt: str | None = None,
+        streaming_callback: Callable[[StreamingChunk], None] | None = None,
+        generation_kwargs: dict[str, Any] | None = None,
+    ) -> dict[str, list[str] | list[dict[str, Any]]]:
         """
         Invoke the text generation inference based on the provided messages and generation parameters.
 
@@ -218,20 +219,20 @@ class OpenAIGenerator:
         # adapt ChatMessage(s) to the format expected by the OpenAI API
         openai_formatted_messages = [message.to_openai_dict_format() for message in messages]
 
-        completion: Union[Stream[ChatCompletionChunk], ChatCompletion] = self.client.chat.completions.create(
+        completion: Stream[ChatCompletionChunk] | ChatCompletion = self.client.chat.completions.create(
             model=self.model,
             messages=openai_formatted_messages,  # type: ignore
             stream=streaming_callback is not None,
             **generation_kwargs,
         )
 
-        completions: List[ChatMessage] = []
+        completions: list[ChatMessage] = []
         if streaming_callback is not None:
             num_responses = generation_kwargs.pop("n", 1)
             if num_responses > 1:
                 raise ValueError("Cannot stream multiple responses, please set n=1.")
-            chunks: List[StreamingChunk] = []
-            last_chunk: Optional[ChatCompletionChunk] = None
+            chunks: list[StreamingChunk] = []
+            last_chunk: ChatCompletionChunk | None = None
 
             for chunk in completion:
                 if isinstance(chunk, ChatCompletionChunk):
@@ -254,7 +255,7 @@ class OpenAIGenerator:
 
         return {"replies": [message.text for message in completions], "meta": [message.meta for message in completions]}
 
-    def _serialize_usage(self, usage):
+    def _serialize_usage(self, usage: Any) -> Any:
         """Convert OpenAI usage object to serializable dict recursively"""
         if hasattr(usage, "model_dump"):
             return usage.model_dump()
@@ -268,7 +269,7 @@ class OpenAIGenerator:
             return usage
 
     def _create_message_from_chunks(
-        self, completion_chunk: ChatCompletionChunk, streamed_chunks: List[StreamingChunk]
+        self, completion_chunk: ChatCompletionChunk, streamed_chunks: list[StreamingChunk]
     ) -> ChatMessage:
         """
         Creates a single ChatMessage from the streamed chunks. Some data is retrieved from the completion chunk.

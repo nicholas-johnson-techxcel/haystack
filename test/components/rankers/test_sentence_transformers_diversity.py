@@ -1,7 +1,7 @@
-# SPDX-FileCopyrightText: 2022-present deepset GmbH <info@deepset.ai>
 #
 # SPDX-License-Identifier: Apache-2.0
 from unittest.mock import MagicMock, call, patch
+from typing import Any
 
 import pytest
 import torch
@@ -16,7 +16,7 @@ from haystack.utils import ComponentDevice
 from haystack.utils.auth import Secret
 
 
-def mock_encode_response(texts, **kwargs):
+def mock_encode_response(texts: list[str], **kwargs: Any) -> torch.Tensor:
     if texts == ["city"]:
         return torch.tensor([[1.0, 1.0]])
     elif texts == ["Eiffel Tower", "Berlin", "Bananas"]:
@@ -91,7 +91,7 @@ class TestSentenceTransformersDiversityRanker:
         assert data["init_parameters"]["strategy"] == "greedy_diversity_order"
 
     def test_from_dict(self):
-        data = {
+        data: dict[str, Any] = {
             "type": "haystack.components.rankers.sentence_transformers_diversity.SentenceTransformersDiversityRanker",
             "init_parameters": {
                 "model": "sentence-transformers/all-MiniLM-L6-v2",
@@ -122,7 +122,7 @@ class TestSentenceTransformersDiversityRanker:
         assert ranker.embedding_separator == "\n"
 
     def test_from_dict_none_device(self):
-        data = {
+        data: dict[str, Any] = {
             "type": "haystack.components.rankers.sentence_transformers_diversity.SentenceTransformersDiversityRanker",
             "init_parameters": {
                 "model": "sentence-transformers/all-MiniLM-L6-v2",
@@ -153,7 +153,7 @@ class TestSentenceTransformersDiversityRanker:
         assert ranker.embedding_separator == "\n"
 
     def test_from_dict_no_default_parameters(self):
-        data = {
+        data: dict[str, Any] = {
             "type": "haystack.components.rankers.sentence_transformers_diversity.SentenceTransformersDiversityRanker",
             "init_parameters": {},
         }
@@ -205,7 +205,7 @@ class TestSentenceTransformersDiversityRanker:
         assert data["init_parameters"]["strategy"] == "greedy_diversity_order"
 
     def test_from_dict_with_custom_init_parameters(self):
-        data = {
+        data: dict[str, Any] = {
             "type": "haystack.components.rankers.sentence_transformers_diversity.SentenceTransformersDiversityRanker",
             "init_parameters": {
                 "model": "sentence-transformers/msmarco-distilbert-base-v4",
@@ -254,7 +254,7 @@ class TestSentenceTransformersDiversityRanker:
             )
 
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_run_without_warm_up(self, similarity):
+    def test_run_without_warm_up(self, similarity: str) -> None:
         """
         Tests that run method raises ComponentError if model is not warmed up
         """
@@ -268,7 +268,7 @@ class TestSentenceTransformersDiversityRanker:
             ranker.run(query="test query", documents=documents)
 
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_warm_up(self, similarity, monkeypatch):
+    def test_warm_up(self, similarity: str, monkeypatch: pytest.MonkeyPatch) -> None:
         """
         Test that ranker loads the SentenceTransformer model correctly during warm up.
         """
@@ -299,7 +299,7 @@ class TestSentenceTransformersDiversityRanker:
             assert ranker.model == mock_model_instance
 
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_run_empty_query(self, similarity):
+    def test_run_empty_query(self, similarity: str) -> None:
         """
         Test that ranker can be run with an empty query.
         """
@@ -318,7 +318,7 @@ class TestSentenceTransformersDiversityRanker:
         assert all(isinstance(doc, Document) for doc in ranked_docs)
 
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_run_top_k(self, similarity):
+    def test_run_top_k(self, similarity: str) -> None:
         """
         Test that run method returns the correct number of documents for different top_k values passed at
         initialization and runtime.
@@ -352,7 +352,7 @@ class TestSentenceTransformersDiversityRanker:
         assert all(isinstance(doc, Document) for doc in ranked_docs)
 
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_run_negative_top_k_at_init(self, similarity):
+    def test_run_negative_top_k_at_init(self, similarity: str) -> None:
         """
         Tests that run method raises an error for negative top-k set at init.
         """
@@ -362,7 +362,7 @@ class TestSentenceTransformersDiversityRanker:
             )
 
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_run_top_k_is_none_at_init(self, similarity):
+    def test_run_top_k_is_none_at_init(self, similarity: str) -> None:
         """
         Tests that run method raises an error for top-k set to None at init.
         """
@@ -372,7 +372,7 @@ class TestSentenceTransformersDiversityRanker:
             )
 
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_run_negative_top_k(self, similarity):
+    def test_run_negative_top_k(self, similarity: str) -> None:
         """
         Tests that run method raises an error for negative top-k set at runtime.
         """
@@ -387,7 +387,7 @@ class TestSentenceTransformersDiversityRanker:
             ranker.run(query=query, documents=documents, top_k=-5)
 
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_run_top_k_is_none(self, similarity):
+    def test_run_top_k_is_none(self, similarity: str) -> None:
         """
         Tests that run method returns the correct order of documents for top-k set to None.
         """
@@ -404,7 +404,7 @@ class TestSentenceTransformersDiversityRanker:
         assert len(result["documents"]) == 2
 
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_run_no_documents_provided(self, similarity):
+    def test_run_no_documents_provided(self, similarity: str) -> None:
         """
         Test that run method returns an empty list if no documents are supplied.
         """
@@ -419,7 +419,7 @@ class TestSentenceTransformersDiversityRanker:
         assert len(results["documents"]) == 0
 
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_run_with_less_documents_than_top_k(self, similarity):
+    def test_run_with_less_documents_than_top_k(self, similarity: str) -> None:
         """
         Tests that run method returns the correct number of documents for top_k values greater than number of documents.
         """
@@ -435,7 +435,7 @@ class TestSentenceTransformersDiversityRanker:
         assert len(result["documents"]) == 3
 
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_run_single_document_corner_case(self, similarity):
+    def test_run_single_document_corner_case(self, similarity: str) -> None:
         """
         Tests that run method returns the correct number of documents for a single document
         """
@@ -451,7 +451,7 @@ class TestSentenceTransformersDiversityRanker:
         assert len(result["documents"]) == 1
 
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_prepare_texts_to_embed(self, similarity):
+    def test_prepare_texts_to_embed(self, similarity: str) -> None:
         """
         Test creation of texts to embed from documents with meta fields, document prefix and suffix.
         """
@@ -475,7 +475,7 @@ class TestSentenceTransformersDiversityRanker:
         ]
 
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_encode_text(self, similarity):
+    def test_encode_text(self, similarity: str) -> None:
         """
         Test addition of suffix and prefix to the query and documents when creating embeddings.
         """
@@ -513,7 +513,7 @@ class TestSentenceTransformersDiversityRanker:
         )
 
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_run_greedy_diversity_order(self, similarity):
+    def test_run_greedy_diversity_order(self, similarity: str) -> None:
         """
         Tests that the given list of documents is ordered to maximize diversity.
         """
@@ -526,12 +526,12 @@ class TestSentenceTransformersDiversityRanker:
         ranker.model.encode = MagicMock(side_effect=mock_encode_response)
 
         ranked_docs = ranker._greedy_diversity_order(query=query, documents=documents)
-        ranked_text = " ".join([doc.content for doc in ranked_docs])
+        ranked_text = " ".join([doc.content or "" for doc in ranked_docs])
 
         assert ranked_text == "Berlin Eiffel Tower Bananas"
 
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_run_maximum_margin_relevance(self, similarity):
+    def test_run_maximum_margin_relevance(self, similarity: str) -> None:
         ranker = SentenceTransformersDiversityRanker(
             model="sentence-transformers/all-MiniLM-L6-v2", similarity=similarity
         )
@@ -544,12 +544,12 @@ class TestSentenceTransformersDiversityRanker:
         ranker.model.encode = MagicMock(side_effect=mock_encode_response)
 
         ranked_docs = ranker._maximum_margin_relevance(query=query, documents=documents, lambda_threshold=0, top_k=3)
-        ranked_text = " ".join([doc.content for doc in ranked_docs])
+        ranked_text = " ".join([doc.content or "" for doc in ranked_docs])
 
         assert ranked_text == "Berlin Eiffel Tower Bananas"
 
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_run_maximum_margin_relevance_with_given_lambda_threshold(self, similarity):
+    def test_run_maximum_margin_relevance_with_given_lambda_threshold(self, similarity: str) -> None:
         ranker = SentenceTransformersDiversityRanker(
             model="sentence-transformers/all-MiniLM-L6-v2", similarity=similarity
         )
@@ -562,11 +562,11 @@ class TestSentenceTransformersDiversityRanker:
         ranker.model.encode = MagicMock(side_effect=mock_encode_response)
 
         ranked_docs = ranker._maximum_margin_relevance(query=query, documents=documents, lambda_threshold=1, top_k=3)
-        ranked_text = " ".join([doc.content for doc in ranked_docs])
+        ranked_text = " ".join([doc.content or "" for doc in ranked_docs])
 
         assert ranked_text == "Berlin Eiffel Tower Bananas"
 
-    def test_pipeline_serialise_deserialise(self):
+    def test_pipeline_serialise_deserialise(self) -> None:
         ranker = SentenceTransformersDiversityRanker(
             model="sentence-transformers/all-MiniLM-L6-v2", similarity="cosine", top_k=5
         )
@@ -579,7 +579,7 @@ class TestSentenceTransformersDiversityRanker:
     @pytest.mark.integration
     @pytest.mark.slow
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_run_real_world_use_case(self, similarity, monkeypatch):
+    def test_run_real_world_use_case(self, similarity: str, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("HF_API_TOKEN", raising=False)  # https://github.com/deepset-ai/haystack/issues/8811
         ranker = SentenceTransformersDiversityRanker(
             model="sentence-transformers/all-MiniLM-L6-v2", similarity=similarity
@@ -653,7 +653,7 @@ class TestSentenceTransformersDiversityRanker:
     @pytest.mark.integration
     @pytest.mark.slow
     @pytest.mark.parametrize("similarity", ["dot_product", "cosine"])
-    def test_run_with_maximum_margin_relevance_strategy(self, similarity, monkeypatch):
+    def test_run_with_maximum_margin_relevance_strategy(self, similarity: str, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("HF_API_TOKEN", raising=False)  # https://github.com/deepset-ai/haystack/issues/8811
         query = "renewable energy sources"
         docs = [
@@ -701,7 +701,7 @@ class TestSentenceTransformersDiversityRanker:
         assert [doc.content for doc in results["documents"]] == expected
 
     @patch("haystack.components.rankers.sentence_transformers_diversity.SentenceTransformer")
-    def test_model_onnx_backend(self, mocked_sentence_transformer):
+    def test_model_onnx_backend(self, mocked_sentence_transformer: Any) -> None:
         ranker = SentenceTransformersDiversityRanker(
             model="sentence-transformers/all-MiniLM-L6-v2",
             token=None,
@@ -722,7 +722,7 @@ class TestSentenceTransformersDiversityRanker:
         )
 
     @patch("haystack.components.rankers.sentence_transformers_diversity.SentenceTransformer")
-    def test_model_openvino_backend(self, mocked_sentence_transformer):
+    def test_model_openvino_backend(self, mocked_sentence_transformer: Any) -> None:
         ranker = SentenceTransformersDiversityRanker(
             model="sentence-transformers/all-MiniLM-L6-v2",
             token=None,
@@ -744,7 +744,7 @@ class TestSentenceTransformersDiversityRanker:
 
     @patch("haystack.components.rankers.sentence_transformers_diversity.SentenceTransformer")
     @pytest.mark.parametrize("model_kwargs", [{"torch_dtype": "float16"}, {"torch_dtype": "bfloat16"}])
-    def test_dtype_on_gpu(self, mocked_sentence_transformer, model_kwargs):
+    def test_dtype_on_gpu(self, mocked_sentence_transformer: Any, model_kwargs: dict[str, Any]) -> None:
         ranker = SentenceTransformersDiversityRanker(
             model="sentence-transformers/all-MiniLM-L6-v2",
             token=None,

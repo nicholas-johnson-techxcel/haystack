@@ -13,7 +13,7 @@ _component_instance = component()
 class Repeat:
     def __init__(self, outputs: List[str]):
         self._outputs = outputs
-        component.set_output_types(self, **dict.fromkeys(outputs, int))
+        _component_instance.set_output_types(self, **dict.fromkeys(outputs, int))
 
     def run(self, value: int):
         """

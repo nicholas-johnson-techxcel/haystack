@@ -4,13 +4,13 @@
 
 import ast
 import contextlib
-from typing import Any, Callable, Dict, Optional, Set
+from collections.abc import Callable
+from typing import Any, TypeAlias
 
 import jinja2.runtime
 from jinja2 import Environment, TemplateSyntaxError, meta
 from jinja2.nativetypes import NativeEnvironment
 from jinja2.sandbox import SandboxedEnvironment
-from typing_extensions import TypeAlias
 
 from haystack import component, default_from_dict, default_to_dict, logging
 from haystack.utils import deserialize_callable, deserialize_type, serialize_callable, serialize_type
@@ -47,7 +47,7 @@ class OutputAdapter:
         self,
         template: str,
         output_type: TypeAlias,
-        custom_filters: Optional[Dict[str, Callable]] = None,
+        custom_filters: dict[str, Callable[[Any], Any]] | None = None,
         unsafe: bool = False,
     ):
         """
@@ -71,7 +71,7 @@ class OutputAdapter:
             This should only be used if you trust the source of the template as it can be lead to remote code execution.
         """
         self.custom_filters = {**(custom_filters or {})}
-        input_types: Set[str] = set()
+        input_types: set[str] = set()
 
         self._unsafe = unsafe
 
@@ -99,11 +99,11 @@ class OutputAdapter:
         input_types.update(route_input_names)
 
         # the env is not needed, discarded automatically
-        component.set_input_types(self, **dict.fromkeys(input_types, Any))
-        component.set_output_types(self, **{"output": output_type})
+        _component_instance.set_input_types(self, **dict.fromkeys(input_types, Any))
+        _component_instance.set_output_types(self, **{"output": output_type})
         self.output_type = output_type
 
-    def run(self, **kwargs):
+    def run(self, **kwargs: Any) -> dict[str, Any]:
         """
         Renders the Jinja template with the provided inputs.
 
@@ -140,7 +140,7 @@ class OutputAdapter:
             raise OutputAdaptationException(f"Error adapting {self.template} with {kwargs}: {e}") from e
         return adapted_outputs
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serializes the component to a dictionary.
 
@@ -157,7 +157,7 @@ class OutputAdapter:
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "OutputAdapter":
+    def from_dict(cls, data: dict[str, Any]) -> "OutputAdapter":
         """
         Deserializes the component from a dictionary.
 
@@ -177,7 +177,7 @@ class OutputAdapter:
             }
         return default_from_dict(cls, data)
 
-    def _extract_variables(self, env: Environment) -> Set[str]:
+    def _extract_variables(self, env: Environment) -> set[str]:
         """
         Extracts all variables from a list of Jinja template strings.
 

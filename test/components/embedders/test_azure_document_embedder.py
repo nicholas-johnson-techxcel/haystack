@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 import os
+from typing import Any
 
 from openai import APIError
 
@@ -15,7 +16,7 @@ from unittest.mock import Mock, patch
 
 
 class TestAzureOpenAIDocumentEmbedder:
-    def test_init_default(self, monkeypatch):
+    def test_init_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "fake-api-key")
         embedder = AzureOpenAIDocumentEmbedder(azure_endpoint="https://example-resource.azure.openai.com/")
         assert embedder.azure_deployment == "text-embedding-ada-002"
@@ -32,7 +33,7 @@ class TestAzureOpenAIDocumentEmbedder:
         assert embedder.azure_ad_token_provider is None
         assert embedder.http_client_kwargs is None
 
-    def test_init_with_0_max_retries(self, monkeypatch):
+    def test_init_with_0_max_retries(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Tests that the max_retries init param is set correctly if equal 0"""
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "fake-api-key")
         embedder = AzureOpenAIDocumentEmbedder(
@@ -52,7 +53,7 @@ class TestAzureOpenAIDocumentEmbedder:
         assert embedder.azure_ad_token_provider is None
         assert embedder.max_retries == 0
 
-    def test_to_dict(self, monkeypatch):
+    def test_to_dict(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "fake-api-key")
         component = AzureOpenAIDocumentEmbedder(azure_endpoint="https://example-resource.azure.openai.com/")
         data = component.to_dict()
@@ -80,7 +81,7 @@ class TestAzureOpenAIDocumentEmbedder:
             },
         }
 
-    def test_to_dict_with_parameters(self, monkeypatch):
+    def test_to_dict_with_parameters(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "fake-api-key")
         component = AzureOpenAIDocumentEmbedder(
             azure_endpoint="https://example-resource.azure.openai.com/",
@@ -95,7 +96,7 @@ class TestAzureOpenAIDocumentEmbedder:
             azure_ad_token_provider=default_azure_ad_token_provider,
             http_client_kwargs={"proxy": "http://example.com:3128", "verify": False},
         )
-        data = component.to_dict()
+        data: dict[str, Any] = component.to_dict()
         assert data == {
             "type": "haystack.components.embedders.azure_document_embedder.AzureOpenAIDocumentEmbedder",
             "init_parameters": {
@@ -120,9 +121,9 @@ class TestAzureOpenAIDocumentEmbedder:
             },
         }
 
-    def test_from_dict(self, monkeypatch):
+    def test_from_dict(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "fake-api-key")
-        data = {
+        data: dict[str, Any] = {
             "type": "haystack.components.embedders.azure_document_embedder.AzureOpenAIDocumentEmbedder",
             "init_parameters": {
                 "api_key": {"env_vars": ["AZURE_OPENAI_API_KEY"], "strict": False, "type": "env_var"},
@@ -157,9 +158,9 @@ class TestAzureOpenAIDocumentEmbedder:
         assert component.azure_ad_token_provider is None
         assert component.http_client_kwargs is None
 
-    def test_from_dict_with_parameters(self, monkeypatch):
+    def test_from_dict_with_parameters(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("AZURE_OPENAI_API_KEY", "fake-api-key")
-        data = {
+        data: dict[str, Any] = {
             "type": "haystack.components.embedders.azure_document_embedder.AzureOpenAIDocumentEmbedder",
             "init_parameters": {
                 "api_key": {"env_vars": ["AZURE_OPENAI_API_KEY"], "strict": False, "type": "env_var"},
@@ -194,7 +195,7 @@ class TestAzureOpenAIDocumentEmbedder:
         assert component.azure_ad_token_provider is not None
         assert component.http_client_kwargs == {"proxy": "http://example.com:3128", "verify": False}
 
-    def test_embed_batch_handles_exceptions_gracefully(self, caplog):
+    def test_embed_batch_handles_exceptions_gracefully(self, caplog: pytest.LogCaptureFixture) -> None:
         embedder = AzureOpenAIDocumentEmbedder(
             azure_endpoint="https://test.openai.azure.com",
             api_key=Secret.from_token("fake-api-key"),
@@ -223,7 +224,7 @@ class TestAzureOpenAIDocumentEmbedder:
             "the Azure OpenAI endpoint URL to run this test."
         ),
     )
-    def test_run(self):
+    def test_run(self) -> None:
         docs = [
             Document(content="I love cheese", meta={"topic": "Cuisine"}),
             Document(content="A transformer is a deep learning architecture", meta={"topic": "ML"}),

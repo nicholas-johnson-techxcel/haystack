@@ -34,7 +34,7 @@ class TestPipelineTemplate:
 
         assert PipelineTemplate("{{ valid_template }}").template_content == "{{ valid_template }}"
 
-    def test_from_file(self, random_valid_template):
+    def test_from_file(self, random_valid_template: str):
         with pytest.raises(FileNotFoundError):
             PipelineTemplate.from_file("invalid/path")
 
@@ -48,7 +48,7 @@ class TestPipelineTemplate:
         assert len(tpl.template_content)
 
     #  Building a pipeline directly using all default components specified in a predefined or custom template.
-    def test_build_pipeline_with_default_components(self, monkeypatch):
+    def test_build_pipeline_with_default_components(self, monkeypatch: pytest.MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "fake_key")
         rendered = PipelineTemplate.from_predefined(PredefinedPipeline.INDEXING).render()
         pipeline = Pipeline.loads(rendered)

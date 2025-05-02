@@ -3,11 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from openai.lib.azure import AsyncAzureOpenAI, AzureADTokenProvider, AzureOpenAI
 
-from haystack import component, default_from_dict, default_to_dict, logging
+from haystack import default_from_dict, default_to_dict, logging
 from haystack.components.embedders import OpenAIDocumentEmbedder
 from haystack.utils import Secret, deserialize_callable, deserialize_secrets_inplace, serialize_callable
 from haystack.utils.http_client import init_http_client
@@ -15,10 +15,6 @@ from haystack.utils.http_client import init_http_client
 logger = logging.getLogger(__name__)
 
 
-_component_instance = component()
-
-
-@_component_instance
 class AzureOpenAIDocumentEmbedder(OpenAIDocumentEmbedder):
     """
     Calculates document embeddings using OpenAI models deployed on Azure.
@@ -43,25 +39,25 @@ class AzureOpenAIDocumentEmbedder(OpenAIDocumentEmbedder):
     # pylint: disable=super-init-not-called
     def __init__(  # noqa: PLR0913 (too-many-arguments) # pylint: disable=too-many-positional-arguments
         self,
-        azure_endpoint: Optional[str] = None,
-        api_version: Optional[str] = "2023-05-15",
+        azure_endpoint: str | None = None,
+        api_version: str | None = "2023-05-15",
         azure_deployment: str = "text-embedding-ada-002",
-        dimensions: Optional[int] = None,
-        api_key: Optional[Secret] = Secret.from_env_var("AZURE_OPENAI_API_KEY", strict=False),
-        azure_ad_token: Optional[Secret] = Secret.from_env_var("AZURE_OPENAI_AD_TOKEN", strict=False),
-        organization: Optional[str] = None,
+        dimensions: int | None = None,
+        api_key: Secret | None = Secret.from_env_var("AZURE_OPENAI_API_KEY", strict=False),
+        azure_ad_token: Secret | None = Secret.from_env_var("AZURE_OPENAI_AD_TOKEN", strict=False),
+        organization: str | None = None,
         prefix: str = "",
         suffix: str = "",
         batch_size: int = 32,
         progress_bar: bool = True,
-        meta_fields_to_embed: Optional[List[str]] = None,
+        meta_fields_to_embed: list[str] | None = None,
         embedding_separator: str = "\n",
-        timeout: Optional[float] = None,
-        max_retries: Optional[int] = None,
+        timeout: float | None = None,
+        max_retries: int | None = None,
         *,
-        default_headers: Optional[Dict[str, str]] = None,
-        azure_ad_token_provider: Optional[AzureADTokenProvider] = None,
-        http_client_kwargs: Optional[Dict[str, Any]] = None,
+        default_headers: dict[str, str] | None = None,
+        azure_ad_token_provider: AzureADTokenProvider | None = None,
+        http_client_kwargs: dict[str, Any] | None = None,
     ):
         """
         Creates an AzureOpenAIDocumentEmbedder component.
@@ -144,7 +140,7 @@ class AzureOpenAIDocumentEmbedder(OpenAIDocumentEmbedder):
         self.azure_ad_token_provider = azure_ad_token_provider
         self.http_client_kwargs = http_client_kwargs
 
-        client_args: Dict[str, Any] = {
+        client_args: dict[str, Any] = {
             "api_version": api_version,
             "azure_endpoint": azure_endpoint,
             "azure_deployment": azure_deployment,
@@ -158,13 +154,17 @@ class AzureOpenAIDocumentEmbedder(OpenAIDocumentEmbedder):
         }
 
         self.client = AzureOpenAI(
-            http_client=init_http_client(self.http_client_kwargs, async_client=False), **client_args
+            azure_endpoint=self.azure_endpoint,
+            http_client=init_http_client(self.http_client_kwargs, async_client=False),
+            **client_args,
         )
         self.async_client = AsyncAzureOpenAI(
-            http_client=init_http_client(self.http_client_kwargs, async_client=True), **client_args
+            azure_endpoint=self.azure_endpoint,
+            http_client=init_http_client(self.http_client_kwargs, async_client=True),
+            **client_args,
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serializes the component to a dictionary.
 
@@ -197,7 +197,7 @@ class AzureOpenAIDocumentEmbedder(OpenAIDocumentEmbedder):
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AzureOpenAIDocumentEmbedder":
+    def from_dict(cls, data: dict[str, Any]) -> "AzureOpenAIDocumentEmbedder":
         """
         Deserializes the component from a dictionary.
 

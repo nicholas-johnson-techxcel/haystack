@@ -2,14 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Dict, List, Protocol, TypeVar
+from typing import Any, Protocol
 
 from haystack.dataclasses import ChatMessage
 
 # Ellipsis are needed to define the Protocol but pylint complains. See https://github.com/pylint-dev/pylint/issues/9319.
 # pylint: disable=unnecessary-ellipsis
-
-T = TypeVar("T", bound="ChatGenerator")
 
 
 class ChatGenerator(Protocol):
@@ -21,7 +19,7 @@ class ChatGenerator(Protocol):
     responses using a Language Model. They return a dictionary.
     """
 
-    def run(self, messages: List[ChatMessage]) -> Dict[str, Any]:
+    def run(self, messages: list[ChatMessage]) -> dict[str, Any]:
         """
         Generate messages using the underlying Language Model.
 
@@ -32,5 +30,11 @@ class ChatGenerator(Protocol):
             A list of ChatMessage instances representing the input messages.
         :returns:
             A dictionary.
+        """
+        ...
+
+    def warm_up(self) -> None:
+        """
+        Warm up the generator.
         """
         ...

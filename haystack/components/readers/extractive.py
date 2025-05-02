@@ -4,7 +4,7 @@
 
 import math
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 from haystack import Document, ExtractedAnswer, component, default_from_dict, default_to_dict, logging
 from haystack.lazy_imports import LazyImport
@@ -55,19 +55,19 @@ class ExtractiveReader:
 
     def __init__(  # pylint: disable=too-many-positional-arguments
         self,
-        model: Union[Path, str] = "deepset/roberta-base-squad2-distilled",
-        device: Optional[ComponentDevice] = None,
-        token: Optional[Secret] = Secret.from_env_var(["HF_API_TOKEN", "HF_TOKEN"], strict=False),
+        model: Path | str = "deepset/roberta-base-squad2-distilled",
+        device: ComponentDevice | None = None,
+        token: Secret | None = Secret.from_env_var(["HF_API_TOKEN", "HF_TOKEN"], strict=False),
         top_k: int = 20,
-        score_threshold: Optional[float] = None,
+        score_threshold: float | None = None,
         max_seq_length: int = 384,
         stride: int = 128,
-        max_batch_size: Optional[int] = None,
-        answers_per_seq: Optional[int] = None,
+        max_batch_size: int | None = None,
+        answers_per_seq: int | None = None,
         no_answer: bool = True,
         calibration_factor: float = 0.1,
-        overlap_threshold: Optional[float] = 0.01,
-        model_kwargs: Optional[Dict[str, Any]] = None,
+        overlap_threshold: float | None = 0.01,
+        model_kwargs: dict[str, Any] | None = None,
     ) -> None:
         """
         Creates an instance of ExtractiveReader.
@@ -129,13 +129,13 @@ class ExtractiveReader:
         model_kwargs = resolve_hf_device_map(device=device, model_kwargs=model_kwargs)
         self.model_kwargs = model_kwargs
 
-    def _get_telemetry_data(self) -> Dict[str, Any]:
+    def _get_telemetry_data(self) -> dict[str, Any]:
         """
         Data that is sent to Posthog for usage analytics.
         """
         return {"model": self.model_name_or_path}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serializes the component to a dictionary.
 
@@ -162,7 +162,7 @@ class ExtractiveReader:
         return serialization_dict
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ExtractiveReader":
+    def from_dict(cls, data: dict[str, Any]) -> "ExtractiveReader":
         """
         Deserializes the component from a dictionary.
 
@@ -196,8 +196,8 @@ class ExtractiveReader:
 
     @staticmethod
     def _flatten_documents(
-        queries: List[str], documents: List[List[Document]]
-    ) -> Tuple[List[str], List[Document], List[int]]:
+        queries: list[str], documents: list[list[Document]]
+    ) -> tuple[list[str], list[Document], list[int]]:
         """
         Flattens queries and Documents so all query-document pairs are arranged along one batch axis.
         """
@@ -207,8 +207,8 @@ class ExtractiveReader:
         return flattened_queries, flattened_documents, query_ids
 
     def _preprocess(  # pylint: disable=too-many-positional-arguments
-        self, *, queries: List[str], documents: List[Document], max_seq_length: int, query_ids: List[int], stride: int
-    ) -> Tuple["torch.Tensor", "torch.Tensor", "torch.Tensor", List["Encoding"], List[int], List[int]]:
+        self, *, queries: list[str], documents: list[Document], max_seq_length: int, query_ids: list[int], stride: int
+    ) -> tuple["torch.Tensor", "torch.Tensor", "torch.Tensor", list["Encoding"], list[int], list[int]]:
         """
         Splits and tokenizes Documents and preserves structures by returning mappings to query and Document IDs.
         """
@@ -266,8 +266,8 @@ class ExtractiveReader:
         sequence_ids: "torch.Tensor",
         attention_mask: "torch.Tensor",
         answers_per_seq: int,
-        encodings: List["Encoding"],
-    ) -> Tuple[List[List[int]], List[List[int]], "torch.Tensor"]:
+        encodings: list["Encoding"],
+    ) -> tuple[list[list[int]], list[list[int]], "torch.Tensor"]:
         """
         Turns start and end logits into probabilities for each answer span.
 
@@ -349,19 +349,19 @@ class ExtractiveReader:
     def _nest_answers(
         self,
         *,
-        start: List[List[int]],
-        end: List[List[int]],
+        start: list[list[int]],
+        end: list[list[int]],
         probabilities: "torch.Tensor",
-        flattened_documents: List[Document],
-        queries: List[str],
+        flattened_documents: list[Document],
+        queries: list[str],
         answers_per_seq: int,
-        top_k: Optional[int],
-        score_threshold: Optional[float],
-        query_ids: List[int],
-        document_ids: List[int],
+        top_k: int | None,
+        score_threshold: float | None,
+        query_ids: list[int],
+        document_ids: list[int],
         no_answer: bool,
-        overlap_threshold: Optional[float],
-    ) -> List[List[ExtractedAnswer]]:
+        overlap_threshold: float | None,
+    ) -> list[list[ExtractedAnswer]]:
         """
         Reconstructs the nested structure that existed before flattening.
 
@@ -433,7 +433,7 @@ class ExtractiveReader:
         return 0
 
     def _should_keep(
-        self, candidate_answer: ExtractedAnswer, current_answers: List[ExtractedAnswer], overlap_threshold: float
+        self, candidate_answer: ExtractedAnswer, current_answers: list[ExtractedAnswer], overlap_threshold: float
     ) -> bool:
         """
         Determines if the answer should be kept based on how much it overlaps with previous answers.
@@ -495,8 +495,8 @@ class ExtractiveReader:
         return keep
 
     def deduplicate_by_overlap(
-        self, answers: List[ExtractedAnswer], overlap_threshold: Optional[float]
-    ) -> List[ExtractedAnswer]:
+        self, answers: list[ExtractedAnswer], overlap_threshold: float | None
+    ) -> list[ExtractedAnswer]:
         """
         De-duplicates overlapping Extractive Answers.
 
@@ -531,20 +531,20 @@ class ExtractiveReader:
 
         return deduplicated_answers
 
-    @_component_instance.output_types(answers=List[ExtractedAnswer])
+    @_component_instance.output_types(answers=list[ExtractedAnswer])
     def run(  # pylint: disable=too-many-positional-arguments
         self,
         query: str,
-        documents: List[Document],
-        top_k: Optional[int] = None,
-        score_threshold: Optional[float] = None,
-        max_seq_length: Optional[int] = None,
-        stride: Optional[int] = None,
-        max_batch_size: Optional[int] = None,
-        answers_per_seq: Optional[int] = None,
-        no_answer: Optional[bool] = None,
-        overlap_threshold: Optional[float] = None,
-    ):
+        documents: list[Document],
+        top_k: int | None = None,
+        score_threshold: float | None = None,
+        max_seq_length: int | None = None,
+        stride: int | None = None,
+        max_batch_size: int | None = None,
+        answers_per_seq: int | None = None,
+        no_answer: bool | None = None,
+        overlap_threshold: float | None = None,
+    ) -> dict[str, list[ExtractedAnswer]]:
         """
         Locates and extracts answers from the given Documents using the given query.
 
