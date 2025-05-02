@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List
+from typing import List, Any
 import json
 
 import pytest
@@ -165,10 +165,10 @@ class TestOutputAdapter:
         _component_instance = component()
 
 
-@_component_instance
+        @_component_instance
         class DocumentProducer:
             @_component_instance.output_types(documents=dict)
-            def run(self):
+            def run(self) -> dict[str, Any]:
                 return {"documents": [{"content": '{"framework": "Haystack"}'}]}
 
         pipe = Pipeline()

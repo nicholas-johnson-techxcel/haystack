@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import datetime
 import logging
+from typing import Any, Type
 from unittest.mock import Mock, patch
 
 import pytest
@@ -15,20 +16,19 @@ from haystack.utils.auth import Secret, TokenSecret
 
 @pytest.mark.parametrize("pipeline_class", [Pipeline, AsyncPipeline])
 @patch("haystack.telemetry._telemetry.telemetry")
-def test_pipeline_running(telemetry, pipeline_class):
+def test_pipeline_running(telemetry: Mock, pipeline_class: Type[Pipeline]):
     telemetry.send_event = Mock()
 
     _component_instance = component()
 
-
-@_component_instance
+    @_component_instance
     class Component:
         def _get_telemetry_data(self):
             return {"key": "values"}
 
         @_component_instance.output_types(value=int)
-        def run(self):
-            pass
+        def run(self) -> dict[str, Any]:
+            return {"key": "values"}
 
     pipe = pipeline_class()
     pipe.add_component("component", Component())
@@ -68,13 +68,13 @@ def test_pipeline_running(telemetry, pipeline_class):
 
 
 @patch("haystack.telemetry._telemetry.telemetry")
-def test_pipeline_running_with_non_serializable_component(telemetry):
+def test_pipeline_running_with_non_serializable_component(telemetry: Mock):
     telemetry.send_event = Mock()
 
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class Component:
         def __init__(self, api_key: Secret = TokenSecret("api_key")):
             self.api_key = api_key
@@ -83,8 +83,8 @@ def test_pipeline_running_with_non_serializable_component(telemetry):
             return {"key": "values"}
 
         @_component_instance.output_types(value=int)
-        def run(self):
-            pass
+        def run(self) -> dict[str, Any]:
+            return {"key": "values"}
 
     pipe = Pipeline()
     pipe.add_component("component", Component())
@@ -100,11 +100,11 @@ def test_pipeline_running_with_non_serializable_component(telemetry):
     )
 
 
-def test_pipeline_running_with_non_dict_telemetry_data(caplog):
+def test_pipeline_running_with_non_dict_telemetry_data(caplog: Any):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class Component:
         def __init__(self, api_key: Secret = TokenSecret("api_key")):
             self.api_key = api_key
@@ -114,8 +114,8 @@ def test_pipeline_running_with_non_dict_telemetry_data(caplog):
             return ["values"]
 
         @_component_instance.output_types(value=int)
-        def run(self):
-            pass
+        def run(self) -> dict[str, Any]:
+            return {"key": "values"}
 
     pipe = Pipeline()
     pipe.add_component("my_component", Component())

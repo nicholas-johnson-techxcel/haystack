@@ -4,7 +4,7 @@ from haystack.core.component import component
 from haystack.core.component.component import ComponentError
 
 
-@component
+@component()
 class ValidComponent:
     def run(self, text: str) -> Dict[str, Any]:
         return {"result": text}
@@ -13,7 +13,7 @@ class ValidComponent:
         return {"result": text}
 
 
-@component
+@component()
 class DifferentParamNameComponent:
     def run(self, text: str) -> Dict[str, Any]:
         return {"result": text}
@@ -22,7 +22,7 @@ class DifferentParamNameComponent:
         return {"result": input_text}
 
 
-@component
+@component()
 class DifferentParamTypeComponent:
     def run(self, text: str) -> Dict[str, Any]:
         return {"result": text}
@@ -31,7 +31,7 @@ class DifferentParamTypeComponent:
         return {"result": text[0]}
 
 
-@component
+@component()
 class DifferentDefaultValueComponent:
     def run(self, text: str = "default") -> Dict[str, Any]:
         return {"result": text}
@@ -40,7 +40,7 @@ class DifferentDefaultValueComponent:
         return {"result": text}
 
 
-@component
+@component()
 class DifferentParamKindComponent:
     def run(self, text: str) -> Dict[str, Any]:
         return {"result": text}
@@ -49,7 +49,7 @@ class DifferentParamKindComponent:
         return {"result": text}
 
 
-@component
+@component()
 class DifferentParamCountComponent:
     def run(self, text: str) -> Dict[str, Any]:
         return {"result": text}

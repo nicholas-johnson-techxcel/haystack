@@ -61,11 +61,6 @@ from .template import PipelineTemplate, PredefinedPipeline
 
 DEFAULT_MARSHALLER = YamlMarshaller()
 
-# We use a generic type to annotate the return value of class methods,
-# so that static analyzers won't be confused when derived classes
-# use those methods.
-T = TypeVar("T", bound="PipelineBase")
-
 logger = logging.getLogger(__name__)
 
 
@@ -181,11 +176,11 @@ class PipelineBase:
         }
 
     @classmethod
-    def from_dict(
+    def from_dict[T: PipelineBase](
         cls: Type[T],
         data: Dict[str, Any],
         callbacks: Optional[DeserializationCallbacks] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> T:
         """
         Deserializes the pipeline from a dictionary.
@@ -290,7 +285,7 @@ class PipelineBase:
         fp.write(marshaller.marshal(self.to_dict()))
 
     @classmethod
-    def loads(
+    def loads[T: PipelineBase](
         cls: Type[T],
         data: Union[str, bytes, bytearray],
         marshaller: Marshaller = DEFAULT_MARSHALLER,
@@ -321,7 +316,7 @@ class PipelineBase:
         return cls.from_dict(deserialized_data, callbacks)
 
     @classmethod
-    def load(
+    def load[T: PipelineBase](
         cls: Type[T],
         fp: TextIO,
         marshaller: Marshaller = DEFAULT_MARSHALLER,

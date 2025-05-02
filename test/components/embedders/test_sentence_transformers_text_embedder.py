@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 import random
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -160,7 +161,7 @@ class TestSentenceTransformersTextEmbedder:
         assert component.precision == "float32"
 
     def test_from_dict_no_default_parameters(self):
-        data = {
+        data: dict[str, Any] = {
             "type": "haystack.components.embedders.sentence_transformers_text_embedder.SentenceTransformersTextEmbedder",
             "init_parameters": {},
         }
@@ -210,7 +211,7 @@ class TestSentenceTransformersTextEmbedder:
     @patch(
         "haystack.components.embedders.sentence_transformers_text_embedder._SentenceTransformersEmbeddingBackendFactory"
     )
-    def test_warmup(self, mocked_factory):
+    def test_warmup(self, mocked_factory: MagicMock):
         embedder = SentenceTransformersTextEmbedder(
             model="model",
             token=None,
@@ -235,7 +236,7 @@ class TestSentenceTransformersTextEmbedder:
     @patch(
         "haystack.components.embedders.sentence_transformers_text_embedder._SentenceTransformersEmbeddingBackendFactory"
     )
-    def test_warmup_doesnt_reload(self, mocked_factory):
+    def test_warmup_doesnt_reload(self, mocked_factory: MagicMock):
         embedder = SentenceTransformersTextEmbedder(model="model")
         mocked_factory.get_embedding_backend.assert_not_called()
         embedder.warm_up()
@@ -264,11 +265,11 @@ class TestSentenceTransformersTextEmbedder:
         list_integers_input = [1, 2, 3]
 
         with pytest.raises(TypeError, match="SentenceTransformersTextEmbedder expects a string as input"):
-            embedder.run(text=list_integers_input)
+            embedder.run(text=list_integers_input)  # type: ignore - this is deliberate for the test
 
     @pytest.mark.integration
     @pytest.mark.slow
-    def test_run_trunc(self, monkeypatch):
+    def test_run_trunc(self, monkeypatch: pytest.MonkeyPatch):
         """
         sentence-transformers/paraphrase-albert-small-v2 maps sentences & paragraphs to a 768 dimensional dense vector space
         """
@@ -323,7 +324,7 @@ class TestSentenceTransformersTextEmbedder:
     @patch(
         "haystack.components.embedders.sentence_transformers_text_embedder._SentenceTransformersEmbeddingBackendFactory"
     )
-    def test_model_onnx_backend(self, mocked_factory):
+    def test_model_onnx_backend(self, mocked_factory: MagicMock):
         onnx_embedder = SentenceTransformersTextEmbedder(
             model="sentence-transformers/all-MiniLM-L6-v2",
             token=None,
@@ -350,7 +351,7 @@ class TestSentenceTransformersTextEmbedder:
     @patch(
         "haystack.components.embedders.sentence_transformers_text_embedder._SentenceTransformersEmbeddingBackendFactory"
     )
-    def test_model_openvino_backend(self, mocked_factory):
+    def test_model_openvino_backend(self, mocked_factory: MagicMock):
         openvino_embedder = SentenceTransformersTextEmbedder(
             model="sentence-transformers/all-MiniLM-L6-v2",
             token=None,
@@ -378,7 +379,7 @@ class TestSentenceTransformersTextEmbedder:
         "haystack.components.embedders.sentence_transformers_text_embedder._SentenceTransformersEmbeddingBackendFactory"
     )
     @pytest.mark.parametrize("model_kwargs", [{"torch_dtype": "bfloat16"}, {"torch_dtype": "float16"}])
-    def test_dtype_on_gpu(self, mocked_factory, model_kwargs):
+    def test_dtype_on_gpu(self, mocked_factory: MagicMock, model_kwargs: dict[str, str]):
         torch_dtype_embedder = SentenceTransformersTextEmbedder(
             model="sentence-transformers/all-MiniLM-L6-v2",
             token=None,

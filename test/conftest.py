@@ -4,9 +4,9 @@
 
 from pathlib import Path
 from test.tracing.utils import SpyingTracer
-from typing import Generator, Dict
+from typing import Generator, Any
 from unittest.mock import Mock
-
+from pytest import MonkeyPatch
 import pytest
 import time
 import asyncio
@@ -26,15 +26,15 @@ def waiting_component():
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class Waiter:
         @_component_instance.output_types(waited_for=int)
-        def run(self, wait_for: int) -> Dict[str, int]:
+        def run(self, wait_for: int) -> dict[str, int]:
             time.sleep(wait_for)
             return {"waited_for": wait_for}
 
         @_component_instance.output_types(waited_for=int)
-        async def run_async(self, wait_for: int) -> Dict[str, int]:
+        async def run_async(self, wait_for: int) -> dict[str, int]:
             await asyncio.sleep(wait_for)
             return {"waited_for": wait_for}
 
@@ -58,7 +58,7 @@ def test_files_path():
 
 
 @pytest.fixture(autouse=True)
-def request_blocker(request: pytest.FixtureRequest, monkeypatch):
+def request_blocker(request: pytest.FixtureRequest, monkeypatch: MonkeyPatch):
     """
     This fixture is applied automatically to all tests.
     Those that are not marked as integration will have the requests module
@@ -68,7 +68,7 @@ def request_blocker(request: pytest.FixtureRequest, monkeypatch):
     if marker is not None:
         return
 
-    def urlopen_mock(self, method, url, *args, **kwargs):
+    def urlopen_mock(self, method: str, url: str, *args: Any, **kwargs: Any):
         raise RuntimeError(f"The test was about to {method} {self.scheme}://{self.host}{url}")
 
     monkeypatch.setattr("urllib3.connectionpool.HTTPConnectionPool.urlopen", urlopen_mock)

@@ -9,7 +9,7 @@ from haystack.core.errors import DeserializationError, SerializationError
 from haystack.utils.type_serialization import thread_safe_import
 
 
-def serialize_callable(callable_handle: Callable) -> str:
+def serialize_callable(callable_handle: Callable[..., Any]) -> str:
     """
     Serializes a callable to its full path.
 
@@ -42,7 +42,7 @@ def serialize_callable(callable_handle: Callable) -> str:
     return full_path
 
 
-def deserialize_callable(callable_handle: str) -> Callable:
+def deserialize_callable(callable_handle: str) -> Callable[..., Any]:
     """
     Deserializes a callable given its full import path as a string.
 

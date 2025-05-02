@@ -2,16 +2,14 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal, Optional, TypedDict, overload
 
 import numpy as np
 
 from haystack.lazy_imports import LazyImport
 from haystack.utils.auth import Secret
 
-with LazyImport(
-    message="Run 'pip install \"sentence-transformers>=3.0.0\"'"
-) as sentence_transformers_import:
+with LazyImport(message="Run 'pip install \"sentence-transformers>=3.0.0\"'") as sentence_transformers_import:
     from sentence_transformers import SentenceTransformer
 
 
@@ -20,7 +18,7 @@ class _SentenceTransformersEmbeddingBackendFactory:
     Factory class to create instances of Sentence Transformers embedding backends.
     """
 
-    _instances: Dict[str, "_SentenceTransformersEmbeddingBackend"] = {}
+    _instances: dict[str, "_SentenceTransformersEmbeddingBackend"] = {}
 
     @staticmethod
     def get_embedding_backend(  # pylint: disable=too-many-positional-arguments
@@ -29,20 +27,15 @@ class _SentenceTransformersEmbeddingBackendFactory:
         auth_token: Optional[Secret] = None,
         trust_remote_code: bool = False,
         truncate_dim: Optional[int] = None,
-        model_kwargs: Optional[Dict[str, Any]] = None,
-        tokenizer_kwargs: Optional[Dict[str, Any]] = None,
-        config_kwargs: Optional[Dict[str, Any]] = None,
+        model_kwargs: Optional[dict[str, Any]] = None,
+        tokenizer_kwargs: Optional[dict[str, Any]] = None,
+        config_kwargs: Optional[dict[str, Any]] = None,
         backend: Literal["torch", "onnx", "openvino"] = "torch",
     ):
         embedding_backend_id = f"{model}{device}{auth_token}{truncate_dim}{backend}"
 
-        if (
-            embedding_backend_id
-            in _SentenceTransformersEmbeddingBackendFactory._instances
-        ):
-            return _SentenceTransformersEmbeddingBackendFactory._instances[
-                embedding_backend_id
-            ]
+        if embedding_backend_id in _SentenceTransformersEmbeddingBackendFactory._instances:
+            return _SentenceTransformersEmbeddingBackendFactory._instances[embedding_backend_id]
         embedding_backend = _SentenceTransformersEmbeddingBackend(
             model=model,
             device=device,
@@ -54,10 +47,18 @@ class _SentenceTransformersEmbeddingBackendFactory:
             config_kwargs=config_kwargs,
             backend=backend,
         )
-        _SentenceTransformersEmbeddingBackendFactory._instances[
-            embedding_backend_id
-        ] = embedding_backend
+        _SentenceTransformersEmbeddingBackendFactory._instances[embedding_backend_id] = embedding_backend
         return embedding_backend
+
+
+class EncodeKwargs(TypedDict, total=False):
+    batch_size: int
+    show_progress_bar: bool
+    output_value: Literal["sentence_embedding", "token_embeddings"]
+    convert_to_numpy: bool
+    convert_to_tensor: bool
+    device: Optional[str]
+    normalize_embeddings: bool
 
 
 class _SentenceTransformersEmbeddingBackend:
@@ -69,18 +70,17 @@ class _SentenceTransformersEmbeddingBackend:
         self,
         model: str,
         device: Optional[str] = None,
-        auth_token: Optional[Secret] = None,
+        auth_token: Optional[Any] = None,
         trust_remote_code: bool = False,
         truncate_dim: Optional[int] = None,
-        model_kwargs: Optional[Dict[str, Any]] = None,
-        tokenizer_kwargs: Optional[Dict[str, Any]] = None,
-        config_kwargs: Optional[Dict[str, Any]] = None,
+        model_kwargs: Optional[dict[str, Any]] = None,
+        tokenizer_kwargs: Optional[dict[str, Any]] = None,
+        config_kwargs: Optional[dict[str, Any]] = None,
         backend: Literal["torch", "onnx", "openvino"] = "torch",
     ):
         sentence_transformers_import.check()
 
-        self.model = SentenceTransformer(  # type: ignore[call-overload, misc]
-            # type issues with sentence-transformers 4.0.1 - https://github.com/UKPLab/sentence-transformers/issues/3290
+        self.model = SentenceTransformer(
             model_name_or_path=model,
             device=device,
             token=auth_token.resolve_value() if auth_token else None,
@@ -92,10 +92,8 @@ class _SentenceTransformersEmbeddingBackend:
             backend=backend,
         )
 
-    def embed(self, data: List[str], **kwargs: Any) -> list[list[float]]:
+    def embed(self, data: list[str], **kwargs: Any) -> list[list[float]]:
         embeddings = self.model.encode(data, **kwargs)
         if isinstance(embeddings, np.ndarray):
-            lst = embeddings.tolist()
-            print("lst", embeddings.shape)
-            return lst
+            return embeddings.tolist()
         raise ValueError(f"Unexpected embedding type: {type(embeddings)}")

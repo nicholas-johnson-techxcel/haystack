@@ -132,7 +132,7 @@ def generate_qualified_class_name(cls: Type[object]) -> str:
 
 
 def component_from_dict(
-    cls: Type[object], data: Dict[str, Any], name: str, callbacks: Optional[DeserializationCallbacks] = None
+    cls: Type[object], data: dict[str, Any], name: str, callbacks: Optional[DeserializationCallbacks] = None
 ) -> Any:
     """
     Creates a component instance from a dictionary.
@@ -169,7 +169,7 @@ def component_from_dict(
         return do_from_dict()
 
 
-def default_to_dict(obj: Any, **init_parameters) -> Dict[str, Any]:
+def default_to_dict(obj: Any, **init_parameters: Any) -> dict[str, Any]:
     """
     Utility function to serialize an object to a dictionary.
 
@@ -210,7 +210,7 @@ def default_to_dict(obj: Any, **init_parameters) -> Dict[str, Any]:
     return {"type": generate_qualified_class_name(type(obj)), "init_parameters": init_parameters}
 
 
-def default_from_dict(cls: Type[object], data: Dict[str, Any]) -> Any:
+def default_from_dict[T: object](cls: Type[T], data: dict[str, Any]) -> T:
     """
     Utility function to deserialize a dictionary to an object.
 

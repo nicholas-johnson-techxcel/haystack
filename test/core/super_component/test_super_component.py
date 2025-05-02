@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2024-present deepset GmbH <info@deepset.ai>
 #
 # SPDX-License-Identifier: Apache-2.0
-from typing import List
+from typing import Any
 
 import pytest
 from haystack import Document, SuperComponent, Pipeline, AsyncPipeline, component, super_component
@@ -19,10 +19,10 @@ from haystack.core.super_component.super_component import InvalidMappingTypeErro
 
 
 @pytest.fixture
-def mock_openai_generator(monkeypatch):
+def mock_openai_generator(monkeypatch: pytest.MonkeyPatch):
     """Create a mock OpenAI Generator for testing."""
 
-    def mock_run(self, prompt: str, **kwargs):
+    def mock_run(self: OpenAIGenerator, prompt: str, **kwargs: Any) -> dict[str, list[str]]:
         return {"replies": ["This is a test response about capitals."]}
 
     monkeypatch.setattr(OpenAIGenerator, "run", mock_run)
@@ -40,7 +40,7 @@ def documents():
 
 
 @pytest.fixture
-def document_store(documents):
+def document_store(documents: list[Document]):
     """Create and populate a test document store."""
     store = InMemoryDocumentStore()
     store.write_documents(documents, policy=DuplicatePolicy.OVERWRITE)
@@ -48,16 +48,15 @@ def document_store(documents):
 
 
 @pytest.fixture
-def rag_pipeline(document_store):
+def rag_pipeline(document_store: InMemoryDocumentStore):
     """Create a simple RAG pipeline."""
 
     _component_instance = component()
 
-
-@_component_instance
+    @_component_instance
     class FakeGenerator:
-        @_component_instance.output_types(replies=List[str])
-        def run(self, prompt: str, **kwargs):
+        @_component_instance.output_types(replies=list[str])
+        def run(self, prompt: str, **kwargs: Any) -> dict[str, list[str]]:
             return {"replies": ["This is a test response about capitals."]}
 
     pipeline = Pipeline()
@@ -82,16 +81,15 @@ def rag_pipeline(document_store):
 
 
 @pytest.fixture
-def async_rag_pipeline(document_store):
+def async_rag_pipeline(document_store: InMemoryDocumentStore):
     """Create a simple asyncRAG pipeline."""
 
     _component_instance = component()
 
-
-@_component_instance
+    @_component_instance
     class FakeGenerator:
-        @_component_instance.output_types(replies=List[str])
-        def run(self, prompt: str, **kwargs):
+        @_component_instance.output_types(replies=list[str])
+        def run(self, prompt: str, **kwargs: Any) -> dict[str, list[str]]:
             return {"replies": ["This is a test response about capitals."]}
 
     pipeline = AsyncPipeline()
@@ -136,27 +134,27 @@ class TestSuperComponent:
         with pytest.raises(InvalidMappingValueError):
             SuperComponent._split_component_path(path)
 
-    def test_invalid_input_mapping_type(self, rag_pipeline):
+    def test_invalid_input_mapping_type(self, rag_pipeline: Pipeline):
         input_mapping = {"search_query": "not_a_list"}  # Should be a list
         with pytest.raises(InvalidMappingTypeError):
             SuperComponent(pipeline=rag_pipeline, input_mapping=input_mapping)
 
-    def test_invalid_input_mapping_value(self, rag_pipeline):
+    def test_invalid_input_mapping_value(self, rag_pipeline: Pipeline):
         input_mapping = {"search_query": ["nonexistent_component.query"]}
         with pytest.raises(InvalidMappingValueError):
             SuperComponent(pipeline=rag_pipeline, input_mapping=input_mapping)
 
-    def test_invalid_output_mapping_type(self, rag_pipeline):
+    def test_invalid_output_mapping_type(self, rag_pipeline: Pipeline):
         output_mapping = {"answer_builder.answers": 123}  # Should be a string
         with pytest.raises(InvalidMappingTypeError):
             SuperComponent(pipeline=rag_pipeline, output_mapping=output_mapping)
 
-    def test_invalid_output_mapping_value(self, rag_pipeline):
+    def test_invalid_output_mapping_value(self, rag_pipeline: Pipeline):
         output_mapping = {"nonexistent_component.answers": "final_answers"}
         with pytest.raises(InvalidMappingValueError):
             SuperComponent(pipeline=rag_pipeline, output_mapping=output_mapping)
 
-    def test_duplicate_output_names(self, rag_pipeline):
+    def test_duplicate_output_names(self, rag_pipeline: Pipeline):
         output_mapping = {
             "answer_builder.answers": "final_answers",
             "llm.replies": "final_answers",  # Different path but same output name
@@ -164,21 +162,21 @@ class TestSuperComponent:
         with pytest.raises(InvalidMappingValueError):
             SuperComponent(pipeline=rag_pipeline, output_mapping=output_mapping)
 
-    def test_explicit_input_mapping(self, rag_pipeline):
+    def test_explicit_input_mapping(self, rag_pipeline: Pipeline):
         input_mapping = {"search_query": ["retriever.query", "prompt_builder.query", "answer_builder.query"]}
         wrapper = SuperComponent(pipeline=rag_pipeline, input_mapping=input_mapping)
         input_sockets = wrapper.__haystack_input__._sockets_dict
         assert set(input_sockets.keys()) == {"search_query"}
         assert input_sockets["search_query"].type == str
 
-    def test_explicit_output_mapping(self, rag_pipeline):
+    def test_explicit_output_mapping(self, rag_pipeline: Pipeline):
         output_mapping = {"answer_builder.answers": "final_answers"}
         wrapper = SuperComponent(pipeline=rag_pipeline, output_mapping=output_mapping)
         output_sockets = wrapper.__haystack_output__._sockets_dict
         assert set(output_sockets.keys()) == {"final_answers"}
         assert output_sockets["final_answers"].type == List[GeneratedAnswer]
 
-    def test_auto_input_mapping(self, rag_pipeline):
+    def test_auto_input_mapping(self, rag_pipeline: Pipeline):
         wrapper = SuperComponent(pipeline=rag_pipeline)
         input_sockets = wrapper.__haystack_input__._sockets_dict
         assert set(input_sockets.keys()) == {
@@ -194,17 +192,17 @@ class TestSuperComponent:
             "top_k",
         }
 
-    def test_auto_output_mapping(self, rag_pipeline):
+    def test_auto_output_mapping(self, rag_pipeline: Pipeline):
         wrapper = SuperComponent(pipeline=rag_pipeline)
         output_sockets = wrapper.__haystack_output__._sockets_dict
         assert set(output_sockets.keys()) == {"answers", "documents"}
 
-    def test_auto_mapping_sockets(self, rag_pipeline):
+    def test_auto_mapping_sockets(self, rag_pipeline: Pipeline):
         wrapper = SuperComponent(pipeline=rag_pipeline)
 
         output_sockets = wrapper.__haystack_output__._sockets_dict
         assert set(output_sockets.keys()) == {"answers", "documents"}
-        assert output_sockets["answers"].type == List[GeneratedAnswer]
+        assert output_sockets["answers"].type == list[GeneratedAnswer]
 
         input_sockets = wrapper.__haystack_input__._sockets_dict
         assert set(input_sockets.keys()) == {
@@ -221,7 +219,7 @@ class TestSuperComponent:
         }
         assert input_sockets["query"].type == str
 
-    def test_super_component_run(self, rag_pipeline):
+    def test_super_component_run(self, rag_pipeline: Pipeline):
         input_mapping = {"search_query": ["retriever.query", "prompt_builder.query", "answer_builder.query"]}
         output_mapping = {"answer_builder.answers": "final_answers"}
         wrapper = SuperComponent(pipeline=rag_pipeline, input_mapping=input_mapping, output_mapping=output_mapping)
@@ -231,7 +229,7 @@ class TestSuperComponent:
         assert isinstance(result["final_answers"][0], GeneratedAnswer)
 
     @pytest.mark.asyncio
-    async def test_super_component_run_async(self, async_rag_pipeline):
+    async def test_super_component_run_async(self, async_rag_pipeline: AsyncPipeline):
         input_mapping = {"search_query": ["retriever.query", "prompt_builder.query", "answer_builder.query"]}
         output_mapping = {"answer_builder.answers": "final_answers"}
         wrapper = SuperComponent(
@@ -242,7 +240,7 @@ class TestSuperComponent:
         assert "final_answers" in result
         assert isinstance(result["final_answers"][0], GeneratedAnswer)
 
-    def test_wrapper_serialization(self, document_store):
+    def test_wrapper_serialization(self, document_store: InMemoryDocumentStore):
         """Test serialization and deserialization of pipeline wrapper."""
         pipeline = Pipeline()
         pipeline.add_component("retriever", InMemoryBM25Retriever(document_store=document_store))
@@ -270,16 +268,13 @@ class TestSuperComponent:
         assert "documents" in result
         assert result["documents"][0].content == "Paris is the capital of France."
 
-    def test_subclass_serialization(self, rag_pipeline):
+    def test_subclass_serialization(self, rag_pipeline: Pipeline):
         super_comp = SuperComponent(rag_pipeline)
         serialized = super_comp.to_dict()
 
-        _component_instance = component()
-
-
-@_component_instance
+        @super_component
         class CustomSuperComponent(SuperComponent):
-            def __init__(self, pipeline, instance_attribute="test"):
+            def __init__(self, pipeline: Pipeline, instance_attribute: str = "test"):
                 self.instance_attribute = instance_attribute
                 super(CustomSuperComponent, self).__init__(pipeline)
 
@@ -299,7 +294,7 @@ class TestSuperComponent:
         assert custom_serialized["type"] == "test_super_component.CustomSuperComponent"
         assert custom_super_component._to_super_component_dict() == serialized
 
-    def test_super_component_non_leaf_output(self, rag_pipeline):
+    def test_super_component_non_leaf_output(self, rag_pipeline: Pipeline):
         # 'retriever' is not a leaf, but should now be allowed
         output_mapping = {"retriever.documents": "retrieved_docs", "answer_builder.answers": "final_answers"}
         wrapper = SuperComponent(pipeline=rag_pipeline, output_mapping=output_mapping)
@@ -309,7 +304,7 @@ class TestSuperComponent:
         assert "retrieved_docs" in result  # non-leaf output
         assert isinstance(result["retrieved_docs"][0], Document)
 
-    def test_custom_super_component_to_dict(self, rag_pipeline):
+    def test_custom_super_component_to_dict(self, rag_pipeline: Pipeline):
         custom_super_component = CustomSuperComponent(1)
         data = component_to_dict(custom_super_component, "custom_super_component")
         assert data == {

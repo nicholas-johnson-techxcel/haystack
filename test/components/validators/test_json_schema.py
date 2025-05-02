@@ -173,8 +173,7 @@ class TestJsonSchemaValidator:
     def test_schema_validator_in_pipeline_validated(self, json_schema_github_compare, genuine_fc_message):
         _component_instance = component()
 
-
-@_component_instance
+        @_component_instance
         class ChatMessageProducer:
             @_component_instance.output_types(messages=List[ChatMessage])
             def run(self):
@@ -192,8 +191,7 @@ class TestJsonSchemaValidator:
     def test_schema_validator_in_pipeline_validation_error(self, json_schema_github_compare):
         _component_instance = component()
 
-
-@_component_instance
+        @_component_instance
         class ChatMessageProducer:
             @_component_instance.output_types(messages=List[ChatMessage])
             def run(self):

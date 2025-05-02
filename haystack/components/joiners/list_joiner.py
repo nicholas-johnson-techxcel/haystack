@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from itertools import chain
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, List
 
 from haystack import component, default_from_dict, default_to_dict
 from haystack.core.component.types import Variadic
@@ -67,7 +67,7 @@ class ListJoiner:
     ```
     """
 
-    def __init__(self, list_type_: Optional[Type] = None):
+    def __init__(self, list_type_: type | None = None):
         """
         Creates a ListJoiner component.
 
@@ -77,11 +77,11 @@ class ListJoiner:
         """
         self.list_type_ = list_type_
         if list_type_ is not None:
-            component.set_output_types(self, values=list_type_)
+            _component_instance.set_output_types(instance=self, values=list_type_)
         else:
-            component.set_output_types(self, values=List[Any])
+            _component_instance.set_output_types(instance=self, values=List[Any])
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serializes the component to a dictionary.
 
@@ -92,7 +92,7 @@ class ListJoiner:
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ListJoiner":
+    def from_dict(cls, data: dict[str, Any]) -> "ListJoiner":
         """
         Deserializes the component from a dictionary.
 
@@ -104,7 +104,7 @@ class ListJoiner:
             data["init_parameters"]["list_type_"] = deserialize_type(data["init_parameters"]["list_type_"])
         return default_from_dict(cls, data)
 
-    def run(self, values: Variadic[List[Any]]) -> Dict[str, List[Any]]:
+    def run(self, values: Variadic[list[Any]]) -> dict[str, list[Any]]:
         """
         Joins multiple lists into a single flat list.
 

@@ -81,7 +81,7 @@ class TestPipeline:
         _component_instance = component()
 
 
-@_component_instance
+        @_component_instance
         class WrongOutput:
             @_component_instance.output_types(output=str)
             def run(self, value: str):
@@ -108,7 +108,7 @@ class TestPipeline:
         _component_instance = component()
 
 
-@_component_instance
+        @_component_instance
         class ErroringComponent:
             @_component_instance.output_types(output=str)
             def run(self):

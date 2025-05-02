@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "LLM framework to build customizable, production-ready LLM applications. Connect components (models, vector DBs, file converters) to pipelines or agents that can interact with your data."
 readme = "README.md"
 license = "Apache-2.0"
-requires-python = ">=3.10,<3.12"
+requires-python = ">=3.12"
 authors = [{ name = "deepset.ai", email = "malte.pietsch@deepset.ai" }]
 keywords = [
   "BERT",
@@ -82,16 +82,19 @@ format = "ruff format {args}"
 format-check = "ruff format --check {args}"
 
 [tool.hatch.envs.test]
+path=".venv"
 
 # we override dependencies from the default environment
 dependencies = [
+  "cmake==3.27", # https://github.com/google/sentencepiece/issues/932#issuecomment-2778586629
   "numpy>=2", # Haystack is compatible both with numpy 1.x and 2.x, but we test with 2.x
   "numba>=0.54.0", # This pin helps uv resolve the dependency tree. See https://github.com/astral-sh/uv/issues/7881
 
   "pandas",                                    # AzureOCRDocumentConverter, CSVDocumentCleaner, CSVDocumentSplitter,
                                                # EvaluationRunResult, XLSXToDocument, and pipeline tests
 
-  "transformers[torch,sentencepiece]>=4.51.1,<4.52", # ExtractiveReader, TransformersSimilarityRanker, LocalWhisperTranscriber, HFGenerators...
+  "transformers[torch]>=4.51.1,<4.52", # ExtractiveReader, TransformersSimilarityRanker, LocalWhisperTranscriber, HFGenerators...
+#  "sentencepiece>=0.2.0",
   "huggingface_hub>=0.27.0",                   # Hugging Face API Generators and Embedders
   "sentence-transformers>=3.0.0",              # SentenceTransformersTextEmbedder and SentenceTransformersDocumentEmbedder
   "langdetect",                                # TextLanguageRouter and DocumentLanguageClassifier
@@ -156,6 +159,8 @@ unit = 'pytest --cov-report xml:coverage.xml --cov="haystack" -m "not integratio
 integration = 'pytest --maxfail=5 -m "integration" {args:test}'
 integration-only-fast = 'pytest --maxfail=5 -m "integration and not slow" {args:test}'
 integration-only-slow = 'pytest --maxfail=5 -m "integration and slow" {args:test}'
+preinstall = "python -c 'import cmake; print(\"CMake version:\", cmake.__version__)'"
+install-pt = "pip install 'transformers[torch]>=4.51.1,<4.52' sentencepiece"
 
 types = "mypy --install-types --non-interactive --cache-dir=.mypy_cache/ {args:haystack}"
 lint = "pylint -ry -j 0 {args:haystack}"
@@ -282,8 +287,6 @@ markers = [
   "slow: slow/unstable integration tests",
 ]
 log_cli = true
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "class"
 
 [tool.mypy]
 warn_return_any = false

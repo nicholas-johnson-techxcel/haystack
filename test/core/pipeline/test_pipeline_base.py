@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
-from typing import List, Optional
+from typing import Any, List, Optional
 from unittest.mock import patch
 
 import pytest
@@ -152,7 +152,7 @@ class TestPipelineBase:
     @patch("IPython.display.Image")
     @patch("IPython.display.display")
     def test_show_in_notebook(
-        self, mock_ipython_display, mock_ipython_image, mock_is_in_jupyter, mock_to_mermaid_image
+        self, mock_ipython_display: Any, mock_ipython_image: Any, mock_is_in_jupyter: Any, mock_to_mermaid_image: Any
     ):
         pipe = PipelineBase()
 
@@ -786,7 +786,7 @@ class TestPipelineBase:
         _component_instance = component()
 
 
-@_component_instance
+        @_component_instance
         class Hello:
             @_component_instance.output_types(output=str)
             def run(self, word: str):
@@ -798,7 +798,7 @@ class TestPipelineBase:
         _component_instance = component()
 
 
-@_component_instance
+        @_component_instance
         class Joiner:
             @_component_instance.output_types(output=str)
             def run(self, word1: str, word2: str):
@@ -833,7 +833,7 @@ class TestPipelineBase:
         _component_instance = component()
 
 
-@_component_instance
+        @_component_instance
         class Hello:
             def __init__(self):
                 self.iteration_counter = 0

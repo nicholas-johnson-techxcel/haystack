@@ -72,6 +72,7 @@ class Component(Protocol):
 
         isinstance(MyComponent, Component)
     """
+
     def run(self, *args: Any, **kwargs: Any) -> dict[str, Any]: ...
 
 
@@ -288,6 +289,7 @@ class _Component:
     Raises:
         ComponentError: if the class provided has no `run()` method or otherwise doesn't respect the component contract.
     """
+
     def __init__(self) -> None:
         self.registry: dict[str, type[Component]] = {}
 
@@ -318,14 +320,17 @@ class _Component:
         Use as:
 
         ```python
-        @component
+        _component_instance = component()
+
+
+        @_component_instance
         class MyComponent:
 
             def __init__(self, value: int):
                 component.set_input_types(self, value_1=str, value_2=str)
                 ...
 
-            @component.output_types(output_1=int, output_2=str)
+            @_component_instance.output_types(output_1=int, output_2=str)
             def run(self, **kwargs):
                 return {"output_1": kwargs["value_1"], "output_2": ""}
         ```
@@ -336,6 +341,7 @@ class _Component:
 
         ```python
         _component_instance = component()
+
 
         @_component_instance
         class MyComponent:
@@ -410,6 +416,7 @@ class _Component:
                 return {"output_1": 1, "output_2": "2"}
         ```
         """
+
         def output_types_decorator(run_method: T) -> T:
             """
             Decorator that sets the output types of the decorated method.
@@ -438,8 +445,6 @@ class _Component:
                 "_output_types_cache",
                 {name: OutputSocket(name=name, type=type_) for name, type_ in types.items()},
             )
-
-            print("self", run_method, "run_method", run_method._output_types_cache)
 
             # We now use the inferred return_type (Coroutine or Dict) in the annotation
             run_method.__annotations__["return"] = return_type

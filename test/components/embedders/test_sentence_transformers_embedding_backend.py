@@ -1,9 +1,7 @@
 # SPDX-FileCopyrightText: 2022-present deepset GmbH <info@deepset.ai>
 #
 # SPDX-License-Identifier: Apache-2.0
-from unittest.mock import patch
-
-import pytest
+from unittest.mock import patch, MagicMock
 
 from haystack.components.embedders.backends.sentence_transformers_backend import (
     _SentenceTransformersEmbeddingBackendFactory,
@@ -12,7 +10,7 @@ from haystack.utils.auth import Secret
 
 
 @patch("haystack.components.embedders.backends.sentence_transformers_backend.SentenceTransformer")
-def test_factory_behavior(mock_sentence_transformer):
+def test_factory_behavior(mock_sentence_transformer: MagicMock):
     embedding_backend = _SentenceTransformersEmbeddingBackendFactory.get_embedding_backend(
         model="my_model", device="cpu"
     )
@@ -26,7 +24,7 @@ def test_factory_behavior(mock_sentence_transformer):
 
 
 @patch("haystack.components.embedders.backends.sentence_transformers_backend.SentenceTransformer")
-def test_model_initialization(mock_sentence_transformer):
+def test_model_initialization(mock_sentence_transformer: MagicMock):
     _SentenceTransformersEmbeddingBackendFactory.get_embedding_backend(
         model="model",
         device="cpu",
@@ -49,7 +47,7 @@ def test_model_initialization(mock_sentence_transformer):
 
 
 @patch("haystack.components.embedders.backends.sentence_transformers_backend.SentenceTransformer")
-def test_embedding_function_with_kwargs(mock_sentence_transformer):
+def test_embedding_function_with_kwargs(mock_sentence_transformer: MagicMock):
     embedding_backend = _SentenceTransformersEmbeddingBackendFactory.get_embedding_backend(model="model")
 
     data = ["sentence1", "sentence2"]

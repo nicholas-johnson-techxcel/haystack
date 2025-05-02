@@ -3,12 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 import logging
 import os
-from typing import List
 from datetime import datetime
 import pytest
 from openai import OpenAIError
 from openai.types.chat import ChatCompletionChunk, chat_completion_chunk
 from unittest.mock import MagicMock, patch
+from pytest import LogCaptureFixture, MonkeyPatch
 
 from haystack.components.generators import OpenAIGenerator
 from haystack.components.generators.utils import print_streaming_chunk
@@ -17,7 +17,7 @@ from haystack.utils.auth import Secret
 
 
 class TestOpenAIGenerator:
-    def test_init_default(self, monkeypatch):
+    def test_init_default(self, monkeypatch: MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = OpenAIGenerator()
         assert component.client.api_key == "test-api-key"
@@ -27,12 +27,12 @@ class TestOpenAIGenerator:
         assert component.client.timeout == 30
         assert component.client.max_retries == 5
 
-    def test_init_fail_wo_api_key(self, monkeypatch):
+    def test_init_fail_wo_api_key(self, monkeypatch: MonkeyPatch):
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         with pytest.raises(ValueError, match="None of the .* environment variables are set"):
             OpenAIGenerator()
 
-    def test_init_with_parameters(self, monkeypatch):
+    def test_init_with_parameters(self, monkeypatch: MonkeyPatch):
         monkeypatch.setenv("OPENAI_TIMEOUT", "100")
         monkeypatch.setenv("OPENAI_MAX_RETRIES", "10")
         component = OpenAIGenerator(
@@ -51,7 +51,7 @@ class TestOpenAIGenerator:
         assert component.client.timeout == 40.0
         assert component.client.max_retries == 1
 
-    def test_to_dict_default(self, monkeypatch):
+    def test_to_dict_default(self, monkeypatch: MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "test-api-key")
         component = OpenAIGenerator()
         data = component.to_dict()
@@ -69,7 +69,7 @@ class TestOpenAIGenerator:
             },
         }
 
-    def test_to_dict_with_parameters(self, monkeypatch):
+    def test_to_dict_with_parameters(self, monkeypatch: MonkeyPatch):
         monkeypatch.setenv("ENV_VAR", "test-api-key")
         component = OpenAIGenerator(
             api_key=Secret.from_env_var("ENV_VAR"),
@@ -95,7 +95,7 @@ class TestOpenAIGenerator:
             },
         }
 
-    def test_from_dict(self, monkeypatch):
+    def test_from_dict(self, monkeypatch: MonkeyPatch):
         monkeypatch.setenv("OPENAI_API_KEY", "fake-api-key")
         data = {
             "type": "haystack.components.generators.openai.OpenAIGenerator",
@@ -118,7 +118,7 @@ class TestOpenAIGenerator:
         assert component.api_key == Secret.from_env_var("OPENAI_API_KEY")
         assert component.http_client_kwargs is None
 
-    def test_from_dict_fail_wo_env_var(self, monkeypatch):
+    def test_from_dict_fail_wo_env_var(self, monkeypatch: MonkeyPatch):
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         data = {
             "type": "haystack.components.generators.openai.OpenAIGenerator",
@@ -133,7 +133,7 @@ class TestOpenAIGenerator:
         with pytest.raises(ValueError, match="None of the .* environment variables are set"):
             OpenAIGenerator.from_dict(data)
 
-    def test_run(self, openai_mock_chat_completion):
+    def test_run(self, openai_mock_chat_completion: MagicMock):
         component = OpenAIGenerator(api_key=Secret.from_token("test-api-key"))
         response = component.run("What's Natural Language Processing?")
 
@@ -144,7 +144,7 @@ class TestOpenAIGenerator:
         assert len(response["replies"]) == 1
         assert [isinstance(reply, str) for reply in response["replies"]]
 
-    def test_run_with_params_streaming(self, openai_mock_chat_completion_chunk):
+    def test_run_with_params_streaming(self, openai_mock_chat_completion_chunk: MagicMock):
         streaming_callback_called = False
 
         def streaming_callback(chunk: StreamingChunk) -> None:
@@ -164,7 +164,7 @@ class TestOpenAIGenerator:
         assert len(response["replies"]) == 1
         assert "Hello" in response["replies"][0]  # see openai_mock_chat_completion_chunk
 
-    def test_run_with_streaming_callback_in_run_method(self, openai_mock_chat_completion_chunk):
+    def test_run_with_streaming_callback_in_run_method(self, openai_mock_chat_completion_chunk: MagicMock):
         streaming_callback_called = False
 
         def streaming_callback(chunk: StreamingChunk) -> None:
@@ -185,7 +185,7 @@ class TestOpenAIGenerator:
         assert len(response["replies"]) == 1
         assert "Hello" in response["replies"][0]  # see openai_mock_chat_completion_chunk
 
-    def test_run_with_params(self, openai_mock_chat_completion):
+    def test_run_with_params(self, openai_mock_chat_completion: MagicMock):
         component = OpenAIGenerator(
             api_key=Secret.from_token("test-api-key"), generation_kwargs={"max_tokens": 10, "temperature": 0.5}
         )
@@ -203,12 +203,12 @@ class TestOpenAIGenerator:
         assert len(response["replies"]) == 1
         assert [isinstance(reply, str) for reply in response["replies"]]
 
-    def test_check_abnormal_completions(self, caplog):
+    def test_check_abnormal_completions(self, caplog: LogCaptureFixture):
         caplog.set_level(logging.INFO)
         component = OpenAIGenerator(api_key=Secret.from_token("test-api-key"))
 
         # underlying implementation uses ChatMessage objects so we have to use them here
-        messages: List[ChatMessage] = []
+        messages: list[ChatMessage] = []
         for i, _ in enumerate(range(4)):
             message = ChatMessage.from_assistant("Hello")
             metadata = {"finish_reason": "content_filter" if i % 2 == 0 else "length", "index": i}
@@ -321,7 +321,7 @@ class TestOpenAIGenerator:
         assert callback.counter > 1
         assert "Paris" in callback.responses
 
-    def test_run_with_wrapped_stream_simulation(self, openai_mock_stream):
+    def test_run_with_wrapped_stream_simulation(self, openai_mock_stream: MagicMock):
         streaming_callback_called = False
 
         def streaming_callback(chunk: StreamingChunk) -> None:

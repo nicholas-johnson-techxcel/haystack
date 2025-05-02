@@ -2,11 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Callable, Dict, List, Literal, Optional
+from typing import Any, Callable, List, Literal, Optional
 
 from haystack import Pipeline, default_from_dict, default_to_dict, super_component
 from haystack.components.preprocessors.document_cleaner import DocumentCleaner
 from haystack.components.preprocessors.document_splitter import DocumentSplitter, Language
+from haystack.dataclasses import Document
 from haystack.utils import deserialize_callable, serialize_callable
 
 
@@ -144,7 +145,7 @@ class DocumentPreprocessor:
         # The pipeline output "documents" comes from "cleaner.documents"
         self.output_mapping = {"cleaner.documents": "documents"}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Serialize SuperComponent to a dictionary.
 
@@ -177,7 +178,7 @@ class DocumentPreprocessor:
         )
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DocumentPreprocessor":
+    def from_dict(cls, data: dict[str, Any]) -> "DocumentPreprocessor":
         """
         Deserializes the SuperComponent from a dictionary.
 

@@ -228,7 +228,7 @@ class TestPromptBuilder:
         _component_instance = component()
 
 
-@_component_instance
+        @_component_instance
         class DocumentProducer:
             @_component_instance.output_types(documents=List[Document])
             def run(self, doc_input: str):

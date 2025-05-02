@@ -1,6 +1,6 @@
 import json
 from copy import deepcopy
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Type
 import re
 
 from pytest_bdd import scenarios, given
@@ -9,6 +9,8 @@ import pytest
 from pandas import DataFrame
 
 from haystack import Document, component
+from haystack.core.pipeline.pipeline import Pipeline
+from haystack.dataclasses.chat_message import ChatRole
 from haystack.document_stores.types import DuplicatePolicy
 from haystack.dataclasses import ChatMessage, GeneratedAnswer, TextContent, ByteStream
 from haystack.components.routers import ConditionalRouter, FileTypeRouter
@@ -51,7 +53,7 @@ scenarios("pipeline_run.feature")
 
 
 @given("a pipeline that has no components", target_fixture="pipeline_data")
-def pipeline_that_has_no_components(pipeline_class):
+def pipeline_that_has_no_components(pipeline_class: Type[Pipeline]):
     pipeline = pipeline_class(max_runs_per_component=1)
     inputs = {}
     expected_outputs = {}
@@ -59,7 +61,7 @@ def pipeline_that_has_no_components(pipeline_class):
 
 
 @given("a pipeline that is linear", target_fixture="pipeline_data")
-def pipeline_that_is_linear(pipeline_class):
+def pipeline_that_is_linear(pipeline_class: Type[Pipeline]):
     pipeline = pipeline_class(max_runs_per_component=1)
     pipeline.add_component("first_addition", AddFixedValue(add=2))
     pipeline.add_component("second_addition", AddFixedValue())
@@ -84,7 +86,7 @@ def pipeline_that_is_linear(pipeline_class):
 
 
 @given("a pipeline that has an infinite loop", target_fixture="pipeline_data")
-def pipeline_that_has_an_infinite_loop(pipeline_class):
+def pipeline_that_has_an_infinite_loop(pipeline_class: Type[Pipeline]):
     routes = [
         {"condition": "{{number > 2}}", "output": "{{number}}", "output_name": "big_number", "output_type": int},
         {"condition": "{{number <= 2}}", "output": "{{number + 2}}", "output_name": "small_number", "output_type": int},
@@ -107,7 +109,7 @@ def pipeline_that_has_an_infinite_loop(pipeline_class):
 
 
 @given("a pipeline that is really complex with lots of components, forks, and loops", target_fixture="pipeline_data")
-def pipeline_complex(pipeline_class):
+def pipeline_complex(pipeline_class: Type[Pipeline]):
     pipeline = pipeline_class(max_runs_per_component=2)
     pipeline.add_component("greet_first", Greet(message="Hello, the value is {value}."))
     pipeline.add_component("accumulate_1", Accumulate())
@@ -201,11 +203,11 @@ def pipeline_complex(pipeline_class):
 
 
 @given("a pipeline that has a single component with a default input", target_fixture="pipeline_data")
-def pipeline_that_has_a_single_component_with_a_default_input(pipeline_class):
+def pipeline_that_has_a_single_component_with_a_default_input(pipeline_class: Type[Pipeline]):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class WithDefault:
         @_component_instance.output_types(b=int)
         def run(self, a: int, b: int = 2):
@@ -232,7 +234,7 @@ def pipeline_that_has_a_single_component_with_a_default_input(pipeline_class):
 
 
 @given("a pipeline that has two loops of identical lengths", target_fixture="pipeline_data")
-def pipeline_that_has_two_loops_of_identical_lengths(pipeline_class):
+def pipeline_that_has_two_loops_of_identical_lengths(pipeline_class: Type[Pipeline]):
     pipeline = pipeline_class(max_runs_per_component=10)
     pipeline.add_component("branch_joiner", BranchJoiner(type_=int))
     pipeline.add_component("remainder", Remainder(divisor=3))
@@ -289,7 +291,7 @@ def pipeline_that_has_two_loops_of_identical_lengths(pipeline_class):
 
 
 @given("a pipeline that has two loops of different lengths", target_fixture="pipeline_data")
-def pipeline_that_has_two_loops_of_different_lengths(pipeline_class):
+def pipeline_that_has_two_loops_of_different_lengths(pipeline_class: Type[Pipeline]):
     pipeline = pipeline_class(max_runs_per_component=10)
     pipeline.add_component("branch_joiner", BranchJoiner(type_=int))
     pipeline.add_component("remainder", Remainder(divisor=3))
@@ -350,7 +352,7 @@ def pipeline_that_has_two_loops_of_different_lengths(pipeline_class):
 
 
 @given("a pipeline that has a single loop with two conditional branches", target_fixture="pipeline_data")
-def pipeline_that_has_a_single_loop_with_two_conditional_branches(pipeline_class):
+def pipeline_that_has_a_single_loop_with_two_conditional_branches(pipeline_class: Type[Pipeline]):
     accumulator = Accumulate()
     pipeline = pipeline_class(max_runs_per_component=10)
 
@@ -398,7 +400,7 @@ def pipeline_that_has_a_single_loop_with_two_conditional_branches(pipeline_class
 
 
 @given("a pipeline that has a component with dynamic inputs defined in init", target_fixture="pipeline_data")
-def pipeline_that_has_a_component_with_dynamic_inputs_defined_in_init(pipeline_class):
+def pipeline_that_has_a_component_with_dynamic_inputs_defined_in_init(pipeline_class: Type[Pipeline]):
     pipeline = pipeline_class(max_runs_per_component=1)
     pipeline.add_component("hello", Hello())
     pipeline.add_component("fstring", FString(template="This is the greeting: {greeting}!", variables=["greeting"]))
@@ -432,7 +434,7 @@ def pipeline_that_has_a_component_with_dynamic_inputs_defined_in_init(pipeline_c
 
 
 @given("a pipeline that has two branches that don't merge", target_fixture="pipeline_data")
-def pipeline_that_has_two_branches_that_dont_merge(pipeline_class):
+def pipeline_that_has_two_branches_that_dont_merge(pipeline_class: Type[Pipeline]):
     pipeline = pipeline_class(max_runs_per_component=1)
     pipeline.add_component("add_one", AddFixedValue(add=1))
     pipeline.add_component("parity", Parity())
@@ -472,7 +474,7 @@ def pipeline_that_has_two_branches_that_dont_merge(pipeline_class):
 
 
 @given("a pipeline that has three branches that don't merge", target_fixture="pipeline_data")
-def pipeline_that_has_three_branches_that_dont_merge(pipeline_class):
+def pipeline_that_has_three_branches_that_dont_merge(pipeline_class: Type[Pipeline]):
     pipeline = pipeline_class(max_runs_per_component=1)
     pipeline.add_component("add_one", AddFixedValue(add=1))
     pipeline.add_component("repeat", Repeat(outputs=["first", "second"]))
@@ -507,7 +509,7 @@ def pipeline_that_has_three_branches_that_dont_merge(pipeline_class):
 
 
 @given("a pipeline that has two branches that merge", target_fixture="pipeline_data")
-def pipeline_that_has_two_branches_that_merge(pipeline_class):
+def pipeline_that_has_two_branches_that_merge(pipeline_class: Type[Pipeline]):
     pipeline = pipeline_class(max_runs_per_component=1)
     pipeline.add_component("first_addition", AddFixedValue(add=2))
     pipeline.add_component("second_addition", AddFixedValue(add=2))
@@ -540,7 +542,7 @@ def pipeline_that_has_two_branches_that_merge(pipeline_class):
 @given(
     "a pipeline that has different combinations of branches that merge and do not merge", target_fixture="pipeline_data"
 )
-def pipeline_that_has_different_combinations_of_branches_that_merge_and_do_not_merge(pipeline_class):
+def pipeline_that_has_different_combinations_of_branches_that_merge_and_do_not_merge(pipeline_class: Type[Pipeline]):
     pipeline = pipeline_class(max_runs_per_component=1)
     pipeline.add_component("add_one", AddFixedValue())
     pipeline.add_component("parity", Parity())
@@ -590,7 +592,7 @@ def pipeline_that_has_different_combinations_of_branches_that_merge_and_do_not_m
 
 
 @given("a pipeline that has two branches, one of which loops back", target_fixture="pipeline_data")
-def pipeline_that_has_two_branches_one_of_which_loops_back(pipeline_class):
+def pipeline_that_has_two_branches_one_of_which_loops_back(pipeline_class: Type[Pipeline]):
     pipeline = pipeline_class(max_runs_per_component=10)
     pipeline.add_component("add_zero", AddFixedValue(add=0))
     pipeline.add_component("branch_joiner", BranchJoiner(type_=int))
@@ -635,11 +637,11 @@ def pipeline_that_has_two_branches_one_of_which_loops_back(pipeline_class):
 
 
 @given("a pipeline that has a component with mutable input", target_fixture="pipeline_data")
-def pipeline_that_has_a_component_with_mutable_input(pipeline_class):
+def pipeline_that_has_a_component_with_mutable_input(pipeline_class: Type[Pipeline]):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class InputMangler:
         @_component_instance.output_types(mangled_list=List[str])
         def run(self, input_list: List[str]):
@@ -677,11 +679,11 @@ def pipeline_that_has_a_component_with_mutable_input(pipeline_class):
 
 
 @given("a pipeline that has a component with mutable output sent to multiple inputs", target_fixture="pipeline_data")
-def pipeline_that_has_a_component_with_mutable_output_sent_to_multiple_inputs(pipeline_class):
+def pipeline_that_has_a_component_with_mutable_output_sent_to_multiple_inputs(pipeline_class: Type[Pipeline]):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class PassThroughPromptBuilder:
         # This is a pass-through component that returns the same input
         @_component_instance.output_types(prompt=List[ChatMessage])
@@ -691,16 +693,16 @@ def pipeline_that_has_a_component_with_mutable_output_sent_to_multiple_inputs(pi
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class MessageMerger:
         @_component_instance.output_types(merged_message=str)
-        def run(self, messages: List[ChatMessage], metadata: dict = None):
+        def run(self, messages: List[ChatMessage], metadata: dict[str, Any] | None = None) -> dict[str, Any]:
             return {"merged_message": "\n".join(t.text or "" for t in messages)}
 
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeGenerator:
         # This component is a fake generator that always returns the same message
         @_component_instance.output_types(replies=List[ChatMessage])
@@ -759,7 +761,7 @@ def pipeline_that_has_a_component_with_mutable_output_sent_to_multiple_inputs(pi
                                 _meta={},
                             ),
                             ChatMessage(
-                                _role="user", _content=[TextContent(text="Tell me about Berlin")], _name=None, _meta={}
+                                _role=ChatRole.USER, _content=[TextContent(text="Tell me about Berlin")], _name=None, _meta={}
                             ),
                         ]
                     },
@@ -776,7 +778,7 @@ def pipeline_that_has_a_component_with_mutable_output_sent_to_multiple_inputs(pi
                                 _meta={},
                             ),
                             ChatMessage(
-                                _role="user", _content=[TextContent(text="Tell me about Berlin")], _name=None, _meta={}
+                                _role=ChatRole.USER, _content=[TextContent(text="Tell me about Berlin")], _name=None, _meta={}
                             ),
                         ],
                         "metadata": {"meta2": "value2", "metadata_key": "metadata_value"},
@@ -802,7 +804,7 @@ def pipeline_that_has_a_component_with_mutable_output_sent_to_multiple_inputs(pi
                                 _meta={},
                             ),
                             ChatMessage(
-                                _role="user", _content=[TextContent(text="Tell me about Berlin")], _name=None, _meta={}
+                                _role=ChatRole.USER, _content=[TextContent(text="Tell me about Berlin")], _name=None, _meta={}
                             ),
                         ]
                     },
@@ -816,7 +818,7 @@ def pipeline_that_has_a_component_with_mutable_output_sent_to_multiple_inputs(pi
     "a pipeline that has a greedy and variadic component after a component with default input",
     target_fixture="pipeline_data",
 )
-def pipeline_that_has_a_greedy_and_variadic_component_after_a_component_with_default_input(pipeline_class):
+def pipeline_that_has_a_greedy_and_variadic_component_after_a_component_with_default_input(pipeline_class: Type[Pipeline]):
     """
     This test verifies that `Pipeline.run()` executes the components in the correct order when
     there's a greedy Component with variadic input right before a Component with at least one default input.
@@ -892,7 +894,7 @@ def pipeline_that_has_a_greedy_and_variadic_component_after_a_component_with_def
 
 
 @given("a pipeline that has a component that doesn't return a dictionary", target_fixture="pipeline_data")
-def pipeline_that_has_a_component_that_doesnt_return_a_dictionary(pipeline_class):
+def pipeline_that_has_a_component_that_doesnt_return_a_dictionary(pipeline_class: Type[Pipeline]):
     BrokenComponent = component_class(
         "BrokenComponent",
         input_types={"a": int},
@@ -906,7 +908,7 @@ def pipeline_that_has_a_component_that_doesnt_return_a_dictionary(pipeline_class
 
 
 @given("a pipeline that has a component with only default inputs", target_fixture="pipeline_data")
-def pipeline_that_has_a_component_with_only_default_inputs(pipeline_class):
+def pipeline_that_has_a_component_with_only_default_inputs(pipeline_class: Type[Pipeline]):
     FakeGenerator = component_class(
         "FakeGenerator", input_types={"prompt": str}, output_types={"replies": List[str]}, output={"replies": ["Paris"]}
     )
@@ -1024,7 +1026,7 @@ def pipeline_that_has_a_component_with_only_default_inputs(pipeline_class):
     target_fixture="pipeline_data",
 )
 def pipeline_that_has_a_component_with_only_default_inputs_as_first_to_run_and_receives_inputs_from_a_loop(
-    pipeline_class,
+    pipeline_class: Type[Pipeline],
 ):
     """
     This tests verifies that a Pipeline doesn't get stuck running in a loop if
@@ -1132,7 +1134,7 @@ def pipeline_that_has_a_component_with_only_default_inputs_as_first_to_run_and_r
     "a pipeline that has multiple branches that merge into a component with a single variadic input",
     target_fixture="pipeline_data",
 )
-def pipeline_that_has_multiple_branches_that_merge_into_a_component_with_a_single_variadic_input(pipeline_class):
+def pipeline_that_has_multiple_branches_that_merge_into_a_component_with_a_single_variadic_input(pipeline_class: Type[Pipeline]):
     pipeline = pipeline_class(max_runs_per_component=1)
     pipeline.add_component("add_one", AddFixedValue())
     pipeline.add_component("parity", Remainder(divisor=2))
@@ -1186,7 +1188,7 @@ def pipeline_that_has_multiple_branches_that_merge_into_a_component_with_a_singl
     target_fixture="pipeline_data",
 )
 def pipeline_that_has_multiple_branches_of_different_lengths_that_merge_into_a_component_with_a_single_variadic_input(
-    pipeline_class,
+    pipeline_class: Type[Pipeline],
 ):
     pipeline = pipeline_class(max_runs_per_component=1)
     pipeline.add_component("first_addition", AddFixedValue(add=2))
@@ -1220,7 +1222,7 @@ def pipeline_that_has_multiple_branches_of_different_lengths_that_merge_into_a_c
 
 
 @given("a pipeline that is linear and returns intermediate outputs", target_fixture="pipeline_data")
-def pipeline_that_is_linear_and_returns_intermediate_outputs(pipeline_class):
+def pipeline_that_is_linear_and_returns_intermediate_outputs(pipeline_class: Type[Pipeline]):
     pipeline = pipeline_class(max_runs_per_component=1)
     pipeline.add_component("first_addition", AddFixedValue(add=2))
     pipeline.add_component("second_addition", AddFixedValue())
@@ -1260,7 +1262,7 @@ def pipeline_that_is_linear_and_returns_intermediate_outputs(pipeline_class):
 
 
 @given("a pipeline that has a loop and returns intermediate outputs from it", target_fixture="pipeline_data")
-def pipeline_that_has_a_loop_and_returns_intermediate_outputs_from_it(pipeline_class):
+def pipeline_that_has_a_loop_and_returns_intermediate_outputs_from_it(pipeline_class: Type[Pipeline]):
     pipeline = pipeline_class(max_runs_per_component=10)
     pipeline.add_component("add_one", AddFixedValue(add=1))
     pipeline.add_component("branch_joiner", BranchJoiner(type_=int))
@@ -1325,11 +1327,11 @@ def pipeline_that_has_a_loop_and_returns_intermediate_outputs_from_it(pipeline_c
 @given(
     "a pipeline that is linear and returns intermediate outputs from multiple sockets", target_fixture="pipeline_data"
 )
-def pipeline_that_is_linear_and_returns_intermediate_outputs_from_multiple_sockets(pipeline_class):
+def pipeline_that_is_linear_and_returns_intermediate_outputs_from_multiple_sockets(pipeline_class: Type[Pipeline]):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class DoubleWithOriginal:
         """
         Doubles the input value and returns the original value as well.
@@ -1381,7 +1383,7 @@ def pipeline_that_is_linear_and_returns_intermediate_outputs_from_multiple_socke
     "a pipeline that has a component with default inputs that doesn't receive anything from its sender",
     target_fixture="pipeline_data",
 )
-def pipeline_that_has_a_component_with_default_inputs_that_doesnt_receive_anything_from_its_sender(pipeline_class):
+def pipeline_that_has_a_component_with_default_inputs_that_doesnt_receive_anything_from_its_sender(pipeline_class: Type[Pipeline]):
     routes = [
         {"condition": "{{'reisen' in sentence}}", "output": "German", "output_name": "language_1", "output_type": str},
         {"condition": "{{'viajar' in sentence}}", "output": "Spanish", "output_name": "language_2", "output_type": str},
@@ -1418,7 +1420,7 @@ def pipeline_that_has_a_component_with_default_inputs_that_doesnt_receive_anythi
     target_fixture="pipeline_data",
 )
 def pipeline_that_has_a_component_with_default_inputs_that_doesnt_receive_anything_from_its_sender_but_receives_input_from_user(
-    pipeline_class,
+    pipeline_class: Type[Pipeline],
 ):
     prompt = PromptBuilder(
         template="""Please generate an SQL query. The query should answer the following Question: {{ question }};
@@ -1431,7 +1433,7 @@ def pipeline_that_has_a_component_with_default_inputs_that_doesnt_receive_anythi
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeGenerator:
         @_component_instance.output_types(replies=List[str])
         def run(self, prompt: str):
@@ -1442,7 +1444,7 @@ def pipeline_that_has_a_component_with_default_inputs_that_doesnt_receive_anythi
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeSQLQuerier:
         @_component_instance.output_types(results=str)
         def run(self, query: str):
@@ -1655,7 +1657,7 @@ def pipeline_that_has_a_component_with_default_inputs_that_doesnt_receive_anythi
     target_fixture="pipeline_data",
 )
 def pipeline_that_has_a_loop_and_a_component_with_default_inputs_that_doesnt_receive_anything_from_its_sender_but_receives_input_from_user(
-    pipeline_class,
+    pipeline_class: Type[Pipeline],
 ):
     template = """
     You are an experienced and accurate Turkish CX speacialist that classifies customer comments into pre-defined categories below:\n
@@ -1688,7 +1690,7 @@ def pipeline_that_has_a_loop_and_a_component_with_default_inputs_that_doesnt_rec
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeOutputValidator:
         @_component_instance.output_types(
             valid_replies=List[str], invalid_replies=Optional[List[str]], error_message=Optional[str]
@@ -1702,7 +1704,7 @@ def pipeline_that_has_a_loop_and_a_component_with_default_inputs_that_doesnt_rec
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeGenerator:
         @_component_instance.output_types(replies=List[str])
         def run(self, prompt: str):
@@ -1838,7 +1840,7 @@ def pipeline_that_has_a_loop_and_a_component_with_default_inputs_that_doesnt_rec
     target_fixture="pipeline_data",
 )
 def pipeline_that_has_multiple_components_with_only_default_inputs_and_are_added_in_a_different_order_from_the_order_of_execution(
-    pipeline_class,
+    pipeline_class: Type[Pipeline],
 ):
     prompt_builder1 = PromptBuilder(
         template="""
@@ -1871,7 +1873,7 @@ def pipeline_that_has_multiple_components_with_only_default_inputs_and_are_added
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeRetriever:
         @_component_instance.output_types(documents=List[Document])
         def run(
@@ -1883,10 +1885,7 @@ def pipeline_that_has_multiple_components_with_only_default_inputs_and_are_added
         ):
             return {"documents": [Document(content="This is a document")]}
 
-    _component_instance = component()
-
-
-@_component_instance
+    @_component_instance
     class FakeRanker:
         @_component_instance.output_types(documents=List[Document])
         def run(
@@ -1900,10 +1899,7 @@ def pipeline_that_has_multiple_components_with_only_default_inputs_and_are_added
         ):
             return {"documents": documents}
 
-    _component_instance = component()
-
-
-@_component_instance
+    @_component_instance
     class FakeGenerator:
         @_component_instance.output_types(replies=List[str], meta=Dict[str, Any])
         def run(self, prompt: str, generation_kwargs: Optional[Dict[str, Any]] = None):
@@ -2012,13 +2008,13 @@ def pipeline_that_has_multiple_components_with_only_default_inputs_and_are_added
 
 
 @given("a pipeline that is linear with conditional branching and multiple joins", target_fixture="pipeline_data")
-def that_is_linear_with_conditional_branching_and_multiple_joins(pipeline_class):
+def that_is_linear_with_conditional_branching_and_multiple_joins(pipeline_class: Type[Pipeline]):
     pipeline = pipeline_class()
 
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeRouter:
         @_component_instance.output_types(LEGIT=str, INJECTION=str)
         def run(self, query: str):
@@ -2029,7 +2025,7 @@ def that_is_linear_with_conditional_branching_and_multiple_joins(pipeline_class)
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeEmbedder:
         @_component_instance.output_types(embeddings=List[float])
         def run(self, text: str):
@@ -2038,7 +2034,7 @@ def that_is_linear_with_conditional_branching_and_multiple_joins(pipeline_class)
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeRanker:
         @_component_instance.output_types(documents=List[Document])
         def run(self, query: str, documents: List[Document]):
@@ -2047,7 +2043,7 @@ def that_is_linear_with_conditional_branching_and_multiple_joins(pipeline_class)
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeRetriever:
         @_component_instance.output_types(documents=List[Document])
         def run(self, query: str):
@@ -2058,7 +2054,7 @@ def that_is_linear_with_conditional_branching_and_multiple_joins(pipeline_class)
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeEmbeddingRetriever:
         @_component_instance.output_types(documents=List[Document])
         def run(self, query_embedding: List[float]):
@@ -2138,7 +2134,7 @@ def that_is_linear_with_conditional_branching_and_multiple_joins(pipeline_class)
 
 
 @given("a pipeline that is a simple agent", target_fixture="pipeline_data")
-def that_is_a_simple_agent(pipeline_class):
+def that_is_a_simple_agent(pipeline_class: Type[Pipeline]):
     search_message_template = """
     Given these web search results:
 
@@ -2210,7 +2206,7 @@ def that_is_a_simple_agent(pipeline_class):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeThoughtActionOpenAIChatGenerator:
         run_counter = 0
 
@@ -2231,7 +2227,7 @@ def that_is_a_simple_agent(pipeline_class):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeConclusionOpenAIChatGenerator:
         @_component_instance.output_types(replies=List[ChatMessage])
         def run(self, messages: List[ChatMessage], generation_kwargs: Optional[Dict[str, Any]] = None):
@@ -2240,7 +2236,7 @@ def that_is_a_simple_agent(pipeline_class):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeSerperDevWebSearch:
         @_component_instance.output_types(documents=List[Document])
         def run(self, query: str):
@@ -2260,7 +2256,7 @@ def that_is_a_simple_agent(pipeline_class):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class ToolExtractor:
         @_component_instance.output_types(output=List[str])
         def run(self, messages: List[ChatMessage]):
@@ -2281,20 +2277,20 @@ def that_is_a_simple_agent(pipeline_class):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class PromptConcatenator:
         def __init__(self, suffix: str = ""):
             self._suffix = suffix
 
         @_component_instance.output_types(output=List[ChatMessage])
-        def run(self, replies: List[ChatMessage], current_prompt: List[ChatMessage]):
+        def run(self, replies: List[ChatMessage], current_prompt: List[ChatMessage]) -> dict[str, Any]:
             content = current_prompt[-1].text + replies[-1].text + self._suffix
             return {"output": [ChatMessage.from_user(content)]}
 
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class SearchOutputAdapter:
         @_component_instance.output_types(output=List[ChatMessage])
         def run(self, replies: List[ChatMessage]):
@@ -2348,7 +2344,7 @@ def that_is_a_simple_agent(pipeline_class):
                     "generation_kwargs": None,
                     "messages": [
                         ChatMessage(
-                            _role="user",
+                            _role=ChatRole.USER,
                             _content=[
                                 TextContent(
                                     text="\n    Solve a question answering task with interleaving Thought, Action, Observation steps.\n\n    Thought reasons about the current situation\n\n    Action can be:\n    google_search - Searches Google for the exact concept/entity (given in square brackets) and returns the results for you to use\n    finish - Returns the final answer (given in square brackets) and finishes the task\n\n    Observation summarizes the Action outcome and helps in formulating the next\n    Thought in Thought, Action, Observation interleaving triplet of steps.\n\n    After each Observation, provide the next Thought and next Action.\n    Don't execute multiple steps even though you know the answer.\n    Only generate Thought and Action, never Observation, you'll get Observation from Action.\n    Follow the pattern in the example below.\n\n    Example:\n    ###########################\n    Question: Which magazine was started first Arthur’s Magazine or First for Women?\n    Thought: I need to search Arthur’s Magazine and First for Women, and find which was started\n    first.\n    Action: google_search[When was 'Arthur’s Magazine' started?]\n    Observation: Arthur’s Magazine was an American literary periodical ˘\n    published in Philadelphia and founded in 1844. Edited by Timothy Shay Arthur, it featured work by\n    Edgar A. Poe, J.H. Ingraham, Sarah Josepha Hale, Thomas G. Spear, and others. In May 1846\n    it was merged into Godey’s Lady’s Book.\n    Thought: Arthur’s Magazine was started in 1844. I need to search First for Women founding date next\n    Action: google_search[When was 'First for Women' magazine started?]\n    Observation: First for Women is a woman’s magazine published by Bauer Media Group in the\n    USA. The magazine was started in 1989. It is based in Englewood Cliffs, New Jersey. In 2011\n    the circulation of the magazine was 1,310,696 copies.\n    Thought: First for Women was started in 1989. 1844 (Arthur’s Magazine) ¡ 1989 (First for\n    Women), so Arthur’s Magazine was started first.\n    Action: finish[Arthur’s Magazine]\n    ############################\n\n    Let's start, the question is: which tower is taller: eiffel tower or tower of pisa?\n\n    Thought:\n    "
@@ -2363,7 +2359,7 @@ def that_is_a_simple_agent(pipeline_class):
                     "generation_kwargs": None,
                     "messages": [
                         ChatMessage(
-                            _role="user",
+                            _role=ChatRole.USER,
                             _content=[
                                 TextContent(
                                     text="\n    Solve a question answering task with interleaving Thought, Action, Observation steps.\n\n    Thought reasons about the current situation\n\n    Action can be:\n    google_search - Searches Google for the exact concept/entity (given in square brackets) and returns the results for you to use\n    finish - Returns the final answer (given in square brackets) and finishes the task\n\n    Observation summarizes the Action outcome and helps in formulating the next\n    Thought in Thought, Action, Observation interleaving triplet of steps.\n\n    After each Observation, provide the next Thought and next Action.\n    Don't execute multiple steps even though you know the answer.\n    Only generate Thought and Action, never Observation, you'll get Observation from Action.\n    Follow the pattern in the example below.\n\n    Example:\n    ###########################\n    Question: Which magazine was started first Arthur’s Magazine or First for Women?\n    Thought: I need to search Arthur’s Magazine and First for Women, and find which was started\n    first.\n    Action: google_search[When was 'Arthur’s Magazine' started?]\n    Observation: Arthur’s Magazine was an American literary periodical ˘\n    published in Philadelphia and founded in 1844. Edited by Timothy Shay Arthur, it featured work by\n    Edgar A. Poe, J.H. Ingraham, Sarah Josepha Hale, Thomas G. Spear, and others. In May 1846\n    it was merged into Godey’s Lady’s Book.\n    Thought: Arthur’s Magazine was started in 1844. I need to search First for Women founding date next\n    Action: google_search[When was 'First for Women' magazine started?]\n    Observation: First for Women is a woman’s magazine published by Bauer Media Group in the\n    USA. The magazine was started in 1989. It is based in Englewood Cliffs, New Jersey. In 2011\n    the circulation of the magazine was 1,310,696 copies.\n    Thought: First for Women was started in 1989. 1844 (Arthur’s Magazine) ¡ 1989 (First for\n    Women), so Arthur’s Magazine was started first.\n    Action: finish[Arthur’s Magazine]\n    ############################\n\n    Let's start, the question is: which tower is taller: eiffel tower or tower of pisa?\n\n    Thought:\n    thinking\n Action: google_search[What is taller, Eiffel Tower or Leaning Tower of Pisa]\nObservation: Tower of Pisa is 55 meters tall\n\n\nThought: "
@@ -2378,7 +2374,7 @@ def that_is_a_simple_agent(pipeline_class):
                     "value": [
                         [
                             ChatMessage(
-                                _role="user",
+                                _role=ChatRole.USER,
                                 _content=[
                                     TextContent(
                                         text="\n    Solve a question answering task with interleaving Thought, Action, Observation steps.\n\n    Thought reasons about the current situation\n\n    Action can be:\n    google_search - Searches Google for the exact concept/entity (given in square brackets) and returns the results for you to use\n    finish - Returns the final answer (given in square brackets) and finishes the task\n\n    Observation summarizes the Action outcome and helps in formulating the next\n    Thought in Thought, Action, Observation interleaving triplet of steps.\n\n    After each Observation, provide the next Thought and next Action.\n    Don't execute multiple steps even though you know the answer.\n    Only generate Thought and Action, never Observation, you'll get Observation from Action.\n    Follow the pattern in the example below.\n\n    Example:\n    ###########################\n    Question: Which magazine was started first Arthur’s Magazine or First for Women?\n    Thought: I need to search Arthur’s Magazine and First for Women, and find which was started\n    first.\n    Action: google_search[When was 'Arthur’s Magazine' started?]\n    Observation: Arthur’s Magazine was an American literary periodical ˘\n    published in Philadelphia and founded in 1844. Edited by Timothy Shay Arthur, it featured work by\n    Edgar A. Poe, J.H. Ingraham, Sarah Josepha Hale, Thomas G. Spear, and others. In May 1846\n    it was merged into Godey’s Lady’s Book.\n    Thought: Arthur’s Magazine was started in 1844. I need to search First for Women founding date next\n    Action: google_search[When was 'First for Women' magazine started?]\n    Observation: First for Women is a woman’s magazine published by Bauer Media Group in the\n    USA. The magazine was started in 1989. It is based in Englewood Cliffs, New Jersey. In 2011\n    the circulation of the magazine was 1,310,696 copies.\n    Thought: First for Women was started in 1989. 1844 (Arthur’s Magazine) ¡ 1989 (First for\n    Women), so Arthur’s Magazine was started first.\n    Action: finish[Arthur’s Magazine]\n    ############################\n\n    Let's start, the question is: {{query}}\n\n    Thought:\n    "
@@ -2394,7 +2390,7 @@ def that_is_a_simple_agent(pipeline_class):
                     "value": [
                         [
                             ChatMessage(
-                                _role="user",
+                                _role=ChatRole.USER,
                                 _content=[
                                     TextContent(
                                         text="\n    Solve a question answering task with interleaving Thought, Action, Observation steps.\n\n    Thought reasons about the current situation\n\n    Action can be:\n    google_search - Searches Google for the exact concept/entity (given in square brackets) and returns the results for you to use\n    finish - Returns the final answer (given in square brackets) and finishes the task\n\n    Observation summarizes the Action outcome and helps in formulating the next\n    Thought in Thought, Action, Observation interleaving triplet of steps.\n\n    After each Observation, provide the next Thought and next Action.\n    Don't execute multiple steps even though you know the answer.\n    Only generate Thought and Action, never Observation, you'll get Observation from Action.\n    Follow the pattern in the example below.\n\n    Example:\n    ###########################\n    Question: Which magazine was started first Arthur’s Magazine or First for Women?\n    Thought: I need to search Arthur’s Magazine and First for Women, and find which was started\n    first.\n    Action: google_search[When was 'Arthur’s Magazine' started?]\n    Observation: Arthur’s Magazine was an American literary periodical ˘\n    published in Philadelphia and founded in 1844. Edited by Timothy Shay Arthur, it featured work by\n    Edgar A. Poe, J.H. Ingraham, Sarah Josepha Hale, Thomas G. Spear, and others. In May 1846\n    it was merged into Godey’s Lady’s Book.\n    Thought: Arthur’s Magazine was started in 1844. I need to search First for Women founding date next\n    Action: google_search[When was 'First for Women' magazine started?]\n    Observation: First for Women is a woman’s magazine published by Bauer Media Group in the\n    USA. The magazine was started in 1989. It is based in Englewood Cliffs, New Jersey. In 2011\n    the circulation of the magazine was 1,310,696 copies.\n    Thought: First for Women was started in 1989. 1844 (Arthur’s Magazine) ¡ 1989 (First for\n    Women), so Arthur’s Magazine was started first.\n    Action: finish[Arthur’s Magazine]\n    ############################\n\n    Let's start, the question is: which tower is taller: eiffel tower or tower of pisa?\n\n    Thought:\n    thinking\n Action: google_search[What is taller, Eiffel Tower or Leaning Tower of Pisa]\nObservation: Tower of Pisa is 55 meters tall\n\n\nThought: "
@@ -2410,7 +2406,7 @@ def that_is_a_simple_agent(pipeline_class):
                     "query": "which tower is taller: eiffel tower or tower of pisa?",
                     "template": [
                         ChatMessage(
-                            _role="user",
+                            _role=ChatRole.USER,
                             _content=[
                                 TextContent(
                                     text="\n    Solve a question answering task with interleaving Thought, Action, Observation steps.\n\n    Thought reasons about the current situation\n\n    Action can be:\n    google_search - Searches Google for the exact concept/entity (given in square brackets) and returns the results for you to use\n    finish - Returns the final answer (given in square brackets) and finishes the task\n\n    Observation summarizes the Action outcome and helps in formulating the next\n    Thought in Thought, Action, Observation interleaving triplet of steps.\n\n    After each Observation, provide the next Thought and next Action.\n    Don't execute multiple steps even though you know the answer.\n    Only generate Thought and Action, never Observation, you'll get Observation from Action.\n    Follow the pattern in the example below.\n\n    Example:\n    ###########################\n    Question: Which magazine was started first Arthur’s Magazine or First for Women?\n    Thought: I need to search Arthur’s Magazine and First for Women, and find which was started\n    first.\n    Action: google_search[When was 'Arthur’s Magazine' started?]\n    Observation: Arthur’s Magazine was an American literary periodical ˘\n    published in Philadelphia and founded in 1844. Edited by Timothy Shay Arthur, it featured work by\n    Edgar A. Poe, J.H. Ingraham, Sarah Josepha Hale, Thomas G. Spear, and others. In May 1846\n    it was merged into Godey’s Lady’s Book.\n    Thought: Arthur’s Magazine was started in 1844. I need to search First for Women founding date next\n    Action: google_search[When was 'First for Women' magazine started?]\n    Observation: First for Women is a woman’s magazine published by Bauer Media Group in the\n    USA. The magazine was started in 1989. It is based in Englewood Cliffs, New Jersey. In 2011\n    the circulation of the magazine was 1,310,696 copies.\n    Thought: First for Women was started in 1989. 1844 (Arthur’s Magazine) ¡ 1989 (First for\n    Women), so Arthur’s Magazine was started first.\n    Action: finish[Arthur’s Magazine]\n    ############################\n\n    Let's start, the question is: {{query}}\n\n    Thought:\n    "
@@ -2426,7 +2422,7 @@ def that_is_a_simple_agent(pipeline_class):
                     "query": "which tower is taller: eiffel tower or tower of pisa?",
                     "template": [
                         ChatMessage(
-                            _role="user",
+                            _role=ChatRole.USER,
                             _content=[
                                 TextContent(
                                     text="\n    Solve a question answering task with interleaving Thought, Action, Observation steps.\n\n    Thought reasons about the current situation\n\n    Action can be:\n    google_search - Searches Google for the exact concept/entity (given in square brackets) and returns the results for you to use\n    finish - Returns the final answer (given in square brackets) and finishes the task\n\n    Observation summarizes the Action outcome and helps in formulating the next\n    Thought in Thought, Action, Observation interleaving triplet of steps.\n\n    After each Observation, provide the next Thought and next Action.\n    Don't execute multiple steps even though you know the answer.\n    Only generate Thought and Action, never Observation, you'll get Observation from Action.\n    Follow the pattern in the example below.\n\n    Example:\n    ###########################\n    Question: Which magazine was started first Arthur’s Magazine or First for Women?\n    Thought: I need to search Arthur’s Magazine and First for Women, and find which was started\n    first.\n    Action: google_search[When was 'Arthur’s Magazine' started?]\n    Observation: Arthur’s Magazine was an American literary periodical ˘\n    published in Philadelphia and founded in 1844. Edited by Timothy Shay Arthur, it featured work by\n    Edgar A. Poe, J.H. Ingraham, Sarah Josepha Hale, Thomas G. Spear, and others. In May 1846\n    it was merged into Godey’s Lady’s Book.\n    Thought: Arthur’s Magazine was started in 1844. I need to search First for Women founding date next\n    Action: google_search[When was 'First for Women' magazine started?]\n    Observation: First for Women is a woman’s magazine published by Bauer Media Group in the\n    USA. The magazine was started in 1989. It is based in Englewood Cliffs, New Jersey. In 2011\n    the circulation of the magazine was 1,310,696 copies.\n    Thought: First for Women was started in 1989. 1844 (Arthur’s Magazine) ¡ 1989 (First for\n    Women), so Arthur’s Magazine was started first.\n    Action: finish[Arthur’s Magazine]\n    ############################\n\n    Let's start, the question is: which tower is taller: eiffel tower or tower of pisa?\n\n    Thought:\n    thinking\n Action: google_search[What is taller, Eiffel Tower or Leaning Tower of Pisa]\nObservation: Tower of Pisa is 55 meters tall\n\n\nThought: "
@@ -2441,7 +2437,7 @@ def that_is_a_simple_agent(pipeline_class):
                 ("prompt_concatenator_after_action", 1): {
                     "current_prompt": [
                         ChatMessage(
-                            _role="user",
+                            _role=ChatRole.USER,
                             _content=[
                                 TextContent(
                                     text="\n    Solve a question answering task with interleaving Thought, Action, Observation steps.\n\n    Thought reasons about the current situation\n\n    Action can be:\n    google_search - Searches Google for the exact concept/entity (given in square brackets) and returns the results for you to use\n    finish - Returns the final answer (given in square brackets) and finishes the task\n\n    Observation summarizes the Action outcome and helps in formulating the next\n    Thought in Thought, Action, Observation interleaving triplet of steps.\n\n    After each Observation, provide the next Thought and next Action.\n    Don't execute multiple steps even though you know the answer.\n    Only generate Thought and Action, never Observation, you'll get Observation from Action.\n    Follow the pattern in the example below.\n\n    Example:\n    ###########################\n    Question: Which magazine was started first Arthur’s Magazine or First for Women?\n    Thought: I need to search Arthur’s Magazine and First for Women, and find which was started\n    first.\n    Action: google_search[When was 'Arthur’s Magazine' started?]\n    Observation: Arthur’s Magazine was an American literary periodical ˘\n    published in Philadelphia and founded in 1844. Edited by Timothy Shay Arthur, it featured work by\n    Edgar A. Poe, J.H. Ingraham, Sarah Josepha Hale, Thomas G. Spear, and others. In May 1846\n    it was merged into Godey’s Lady’s Book.\n    Thought: Arthur’s Magazine was started in 1844. I need to search First for Women founding date next\n    Action: google_search[When was 'First for Women' magazine started?]\n    Observation: First for Women is a woman’s magazine published by Bauer Media Group in the\n    USA. The magazine was started in 1989. It is based in Englewood Cliffs, New Jersey. In 2011\n    the circulation of the magazine was 1,310,696 copies.\n    Thought: First for Women was started in 1989. 1844 (Arthur’s Magazine) ¡ 1989 (First for\n    Women), so Arthur’s Magazine was started first.\n    Action: finish[Arthur’s Magazine]\n    ############################\n\n    Let's start, the question is: which tower is taller: eiffel tower or tower of pisa?\n\n    Thought:\n    "
@@ -2467,7 +2463,7 @@ def that_is_a_simple_agent(pipeline_class):
                 ("prompt_concatenator_after_action", 2): {
                     "current_prompt": [
                         ChatMessage(
-                            _role="user",
+                            _role=ChatRole.USER,
                             _content=[
                                 TextContent(
                                     text="\n    Solve a question answering task with interleaving Thought, Action, Observation steps.\n\n    Thought reasons about the current situation\n\n    Action can be:\n    google_search - Searches Google for the exact concept/entity (given in square brackets) and returns the results for you to use\n    finish - Returns the final answer (given in square brackets) and finishes the task\n\n    Observation summarizes the Action outcome and helps in formulating the next\n    Thought in Thought, Action, Observation interleaving triplet of steps.\n\n    After each Observation, provide the next Thought and next Action.\n    Don't execute multiple steps even though you know the answer.\n    Only generate Thought and Action, never Observation, you'll get Observation from Action.\n    Follow the pattern in the example below.\n\n    Example:\n    ###########################\n    Question: Which magazine was started first Arthur’s Magazine or First for Women?\n    Thought: I need to search Arthur’s Magazine and First for Women, and find which was started\n    first.\n    Action: google_search[When was 'Arthur’s Magazine' started?]\n    Observation: Arthur’s Magazine was an American literary periodical ˘\n    published in Philadelphia and founded in 1844. Edited by Timothy Shay Arthur, it featured work by\n    Edgar A. Poe, J.H. Ingraham, Sarah Josepha Hale, Thomas G. Spear, and others. In May 1846\n    it was merged into Godey’s Lady’s Book.\n    Thought: Arthur’s Magazine was started in 1844. I need to search First for Women founding date next\n    Action: google_search[When was 'First for Women' magazine started?]\n    Observation: First for Women is a woman’s magazine published by Bauer Media Group in the\n    USA. The magazine was started in 1989. It is based in Englewood Cliffs, New Jersey. In 2011\n    the circulation of the magazine was 1,310,696 copies.\n    Thought: First for Women was started in 1989. 1844 (Arthur’s Magazine) ¡ 1989 (First for\n    Women), so Arthur’s Magazine was started first.\n    Action: finish[Arthur’s Magazine]\n    ############################\n\n    Let's start, the question is: which tower is taller: eiffel tower or tower of pisa?\n\n    Thought:\n    thinking\n Action: google_search[What is taller, Eiffel Tower or Leaning Tower of Pisa]\nObservation: Tower of Pisa is 55 meters tall\n\n\nThought: "
@@ -2489,7 +2485,7 @@ def that_is_a_simple_agent(pipeline_class):
                 ("prompt_concatenator_after_observation", 1): {
                     "current_prompt": [
                         ChatMessage(
-                            _role="user",
+                            _role=ChatRole.USER,
                             _content=[
                                 TextContent(
                                     text="\n    Solve a question answering task with interleaving Thought, Action, Observation steps.\n\n    Thought reasons about the current situation\n\n    Action can be:\n    google_search - Searches Google for the exact concept/entity (given in square brackets) and returns the results for you to use\n    finish - Returns the final answer (given in square brackets) and finishes the task\n\n    Observation summarizes the Action outcome and helps in formulating the next\n    Thought in Thought, Action, Observation interleaving triplet of steps.\n\n    After each Observation, provide the next Thought and next Action.\n    Don't execute multiple steps even though you know the answer.\n    Only generate Thought and Action, never Observation, you'll get Observation from Action.\n    Follow the pattern in the example below.\n\n    Example:\n    ###########################\n    Question: Which magazine was started first Arthur’s Magazine or First for Women?\n    Thought: I need to search Arthur’s Magazine and First for Women, and find which was started\n    first.\n    Action: google_search[When was 'Arthur’s Magazine' started?]\n    Observation: Arthur’s Magazine was an American literary periodical ˘\n    published in Philadelphia and founded in 1844. Edited by Timothy Shay Arthur, it featured work by\n    Edgar A. Poe, J.H. Ingraham, Sarah Josepha Hale, Thomas G. Spear, and others. In May 1846\n    it was merged into Godey’s Lady’s Book.\n    Thought: Arthur’s Magazine was started in 1844. I need to search First for Women founding date next\n    Action: google_search[When was 'First for Women' magazine started?]\n    Observation: First for Women is a woman’s magazine published by Bauer Media Group in the\n    USA. The magazine was started in 1989. It is based in Englewood Cliffs, New Jersey. In 2011\n    the circulation of the magazine was 1,310,696 copies.\n    Thought: First for Women was started in 1989. 1844 (Arthur’s Magazine) ¡ 1989 (First for\n    Women), so Arthur’s Magazine was started first.\n    Action: finish[Arthur’s Magazine]\n    ############################\n\n    Let's start, the question is: which tower is taller: eiffel tower or tower of pisa?\n\n    Thought:\n    thinking\n Action: google_search[What is taller, Eiffel Tower or Leaning Tower of Pisa]\n"
@@ -2517,7 +2513,7 @@ def that_is_a_simple_agent(pipeline_class):
                     "generation_kwargs": None,
                     "messages": [
                         ChatMessage(
-                            _role="user",
+                            _role=ChatRole.USER,
                             _content=[
                                 TextContent(
                                     text="\n    Given these web search results:\n\n    \n        Eiffel Tower is 300 meters tall\n    \n        Tower of Pisa is 55 meters tall\n    \n\n    Be as brief as possible, max one sentence.\n    Answer the question: What is taller, Eiffel Tower or Leaning Tower of Pisa\n    "
@@ -2552,7 +2548,7 @@ def that_is_a_simple_agent(pipeline_class):
                     "search_query": "What is taller, Eiffel Tower or Leaning Tower of Pisa",
                     "template": [
                         ChatMessage(
-                            _role="user",
+                            _role=ChatRole.USER,
                             _content=[
                                 TextContent(
                                     text="\n    Given these web search results:\n\n    {% for doc in documents %}\n        {{ doc.content }}\n    {% endfor %}\n\n    Be as brief as possible, max one sentence.\n    Answer the question: {{search_query}}\n    "
@@ -2567,7 +2563,7 @@ def that_is_a_simple_agent(pipeline_class):
                 ("tool_extractor", 1): {
                     "messages": [
                         ChatMessage(
-                            _role="user",
+                            _role=ChatRole.USER,
                             _content=[
                                 TextContent(
                                     text="\n    Solve a question answering task with interleaving Thought, Action, Observation steps.\n\n    Thought reasons about the current situation\n\n    Action can be:\n    google_search - Searches Google for the exact concept/entity (given in square brackets) and returns the results for you to use\n    finish - Returns the final answer (given in square brackets) and finishes the task\n\n    Observation summarizes the Action outcome and helps in formulating the next\n    Thought in Thought, Action, Observation interleaving triplet of steps.\n\n    After each Observation, provide the next Thought and next Action.\n    Don't execute multiple steps even though you know the answer.\n    Only generate Thought and Action, never Observation, you'll get Observation from Action.\n    Follow the pattern in the example below.\n\n    Example:\n    ###########################\n    Question: Which magazine was started first Arthur’s Magazine or First for Women?\n    Thought: I need to search Arthur’s Magazine and First for Women, and find which was started\n    first.\n    Action: google_search[When was 'Arthur’s Magazine' started?]\n    Observation: Arthur’s Magazine was an American literary periodical ˘\n    published in Philadelphia and founded in 1844. Edited by Timothy Shay Arthur, it featured work by\n    Edgar A. Poe, J.H. Ingraham, Sarah Josepha Hale, Thomas G. Spear, and others. In May 1846\n    it was merged into Godey’s Lady’s Book.\n    Thought: Arthur’s Magazine was started in 1844. I need to search First for Women founding date next\n    Action: google_search[When was 'First for Women' magazine started?]\n    Observation: First for Women is a woman’s magazine published by Bauer Media Group in the\n    USA. The magazine was started in 1989. It is based in Englewood Cliffs, New Jersey. In 2011\n    the circulation of the magazine was 1,310,696 copies.\n    Thought: First for Women was started in 1989. 1844 (Arthur’s Magazine) ¡ 1989 (First for\n    Women), so Arthur’s Magazine was started first.\n    Action: finish[Arthur’s Magazine]\n    ############################\n\n    Let's start, the question is: which tower is taller: eiffel tower or tower of pisa?\n\n    Thought:\n    thinking\n Action: google_search[What is taller, Eiffel Tower or Leaning Tower of Pisa]\n"
@@ -2581,7 +2577,7 @@ def that_is_a_simple_agent(pipeline_class):
                 ("tool_extractor", 2): {
                     "messages": [
                         ChatMessage(
-                            _role="user",
+                            _role=ChatRole.USER,
                             _content=[
                                 TextContent(
                                     text="\n    Solve a question answering task with interleaving Thought, Action, Observation steps.\n\n    Thought reasons about the current situation\n\n    Action can be:\n    google_search - Searches Google for the exact concept/entity (given in square brackets) and returns the results for you to use\n    finish - Returns the final answer (given in square brackets) and finishes the task\n\n    Observation summarizes the Action outcome and helps in formulating the next\n    Thought in Thought, Action, Observation interleaving triplet of steps.\n\n    After each Observation, provide the next Thought and next Action.\n    Don't execute multiple steps even though you know the answer.\n    Only generate Thought and Action, never Observation, you'll get Observation from Action.\n    Follow the pattern in the example below.\n\n    Example:\n    ###########################\n    Question: Which magazine was started first Arthur’s Magazine or First for Women?\n    Thought: I need to search Arthur’s Magazine and First for Women, and find which was started\n    first.\n    Action: google_search[When was 'Arthur’s Magazine' started?]\n    Observation: Arthur’s Magazine was an American literary periodical ˘\n    published in Philadelphia and founded in 1844. Edited by Timothy Shay Arthur, it featured work by\n    Edgar A. Poe, J.H. Ingraham, Sarah Josepha Hale, Thomas G. Spear, and others. In May 1846\n    it was merged into Godey’s Lady’s Book.\n    Thought: Arthur’s Magazine was started in 1844. I need to search First for Women founding date next\n    Action: google_search[When was 'First for Women' magazine started?]\n    Observation: First for Women is a woman’s magazine published by Bauer Media Group in the\n    USA. The magazine was started in 1989. It is based in Englewood Cliffs, New Jersey. In 2011\n    the circulation of the magazine was 1,310,696 copies.\n    Thought: First for Women was started in 1989. 1844 (Arthur’s Magazine) ¡ 1989 (First for\n    Women), so Arthur’s Magazine was started first.\n    Action: finish[Arthur’s Magazine]\n    ############################\n\n    Let's start, the question is: which tower is taller: eiffel tower or tower of pisa?\n\n    Thought:\n    thinking\n Action: google_search[What is taller, Eiffel Tower or Leaning Tower of Pisa]\nObservation: Tower of Pisa is 55 meters tall\n\n\nThought: thinking\n Action: finish[Eiffel Tower]\n"
@@ -2598,11 +2594,11 @@ def that_is_a_simple_agent(pipeline_class):
 
 
 @given("a pipeline that has a variadic component that receives partial inputs", target_fixture="pipeline_data")
-def that_has_a_variadic_component_that_receives_partial_inputs(pipeline_class):
+def that_has_a_variadic_component_that_receives_partial_inputs(pipeline_class: Type[Pipeline]):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class ConditionalDocumentCreator:
         def __init__(self, content: str):
             self._content = content
@@ -2682,11 +2678,11 @@ def that_has_a_variadic_component_that_receives_partial_inputs(pipeline_class):
     "a pipeline that has a variadic component that receives partial inputs in a different order",
     target_fixture="pipeline_data",
 )
-def that_has_a_variadic_component_that_receives_partial_inputs_different_order(pipeline_class):
+def that_has_a_variadic_component_that_receives_partial_inputs_different_order(pipeline_class: Type[Pipeline]):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class ConditionalDocumentCreator:
         def __init__(self, content: str):
             self._content = content
@@ -2763,7 +2759,7 @@ def that_has_a_variadic_component_that_receives_partial_inputs_different_order(p
 
 
 @given("a pipeline that has an answer joiner variadic component", target_fixture="pipeline_data")
-def that_has_an_answer_joiner_variadic_component(pipeline_class):
+def that_has_an_answer_joiner_variadic_component(pipeline_class: Type[Pipeline]):
     query = "What's Natural Language Processing?"
 
     pipeline = pipeline_class(max_runs_per_component=1)
@@ -2849,12 +2845,12 @@ def that_has_an_answer_joiner_variadic_component(pipeline_class):
     target_fixture="pipeline_data",
 )
 def that_is_linear_and_a_component_in_the_middle_receives_optional_input_from_other_components_and_input_from_the_user(
-    pipeline_class,
+    pipeline_class: Type[Pipeline],
 ):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class QueryMetadataExtractor:
         @_component_instance.output_types(filters=Dict[str, str])
         def run(self, prompt: str):
@@ -2954,7 +2950,7 @@ def that_is_linear_and_a_component_in_the_middle_receives_optional_input_from_ot
 
 
 @given("a pipeline that has a cycle that would get it stuck", target_fixture="pipeline_data")
-def that_has_a_cycle_that_would_get_it_stuck(pipeline_class):
+def that_has_a_cycle_that_would_get_it_stuck(pipeline_class: Type[Pipeline]):
     template = """
     You are an experienced and accurate Turkish CX speacialist that classifies customer comments into pre-defined categories below:\n
     Negative experience labels:
@@ -2988,7 +2984,7 @@ def that_has_a_cycle_that_would_get_it_stuck(pipeline_class):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeOutputValidator:
         @_component_instance.output_types(
             valid_replies=List[str], invalid_replies=Optional[List[str]], error_message=Optional[str]
@@ -3002,7 +2998,7 @@ def that_has_a_cycle_that_would_get_it_stuck(pipeline_class):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeGenerator:
         @_component_instance.output_types(replies=List[str])
         def run(self, prompt: str):
@@ -3028,11 +3024,11 @@ def that_has_a_cycle_that_would_get_it_stuck(pipeline_class):
 
 
 @given("a pipeline that has a loop in the middle", target_fixture="pipeline_data")
-def that_has_a_loop_in_the_middle(pipeline_class):
+def that_has_a_loop_in_the_middle(pipeline_class: Type[Pipeline]):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeGenerator:
         @_component_instance.output_types(replies=List[str])
         def run(self, prompt: str):
@@ -3047,7 +3043,7 @@ def that_has_a_loop_in_the_middle(pipeline_class):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class PromptCleaner:
         @_component_instance.output_types(clean_prompt=str)
         def run(self, prompt: str):
@@ -3127,7 +3123,7 @@ def that_has_a_loop_in_the_middle(pipeline_class):
 
 
 @given("a pipeline that has variadic component that receives a conditional input", target_fixture="pipeline_data")
-def that_has_variadic_component_that_receives_a_conditional_input(pipeline_class):
+def that_has_variadic_component_that_receives_a_conditional_input(pipeline_class: Type[Pipeline]):
     pipe = pipeline_class(max_runs_per_component=1)
     routes = [
         {
@@ -3147,7 +3143,7 @@ def that_has_variadic_component_that_receives_a_conditional_input(pipeline_class
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class NoOp:
         @_component_instance.output_types(documents=List[Document])
         def run(self, documents: List[Document]):
@@ -3156,7 +3152,7 @@ def that_has_variadic_component_that_receives_a_conditional_input(pipeline_class
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class CommaSplitter:
         @_component_instance.output_types(documents=List[Document])
         def run(self, documents: List[Document]):
@@ -3399,7 +3395,7 @@ def that_has_variadic_component_that_receives_a_conditional_input(pipeline_class
 
 
 @given("a pipeline that has a string variadic component", target_fixture="pipeline_data")
-def that_has_a_string_variadic_component(pipeline_class):
+def that_has_a_string_variadic_component(pipeline_class: Type[Pipeline]):
     string_1 = "What's Natural Language Processing?"
     string_2 = "What's is life?"
 
@@ -3438,13 +3434,13 @@ def that_has_a_string_variadic_component(pipeline_class):
 
 
 @given("a pipeline that is an agent that can use RAG", target_fixture="pipeline_data")
-def an_agent_that_can_use_RAG(pipeline_class):
+def an_agent_that_can_use_RAG(pipeline_class: Type[Pipeline]):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FixedGenerator:
-        def __init__(self, replies):
+        def __init__(self, replies: list[str]) -> None:
             self.replies = replies
             self.idx = 0
 
@@ -3463,7 +3459,7 @@ def an_agent_that_can_use_RAG(pipeline_class):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeRetriever:
         @_component_instance.output_types(documents=List[Document])
         def run(self, query: str):
@@ -3692,11 +3688,11 @@ Documents:
 
 
 @given("a pipeline that has a feedback loop", target_fixture="pipeline_data")
-def has_feedback_loop(pipeline_class):
+def has_feedback_loop(pipeline_class: Type[Pipeline]):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FixedGenerator:
         def __init__(self, replies):
             self.replies = replies
@@ -3859,11 +3855,11 @@ Provide additional feedback on why it fails.
 
 
 @given("a pipeline created in a non-standard order that has a loop", target_fixture="pipeline_data")
-def has_non_standard_order_loop(pipeline_class):
+def has_non_standard_order_loop(pipeline_class: Type[Pipeline]):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FixedGenerator:
         def __init__(self, replies):
             self.replies = replies
@@ -4027,11 +4023,11 @@ Provide additional feedback on why it fails.
 
 
 @given("a pipeline that has an agent with a feedback cycle", target_fixture="pipeline_data")
-def agent_with_feedback_cycle(pipeline_class):
+def agent_with_feedback_cycle(pipeline_class: Type[Pipeline]):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FixedGenerator:
         def __init__(self, replies):
             self.replies = replies
@@ -4049,10 +4045,7 @@ def agent_with_feedback_cycle(pipeline_class):
 
             return {"replies": replies}
 
-    _component_instance = component()
-
-
-@_component_instance
+    @_component_instance
     class FakeFileEditor:
         @_component_instance.output_types(files=str)
         def run(self, replies: List[str]):
@@ -4767,11 +4760,11 @@ Provide additional feedback on why it fails.
 
 
 @given("a pipeline that passes outputs that are consumed in cycle to outside the cycle", target_fixture="pipeline_data")
-def passes_outputs_outside_cycle(pipeline_class):
+def passes_outputs_outside_cycle(pipeline_class: Type[Pipeline]):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FixedGenerator:
         def __init__(self, replies):
             self.replies = replies
@@ -4792,7 +4785,7 @@ def passes_outputs_outside_cycle(pipeline_class):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class AnswerBuilderWithPrompt:
         @_component_instance.output_types(answers=List[GeneratedAnswer])
         def run(self, replies: List[str], query: str, prompt: Optional[str] = None) -> Dict[str, Any]:
@@ -5043,11 +5036,11 @@ FAIL, come on, try again."""
 
 
 @given("a pipeline with a component that has dynamic default inputs", target_fixture="pipeline_data")
-def pipeline_with_dynamic_defaults(pipeline_class):
+def pipeline_with_dynamic_defaults(pipeline_class: Type[Pipeline]):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class ParrotWithDynamicDefaultInputs:
         def __init__(self, input_variable: str):
             self.input_variable = input_variable
@@ -5078,11 +5071,11 @@ def pipeline_with_dynamic_defaults(pipeline_class):
 
 
 @given("a pipeline with a component that has variadic dynamic default inputs", target_fixture="pipeline_data")
-def pipeline_with_variadic_dynamic_defaults(pipeline_class):
+def pipeline_with_variadic_dynamic_defaults(pipeline_class: Type[Pipeline]):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class ParrotWithVariadicDynamicDefaultInputs:
         def __init__(self, input_variable: str):
             self.input_variable = input_variable
@@ -5113,7 +5106,7 @@ def pipeline_with_variadic_dynamic_defaults(pipeline_class):
 
 
 @given("a pipeline that is a file conversion pipeline with two joiners", target_fixture="pipeline_data")
-def pipeline_that_converts_files(pipeline_class):
+def pipeline_that_converts_files(pipeline_class: Type[Pipeline]):
     csv_data = """
 some,header,row
 0,1,0
@@ -5220,7 +5213,7 @@ some,header,row
 
 
 @given("a pipeline that is a file conversion pipeline with three joiners", target_fixture="pipeline_data")
-def pipeline_that_converts_files_with_three_joiners(pipeline_class):
+def pipeline_that_converts_files_with_three_joiners(pipeline_class: Type[Pipeline]):
     # What does this test?
     # When a component does not produce outputs, and the successors only receive inputs from this component,
     # then the successors will not run.
@@ -5328,7 +5321,7 @@ def pipeline_that_converts_files_with_three_joiners(pipeline_class):
 
 
 @given("a pipeline that is a file conversion pipeline with three joiners and a loop", target_fixture="pipeline_data")
-def pipeline_that_converts_files_with_three_joiners_and_a_loop(pipeline_class):
+def pipeline_that_converts_files_with_three_joiners_and_a_loop(pipeline_class: Type[Pipeline]):
     # What does this test?
     # When a component does not produce outputs, and the successors only receive inputs from this component,
     # then the successors will not run.
@@ -5340,7 +5333,7 @@ def pipeline_that_converts_files_with_three_joiners_and_a_loop(pipeline_class):
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class FakeDataExtractor:
         def __init__(self, metas):
             self.metas = metas
@@ -5497,14 +5490,14 @@ def pipeline_that_converts_files_with_three_joiners_and_a_loop(pipeline_class):
 
 
 @given("a pipeline that has components returning dataframes", target_fixture="pipeline_data")
-def pipeline_has_components_returning_dataframes(pipeline_class):
+def pipeline_has_components_returning_dataframes(pipeline_class: Type[Pipeline]):
     def get_df():
         return DataFrame({"a": [1, 2], "b": [1, 2]})
 
     _component_instance = component()
 
 
-@_component_instance
+    @_component_instance
     class DataFramer:
         @_component_instance.output_types(dataframe=DataFrame)
         def run(self, dataframe: DataFrame) -> Dict[str, Any]:
@@ -5533,7 +5526,7 @@ def pipeline_has_components_returning_dataframes(pipeline_class):
     "a pipeline where a single component connects multiple sockets to the same receiver socket",
     target_fixture="pipeline_data",
 )
-def pipeline_single_component_many_sockets_same_target(pipeline_class):
+def pipeline_single_component_many_sockets_same_target(pipeline_class: Type[Pipeline]):
     joiner = BranchJoiner(type_=str)
 
     routes = [
@@ -5567,7 +5560,7 @@ def pipeline_single_component_many_sockets_same_target(pipeline_class):
     "a pipeline where a component in a cycle provides inputs for a component outside the cycle in one iteration and no input in another iteration",
     target_fixture="pipeline_data",
 )
-def pipeline_component_cycle_input_no_input(pipeline_class):
+def pipeline_component_cycle_input_no_input(pipeline_class: Type[Pipeline]):
     joiner = BranchJoiner(type_=str)
 
     routes = [
